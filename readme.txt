@@ -5,25 +5,26 @@ Useful for anything nested which you'd like to print in chucks, e.g. printing a
 C function by its name. With the -I option you can split the output in
 sub-blocks, with -E you can mark the ends, then you can pipe that into awk and
 grep/modify the whole block as you could any other awk record - a quick and
-dirty way of handling nested blocks as discrete units - be it JSON, C struct
+dirty way of handling nested blocks as discrete units, be it JSON, C struct
 declarations, Java methods, or mark-up tags, or whatever.
 
 The 'parsing' is as generic as possible - it's basically a glorified parenthesis
 matching algorithm. It tends to work surprisingly well, though, since structured
 data is usually kept properly formed because it tends to get fed into a parser
-of some kind. This tool takes advantage of that. For example:
+of some kind. This tool takes advantage of this. For example:
 
-/blocks.bin -nwhile ./block_parser.cpp -l
+/blocks.bin -n while ./block_parser.cpp -l
 
 will print all the while loops from its own source file with their line numbers
 
 and
 
-/blocks.bin -n"inline" ./parser_io.hpp -E@END | awk -vRS="@END" '{gsub("[[:space:]]+", " "); print $0}'
+./blocks.bin ./parser_io.hpp -ninline -k2 -E@END | awk -vRS="@END" '{gsub("[[:space:]]+", " "); print $0}'
 
-will flatten all inline functions from parser_io.hpp to a single line.
+will print all inline functions from parser_io.hpp except the first two and
+flatten them to a single line. For more details:
 
--- blocks v1.0 --
+-- blocks v1.1 --
 grep for nested data
 
 Prints proper nested blocks like so:
@@ -81,7 +82,11 @@ When given, <end-mark> will be printed after each block.
 <end-mark> is a string.
 
 -c|--block-count=<number-of-blocks>
-Print at most <number-of-blocks>.
+Print the first <number-of-blocks>.
+<number-of-blocks> is a positive integer.
+
+-k|--skip=<number-of-blocks>
+Don't print the first <number-of-blocks>.
 <number-of-blocks> is a positive integer.
 
 -F|--fatal-error

@@ -35,6 +35,30 @@ function awk_BEGIN() {
 
 }
 
+function get_cname(name) {
+	gsub("-", "_", name)
+	return name
+}
+function get_long_cname(name) {
+	return (get_cname(name) "_opt_long")
+}
+function get_short_cname(name) {
+	return (get_cname(name) "_opt_short")
+}
+
+function gen_names(opt_num,    long_name, sanitized) {
+	long_name = get_long_name(opt_num)
+	
+	print_line(sprintf("static const char %s = '%s';",
+		get_short_cname(long_name), get_short_name(opt_num))\
+	)
+	
+	print_line(sprintf("static const char %s[] = \"%s\";",
+		get_long_cname(long_name),
+		long_name)\
+	)
+}
+
 function SPECIAL_HANDLERS() {return "unknown|unbound"}
 
 function gen_handler_defn(opt_num,    long_name, arg_t) {
@@ -80,6 +104,7 @@ function gen_help_defn(opt_num,    long_name) {
 function gen_default_handlers() {
 	save_long_name("unbound_arg")
 	gen_handler_defn(get_long_name_count())
+	
 	save_long_name("unknown_opt")
 	gen_handler_defn(get_long_name_count())
 }
@@ -101,8 +126,8 @@ function gen_tbl_entry(opt_num,    long_name, underscores, short_name) {
 	print_line(sprintf(".callback = handle_%s,", underscores))
 	print_line(".callback_arg = (void *)context,")
 	print_line(sprintf(".print_help = help_%s,", underscores))
-	print_line(sprintf(".long_name = \"%s\",", long_name))
-	print_line(sprintf(".short_name = '%s',", short_name))
+	print_line(sprintf(".long_name = %s,", get_long_cname(long_name)))
+	print_line(sprintf(".short_name = %s,", get_short_cname(long_name)))
 	print_line(sprintf(".takes_arg = %s,", get_takes_args(opt_num)))
 	print_dec_indent()
 	print_line("},")
@@ -116,8 +141,12 @@ function close_tbl(    src) {
     print_line("the_tbl.length = sizeof(all_entries)/sizeof(*all_entries);")
 }
 
-function gen_opt_functions(    i, end, opt) {
+function main(    i, end, opt) {
 	end = get_long_name_count()
+	
+	for (i = 1; i <= end; ++i)
+		gen_names(i)
+	print_line()
 	
 	for (i = 1; i <= end; ++i) {
 		gen_handler_defn(i)
@@ -141,7 +170,7 @@ function awk_END() {
 	if (get_last_rule() != __R_END)
 		in_error("last read rule not last declared")
 		
-	gen_opt_functions()
+	main()
 }
 
 function in_error(error_msg) {

@@ -18,6 +18,7 @@ struct prog_options
 	const char * mark_start;
 	const char * mark_end;
 	int block_count;
+	int skip_count;
 	bool fatal_error;
 	bool line_numbers;
 	bool print_fnames;
@@ -28,7 +29,7 @@ struct prog_options
 };
 
 const char program_name[] = "blocks";
-const char program_version[] = "1.0";
+const char program_version[] = "1.1";
 
 #define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
 
@@ -43,6 +44,39 @@ void equit_(const char * msg, ...)
 	exit(EXIT_FAILURE);
 	return;
 }
+
+static const char block_name_opt_short = 'n';
+static const char block_name_opt_long[] = "block-name";
+static const char block_start_opt_short = 's';
+static const char block_start_opt_long[] = "block-start";
+static const char block_end_opt_short = 'e';
+static const char block_end_opt_long[] = "block-end";
+static const char mark_start_opt_short = 'S';
+static const char mark_start_opt_long[] = "mark-start";
+static const char mark_end_opt_short = 'E';
+static const char mark_end_opt_long[] = "mark-end";
+static const char block_count_opt_short = 'c';
+static const char block_count_opt_long[] = "block-count";
+static const char skip_opt_short = 'k';
+static const char skip_opt_long[] = "skip";
+static const char fatal_error_opt_short = 'F';
+static const char fatal_error_opt_long[] = "fatal-error";
+static const char line_numbers_opt_short = 'l';
+static const char line_numbers_opt_long[] = "line-numbers";
+static const char print_file_names_opt_short = 'p';
+static const char print_file_names_opt_long[] = "print-file-names";
+static const char case_insensitive_opt_short = 'i';
+static const char case_insensitive_opt_long[] = "case-insensitive";
+static const char ignore_top_opt_short = 'I';
+static const char ignore_top_opt_long[] = "ignore-top";
+static const char quiet_opt_short = 'q';
+static const char quiet_opt_long[] = "quiet";
+static const char debug_trace_opt_short = 'D';
+static const char debug_trace_opt_long[] = "debug-trace";
+static const char help_opt_short = 'h';
+static const char help_opt_long[] = "help";
+static const char version_opt_short = 'v';
+static const char version_opt_long[] = "version";
 
 void help_message(void)
 {
@@ -180,7 +214,25 @@ void handle_block_count(char * opt, char * opt_arg, void * callback_arg)
 void help_block_count(char * short_name, char * long_name)
 {
 printf("-%s|--%s=<number-of-blocks>\n", short_name, long_name);
-puts("Print at most <number-of-blocks>.");
+puts("Print the first <number-of-blocks>.");
+puts("<number-of-blocks> is a positive integer.");
+puts("");
+}
+
+// --skip|-k
+void handle_skip(char * opt, char * opt_arg, void * callback_arg)
+{
+	prog_options * context = (prog_options *)callback_arg;
+	if (sscanf(opt_arg, "%d", &(context->skip_count)) != 1)
+		equit("option --%s '%s' bad number", opt, opt_arg);
+	if(context->skip_count < 0)
+		equit("%s", "skip count has to be positive");
+}
+
+void help_skip(char * short_name, char * long_name)
+{
+printf("-%s|--%s=<number-of-blocks>\n", short_name, long_name);
+puts("Don't print the first <number-of-blocks>.");
 puts("<number-of-blocks> is a positive integer.");
 puts("");
 }
@@ -376,6 +428,7 @@ int handle_options(int argc,
 	out_gather_opts.block_start = curly_open;
 	out_gather_opts.block_end = curly_close;
 	out_gather_opts.block_count = -1;
+	out_gather_opts.skip_count = 0;
 	
 	opts_table the_tbl;
 	opts_entry all_entries[] = {
@@ -383,120 +436,128 @@ int handle_options(int argc,
 			.callback = handle_block_name,
 			.callback_arg = (void *)context,
 			.print_help = help_block_name,
-			.long_name = "block-name",
-			.short_name = 'n',
+			.long_name = block_name_opt_long,
+			.short_name = block_name_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_block_start,
 			.callback_arg = (void *)context,
 			.print_help = help_block_start,
-			.long_name = "block-start",
-			.short_name = 's',
+			.long_name = block_start_opt_long,
+			.short_name = block_start_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_block_end,
 			.callback_arg = (void *)context,
 			.print_help = help_block_end,
-			.long_name = "block-end",
-			.short_name = 'e',
+			.long_name = block_end_opt_long,
+			.short_name = block_end_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_mark_start,
 			.callback_arg = (void *)context,
 			.print_help = help_mark_start,
-			.long_name = "mark-start",
-			.short_name = 'S',
+			.long_name = mark_start_opt_long,
+			.short_name = mark_start_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_mark_end,
 			.callback_arg = (void *)context,
 			.print_help = help_mark_end,
-			.long_name = "mark-end",
-			.short_name = 'E',
+			.long_name = mark_end_opt_long,
+			.short_name = mark_end_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_block_count,
 			.callback_arg = (void *)context,
 			.print_help = help_block_count,
-			.long_name = "block-count",
-			.short_name = 'c',
+			.long_name = block_count_opt_long,
+			.short_name = block_count_opt_short,
+			.takes_arg = true,
+		},
+		{
+			.callback = handle_skip,
+			.callback_arg = (void *)context,
+			.print_help = help_skip,
+			.long_name = skip_opt_long,
+			.short_name = skip_opt_short,
 			.takes_arg = true,
 		},
 		{
 			.callback = handle_fatal_error,
 			.callback_arg = (void *)context,
 			.print_help = help_fatal_error,
-			.long_name = "fatal-error",
-			.short_name = 'F',
+			.long_name = fatal_error_opt_long,
+			.short_name = fatal_error_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_line_numbers,
 			.callback_arg = (void *)context,
 			.print_help = help_line_numbers,
-			.long_name = "line-numbers",
-			.short_name = 'l',
+			.long_name = line_numbers_opt_long,
+			.short_name = line_numbers_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_print_file_names,
 			.callback_arg = (void *)context,
 			.print_help = help_print_file_names,
-			.long_name = "print-file-names",
-			.short_name = 'p',
+			.long_name = print_file_names_opt_long,
+			.short_name = print_file_names_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_case_insensitive,
 			.callback_arg = (void *)context,
 			.print_help = help_case_insensitive,
-			.long_name = "case-insensitive",
-			.short_name = 'i',
+			.long_name = case_insensitive_opt_long,
+			.short_name = case_insensitive_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_ignore_top,
 			.callback_arg = (void *)context,
 			.print_help = help_ignore_top,
-			.long_name = "ignore-top",
-			.short_name = 'I',
+			.long_name = ignore_top_opt_long,
+			.short_name = ignore_top_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_quiet,
 			.callback_arg = (void *)context,
 			.print_help = help_quiet,
-			.long_name = "quiet",
-			.short_name = 'q',
+			.long_name = quiet_opt_long,
+			.short_name = quiet_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_debug_trace,
 			.callback_arg = (void *)context,
 			.print_help = help_debug_trace,
-			.long_name = "debug-trace",
-			.short_name = 'D',
+			.long_name = debug_trace_opt_long,
+			.short_name = debug_trace_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_help,
 			.callback_arg = (void *)(&the_tbl),
 			.print_help = help_help,
-			.long_name = "help",
-			.short_name = 'h',
+			.long_name = help_opt_long,
+			.short_name = help_opt_short,
 			.takes_arg = false,
 		},
 		{
 			.callback = handle_version,
 			.callback_arg = (void *)context,
 			.print_help = help_version,
-			.long_name = "version",
-			.short_name = 'v',
+			.long_name = version_opt_long,
+			.short_name = version_opt_short,
 			.takes_arg = false,
 		},
 	};
@@ -560,6 +621,7 @@ int main(int argc, char * argv[])
 			gather_opts.mark_end,
 			&current_file,
 			gather_opts.block_count,
+			gather_opts.skip_count,
 			gather_opts.fatal_error,
 			gather_opts.line_numbers,
 			gather_opts.ignore_top,

@@ -14,16 +14,17 @@ function test_ok_short_opts
 	local TFILE="$G_TESTS_FILE_OK"
 	
 	> "$G_TESTS_OUT"
-	run_cmd "$BIN $TFILE" "$1"
-	run_cmd "$BIN -n top $TFILE" "$1"
-	run_cmd "$BIN -n inner -l $TFILE" "$1"
-	run_cmd "$BIN -n inner -c 1 $TFILE" "$1"
-	run_cmd "$BIN -n inner -c 1 -p $TFILE" "$1"
-	run_cmd "$BIN -n inner -i -c 2 $TFILE" "$1"
-	run_cmd "$BIN -I $TFILE | $BIN -ninner -S @S@ -E@E@" "$1"
-	run_cmd "$BIN -n '\(' $TFILE -s '\(' -e '\)' $TFILE -p" "$1"
-	run_cmd "$BIN -n '\(nest1' $TFILE -s '\(' -e '\)'" "$1"
-	run_cmd "$BIN -n '\(' $TFILE -s '\(' -e '\)' -q" "$1"
+	run_cmd "$BIN $TFILE"
+	run_cmd "$BIN -n top $TFILE"
+	run_cmd "$BIN -n inner -l $TFILE"
+	run_cmd "$BIN -n inner -c 1 $TFILE"
+	run_cmd "$BIN -n inner -c 1 -p $TFILE"
+	run_cmd "$BIN -n inner -i -c 2 $TFILE"
+	run_cmd "$BIN -I $TFILE | $BIN -ninner -S @S@ -E@E@"
+	run_cmd "$BIN -n '\(' $TFILE -s '\(' -e '\)' $TFILE -p"
+	run_cmd "$BIN -n '\(nest1' $TFILE -s '\(' -e '\)'"
+	run_cmd "$BIN -n '\(' $TFILE -s '\(' -e '\)' -q"
+	run_cmd "$BIN -n inner -k 2 $TFILE"
 	compare_with "$G_TESTS_FILE_OK_ACC"
 }
 
@@ -44,6 +45,7 @@ function test_ok_long_opts
 	run_cmd "$BIN --block-name '\(' $TFILE --block-start '\(' --block-end '\)' $TFILE --print-file-names "
 	run_cmd "$BIN --block-name '\(nest1' $TFILE --block-start '\(' --block-end '\)'"
 	run_cmd "$BIN --block-name '\(' $TFILE --block-start '\(' --block-end '\)' --quiet"
+	run_cmd "$BIN -n inner --skip 2 $TFILE"
 	compare_with "$G_TESTS_FILE_OK_ACC"
 }
 
@@ -60,6 +62,7 @@ function test_errors
 	run_cmd "$BIN --block-name main -q $TFILE"
 	run_cmd "$BIN --block-name main -l $TFILE"
 	run_cmd "$BIN --block-name main -c2 -p $TFILE"
+	run_cmd "$BIN --block-name main -k1 -F -p $TFILE"
 	compare_with "$G_TESTS_FILE_ERR_ACC"
 }
 

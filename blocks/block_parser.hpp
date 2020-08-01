@@ -60,6 +60,7 @@ class block_parser
 			const char * mark_block_end = nullptr,
 			const char ** current_file = nullptr,
 			int print_this_many_blocks = -1,
+			int skip_this_many_blocks = 0,
 			bool fatal_error = false,
 			bool print_line_numbers = false,
 			bool dont_print_top_block = false,
@@ -69,6 +70,7 @@ class block_parser
 			mark_end(mark_block_end),
 			current_file(current_file),
 			block_count(print_this_many_blocks),
+			skip_count(skip_this_many_blocks),
 			fatal_error(fatal_error),
 			line_numbers(print_line_numbers),
 			ignore_top(dont_print_top_block),
@@ -79,6 +81,7 @@ class block_parser
 		const char * mark_end;
 		const char ** current_file;
 		int block_count;
+		int skip_count;
 		bool fatal_error;
 		bool line_numbers;
 		bool ignore_top;

@@ -4,6 +4,7 @@
 #-S|--mark-start=<string>
 #-E|--mark-end=<string>
 #-c|--block-count=<num>
+#-k|--skip=<num>
 #-F|--fatal-error
 #-l|--line-numbers
 #-p|--print-file-names
@@ -45,6 +46,11 @@ end
 
 long_name  block-count
 short_name c
+takes_args true
+end
+
+long_name skip
+short_name k
 takes_args true
 end
 

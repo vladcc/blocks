@@ -68,3 +68,9 @@ blocks error: ^
 ./tests_file_errors.txt:
 main {}
 main {}
+./tests_file_errors.txt:
+main {}
+main } {}
+blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks error: main } {}
+blocks error:      ^

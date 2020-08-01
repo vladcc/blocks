@@ -72,3 +72,4 @@ top
 	(nest1
 		(nest11)
 	)
+	inner3 {}

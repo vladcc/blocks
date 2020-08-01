@@ -196,13 +196,18 @@ void block_parser::print_block()
 	
 	if (!_parse_opts.quiet)
 	{
-		if (-1 == _parse_opts.block_count)
-			actual_print_block();
-		else if (_parse_opts.block_count > 0)
-		{
-			actual_print_block();
-			--_parse_opts.block_count;
+		if (!_parse_opts.skip_count)
+		{ 
+			if (-1 == _parse_opts.block_count)
+				actual_print_block();
+			else if (_parse_opts.block_count > 0)
+			{
+				actual_print_block();
+				--_parse_opts.block_count;
+			}
 		}
+		else
+			--_parse_opts.skip_count;
 	}
 	
 	log_return();

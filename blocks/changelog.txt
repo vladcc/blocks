@@ -1,0 +1,4 @@
+2020-08-02
+v1.0 -> v1.1
+-k|--skip option added.
+Option generator defines options names instead of generating literals.
