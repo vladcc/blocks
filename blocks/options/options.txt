@@ -1,0 +1,94 @@
+#-n|--block-name=<string>
+#-s|--block-start=<string>
+#-e|--block-end=<string>
+#-S|--mark-start=<string>
+#-E|--mark-end=<string>
+#-c|--block-count=<num>
+#-F|--fatal-error
+#-l|--line-numbers
+#-p|--print-file-names
+
+#-i|--case-insensitive
+#-I|--ignore-top
+#-q|--quiet
+#-D|--debug-trace
+
+#-h|--help
+#-v|--version
+
+context_arg_type prog_options
+
+long_name  block-name
+short_name n
+takes_args true
+end
+
+long_name  block-start
+short_name s
+takes_args true
+end
+
+long_name  block-end
+short_name e
+takes_args true
+end
+
+long_name  mark-start
+short_name S
+takes_args true
+end
+
+long_name  mark-end
+short_name E
+takes_args true
+end
+
+long_name  block-count
+short_name c
+takes_args true
+end
+
+long_name fatal-error
+short_name F
+takes_args false
+end
+
+long_name line-numbers
+short_name l
+takes_args false
+end
+
+long_name print-file-names
+short_name p
+takes_args false
+end
+
+long_name  case-insensitive
+short_name i
+takes_args false
+end
+
+long_name  ignore-top
+short_name I
+takes_args false
+end
+
+long_name  quiet
+short_name q
+takes_args false
+end
+
+long_name  debug-trace
+short_name D
+takes_args false
+end
+
+long_name  help
+short_name h
+takes_args false
+end
+
+long_name  version
+short_name v
+takes_args false
+end

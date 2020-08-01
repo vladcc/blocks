@@ -1,0 +1,1 @@
+g++ unit_tests.cpp parser_io.cpp block_parser.cpp -o unit_tests.bin -g -Wall -Wfatal-errors

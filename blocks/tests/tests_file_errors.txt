@@ -1,0 +1,14 @@
+main {}
+main {}
+main } {}
+main }
+main {
+
+}
+main {
+	{{{} 
+	{} 
+	}}
+main {
+
+eof

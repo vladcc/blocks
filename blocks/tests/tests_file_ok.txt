@@ -1,0 +1,24 @@
+top
+{
+	Inner {}
+	inner1 {
+	}
+	
+	inner2
+	// something
+	{
+	
+	}
+	
+	inner3 {}
+}
+
+
+(par
+	(nest1
+		(nest11)
+	)
+	(nest2 (nest21))
+)
+
+eof

@@ -1,0 +1,74 @@
+{
+	Inner {}
+	inner1 {
+	}
+	
+	inner2
+	// something
+	{
+	
+	}
+	
+	inner3 {}
+}
+top
+{
+	Inner {}
+	inner1 {
+	}
+	
+	inner2
+	// something
+	{
+	
+	}
+	
+	inner3 {}
+}
+       4 	inner1 {
+       5 	}
+       7 	inner2
+       8 	// something
+       9 	{
+      10 	
+      11 	}
+      13 	inner3 {}
+	inner1 {
+	}
+./tests_file_ok.txt:
+	inner1 {
+	}
+	Inner {}
+	inner1 {
+	}
+@S@
+	inner1 {
+	}
+@E@
+@S@
+	inner2
+	// something
+	{
+	
+	}
+@E@
+@S@
+	inner3 {}
+@E@
+./tests_file_ok.txt:
+(par
+	(nest1
+		(nest11)
+	)
+	(nest2 (nest21))
+)
+./tests_file_ok.txt:
+(par
+	(nest1
+		(nest11)
+	)
+	(nest2 (nest21))
+)
+	(nest1
+		(nest11)
+	)

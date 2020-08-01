@@ -1,0 +1,1 @@
+g++ main.cpp block_parser.cpp parse_opts.c parser_io.cpp -o blocks.bin -g -Wall -Wfatal-errors
