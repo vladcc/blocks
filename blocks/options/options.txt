@@ -1,6 +1,7 @@
-#-n|--block-name=<string>
-#-s|--block-start=<string>
-#-e|--block-end=<string>
+#-n|--block-name=<regex>
+#-s|--block-start=<regex>
+#-e|--block-end=<regex>
+#-C|--comment=<regex>
 #-S|--mark-start=<string>
 #-E|--mark-end=<string>
 #-c|--block-count=<num>
@@ -26,6 +27,11 @@ end
 
 long_name  block-start
 short_name s
+takes_args true
+end
+
+long_name comment
+short_name C
 takes_args true
 end
 

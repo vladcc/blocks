@@ -13,18 +13,36 @@ matching algorithm. It tends to work surprisingly well, though, since structured
 data is usually kept properly formed because it tends to get fed into a parser
 of some kind. This tool takes advantage of this. For example:
 
-/blocks.bin -n while ./block_parser.cpp -l
-
+./blocks.bin -n while ./block_parser.cpp -l
 will print all the while loops from its own source file with their line numbers
 
 and
 
 ./blocks.bin ./parser_io.hpp -ninline -k2 -E@END | awk -vRS="@END" '{gsub("[[:space:]]+", " "); print $0}'
-
 will print all inline functions from parser_io.hpp except the first two and
-flatten them to a single line. For more details:
+flatten them to a single line.
 
--- blocks v1.1 --
+How to build? If you're lazy like me:
+
+cat compile_parser.txt | bash
+for the program and
+
+cat compile_unit_tests.txt | bash
+for the unit tests.
+
+How to run the tests?
+
+./unit_tests.bin
+for the unit tests. You should see no output.
+
+bash run_tests.sh ../blocks.bin
+from the tests/ directory. You should see no output either.
+
+
+
+For more details about the program, here's the help message:
+
+-- blocks v1.2 --
 grep for nested data
 
 Prints proper nested blocks like so:
@@ -72,6 +90,11 @@ Describes the open block symbol. Default is '{', same as the name.
 -e|--block-end=<block-end>
 Describes the close block symbol. Default is '}'
 <block-end> is a regular expression.
+
+-C|--comment=<comment-sequence>
+Imitates single line comments. When given, all block name, open, and
+close matches which appear after a <comment-sequence> are disregarded.
+<comment-sequence> is a regular expression.
 
 -S|--mark-start=<start-mark>
 When given, <start-mark> will be printed before each block.

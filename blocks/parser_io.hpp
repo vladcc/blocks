@@ -2,6 +2,7 @@
 #define PARSER_IO_HPP
 
 #include <regex>
+#include <vector>
 #include <iostream>
 
 class parser_io
@@ -20,8 +21,7 @@ class parser_io
 		_has_input(false)
 	{reset();}
 	
-	bool match_block_name(const std::regex& b_name);
-	int match_first_of(const std::regex& b_open, const std::regex& b_close);
+	int match_first_of(const std::regex * rparr[], int len);
 	
 	bool read_line();
 	
@@ -33,6 +33,9 @@ class parser_io
 		_match_so_far = 0;
 		_has_input = false;
 	}
+	
+	inline void advance_past_match()
+	{++_match_so_far;}
 	
 	inline void print_line(const std::string& str)
 	{print_line(str.c_str());}

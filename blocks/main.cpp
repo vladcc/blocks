@@ -1,5 +1,6 @@
 #include <regex>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
@@ -15,6 +16,7 @@ struct prog_options
 	const char * block_name;
 	const char * block_start;
 	const char * block_end;
+	const char * comment;
 	const char * mark_start;
 	const char * mark_end;
 	int block_count;
@@ -29,7 +31,7 @@ struct prog_options
 };
 
 const char program_name[] = "blocks";
-const char program_version[] = "1.1";
+const char program_version[] = "1.2";
 
 #define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
 
@@ -51,6 +53,8 @@ static const char block_start_opt_short = 's';
 static const char block_start_opt_long[] = "block-start";
 static const char block_end_opt_short = 'e';
 static const char block_end_opt_long[] = "block-end";
+static const char comment_opt_short = 'C';
+static const char comment_opt_long[] = "comment";
 static const char mark_start_opt_short = 'S';
 static const char mark_start_opt_long[] = "mark-start";
 static const char mark_end_opt_short = 'E';
@@ -168,6 +172,22 @@ void help_block_end(char * short_name, char * long_name)
 printf("-%s|--%s=<block-end>\n", short_name, long_name);
 puts("Describes the close block symbol. Default is '}'");
 puts("<block-end> is a regular expression.");
+puts("");
+}
+
+// --comment|-C
+void handle_comment(char * opt, char * opt_arg, void * callback_arg)
+{
+	prog_options * context = (prog_options *)callback_arg;
+	context->comment = opt_arg;
+}
+
+void help_comment(char * short_name, char * long_name)
+{
+printf("-%s|--%s=<comment-sequence>\n", short_name, long_name);
+puts("Imitates single line comments. When given, all block name, open, and");
+puts("close matches which appear after a <comment-sequence> are disregarded.");
+puts("<comment-sequence> is a regular expression.");
 puts("");
 }
 
@@ -420,10 +440,11 @@ int handle_options(int argc,
 {
 	static const char curly_open[] = "\\{";
 	static const char curly_close[] = "\\}";
-	
+
 	prog_options * context = &out_gather_opts;
 	memset((void *)context, 0, sizeof(*context));
 	
+	// defaults
 	out_gather_opts.block_name = curly_open;
 	out_gather_opts.block_start = curly_open;
 	out_gather_opts.block_end = curly_close;
@@ -454,6 +475,14 @@ int handle_options(int argc,
 			.print_help = help_block_end,
 			.long_name = block_end_opt_long,
 			.short_name = block_end_opt_short,
+			.takes_arg = true,
+		},
+		{
+			.callback = handle_comment,
+			.callback_arg = (void *)context,
+			.print_help = help_comment,
+			.long_name = comment_opt_long,
+			.short_name = comment_opt_short,
 			.takes_arg = true,
 		},
 		{
@@ -599,11 +628,33 @@ int main(int argc, char * argv[])
 	int ret = 1;
 	
 	try
-	{ 
-		std::regex b_name(gather_opts.block_name, regex_flags);
-		std::regex b_open(gather_opts.block_start, regex_flags);
-		std::regex b_close(gather_opts.block_end, regex_flags);
+	{
+		std::vector<std::regex> the_regex;
+		the_regex.push_back(
+			std::regex(gather_opts.block_name, regex_flags)
+		);	
+		the_regex.push_back(
+			std::regex(gather_opts.block_start, regex_flags)
+		);
+		the_regex.push_back(
+			std::regex(gather_opts.block_end, regex_flags)
+		);
 		
+		if (gather_opts.comment)
+		{
+			the_regex.push_back(
+				std::regex(gather_opts.comment, regex_flags)
+			);
+		}
+
+		const std::regex * prname = the_regex.data()+0;
+		const std::regex * prstart = the_regex.data()+1;
+		const std::regex * prend = the_regex.data()+2;
+		const std::regex * prcomment = nullptr;
+		
+		if (gather_opts.comment)
+			prcomment = the_regex.data()+3;
+
 		std::ostream * slog = (gather_opts.debug_trace) ? &std::clog : nullptr;
 	
 		block_parser::stream_info streams(&std::cin,
@@ -613,7 +664,7 @@ int main(int argc, char * argv[])
 			program_name
 		);
 		
-		block_parser::regexps expressions(&b_name, &b_open, &b_close);
+		block_parser::regexps expressions(prname, prstart, prend, prcomment);
 		
 		const char str_stdin[] = "-";
 		const char * current_file = str_stdin;

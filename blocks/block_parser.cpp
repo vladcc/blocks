@@ -124,11 +124,23 @@ bool block_parser::until_name()
 	
 	bool ret = false;
 	
-	const std::regex& block_name = *_regexps.name;
+	const int rarr_size = 2;
+	const std::regex * rarr[rarr_size] = {
+		_regexps.name,
+		_regexps.comment // nullptr is ok
+	};
+	
+	int match = 0;
 	while (_parse_io.has_input())
 	{
-		if (_parse_io.match_block_name(block_name))
-		{			
+		if ((match = _parse_io.match_first_of(rarr, rarr_size)))
+		{	
+			if (rarr_size == match) // comment
+			{
+				next_line();
+				continue;
+			}
+				
 			save_line_once(NAME);
 			ret = true;
 			break;
@@ -147,15 +159,28 @@ int block_parser::until_open_or_close()
 	
 	int which_one = 0;
 	
-	const std::regex& block_open = *_regexps.open;
-	const std::regex& block_close = *_regexps.close;
+	const int rarr_size = 3;
+	const std::regex * rarr[rarr_size] = {
+			_regexps.open,
+			_regexps.close,
+			_regexps.comment // nullptr is ok
+	};
+	
 	while (_parse_io.has_input())
 	{
-		which_one = _parse_io.match_first_of(block_open, block_close);
+		which_one = _parse_io.match_first_of(rarr, rarr_size);
+		
+		if (rarr_size == which_one)
+			which_one = COMMENT;
+		
 		save_line_once(which_one);
 		
 		if (which_one)
-			break;
+		{
+			_parse_io.advance_past_match();
+			if ((OPEN == which_one) || (CLOSE == which_one))
+				break;
+		}
 		
 		next_line();
 	}

@@ -2,3 +2,6 @@
 v1.0 -> v1.1
 -k|--skip option added.
 Option generator defines options names instead of generating literals.
+
+v1.1 -> v1.2
+-C|--comment option added.

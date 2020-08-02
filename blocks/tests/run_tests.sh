@@ -3,8 +3,10 @@
 G_BLOCKS_BIN=""
 G_TESTS_FILE_OK="./tests_file_ok.txt"
 G_TESTS_FILE_ERRORS="./tests_file_errors.txt"
+G_TESTS_FILE_COMMENTS="./tests_file_comments.txt"
 G_TESTS_FILE_OK_ACC="./tests_ok_accepted.txt"
 G_TESTS_FILE_ERR_ACC="./tests_error_accepted.txt"
+G_TESTS_FILE_COMMENTS_ACC="./tests_comments_accepted.txt"
 G_TESTS_OUT="./tests_out.txt"
 
 function test_ok_short_opts
@@ -66,6 +68,22 @@ function test_errors
 	compare_with "$G_TESTS_FILE_ERR_ACC"
 }
 
+function test_comments
+{
+	#G_TESTS_OUT="/dev/stdout"
+	local BIN="$G_BLOCKS_BIN"
+	local TFILE="$G_TESTS_FILE_COMMENTS"
+	
+	> "$G_TESTS_OUT"
+	run_cmd "$BIN --block-name main -l $TFILE"
+	run_cmd "$BIN --block-name main -C \"//\" $TFILE"
+	run_cmd "$BIN --block-name main --comment \"//\" --skip 1 $TFILE"
+	run_cmd "$BIN --block-name main --comment \"//\" --block-count 1 $TFILE"
+	run_cmd "$BIN --block-name main --line-numbers -C \"//\" $TFILE"
+	run_cmd "$BIN --block-name main -S@S -E@E -C \"//\" $TFILE"
+	compare_with "$G_TESTS_FILE_COMMENTS_ACC"
+}
+
 function run_cmd
 {
 	eval "$@" >> "$G_TESTS_OUT" 2>&1
@@ -76,6 +94,7 @@ function run_tests
 	test_ok_short_opts
 	test_ok_long_opts
 	test_errors
+	test_comments
 }
 
 function compare_with

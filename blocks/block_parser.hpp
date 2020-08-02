@@ -42,16 +42,19 @@ class block_parser
 	{
 		regexps(const std::regex * block_name,
 			const std::regex * block_open,
-			const std::regex * block_close
+			const std::regex * block_close,
+			const std::regex * comment
 		) :
 			name(block_name),
 			open(block_open),
-			close(block_close)
+			close(block_close),
+			comment(comment)
 		{}
 		
 		const std::regex * name;
 		const std::regex * open;
 		const std::regex * close;
+		const std::regex * comment;
 	};
 	
 	struct parser_options
@@ -126,7 +129,7 @@ class block_parser
 	
 	
 	private:
-	enum {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02};
+	enum {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02, COMMENT = 0x04};
 	
 	void dbg_log(const char * action, const char * fname, int val);
 	
