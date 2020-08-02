@@ -43,18 +43,24 @@ class block_parser
 		regexps(const std::regex * block_name,
 			const std::regex * block_open,
 			const std::regex * block_close,
-			const std::regex * comment
+			const std::regex * comment,
+			const std::regex * regex_match,
+			const std::regex * regex_no_match
 		) :
 			name(block_name),
 			open(block_open),
 			close(block_close),
-			comment(comment)
+			comment(comment),
+			regex_match(regex_match),
+			regex_no_match(regex_no_match)
 		{}
 		
 		const std::regex * name;
 		const std::regex * open;
 		const std::regex * close;
 		const std::regex * comment;
+		const std::regex * regex_match;
+		const std::regex * regex_no_match;
 	};
 	
 	struct parser_options
@@ -82,6 +88,8 @@ class block_parser
 			
 		const char * mark_start;
 		const char * mark_end;
+		const char * regex_match;
+		const char * regex_no_match;
 		const char ** current_file;
 		int block_count;
 		int skip_count;
@@ -140,6 +148,7 @@ class block_parser
 	bool next_line();
 	void save_line_once(int token);
 	
+	bool match_block(const std::regex * rx);
 	void print_block();
 	void actual_print_block();
 	

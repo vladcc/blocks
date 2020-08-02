@@ -16,6 +16,8 @@ struct prog_options
 	const char * block_name;
 	const char * block_start;
 	const char * block_end;
+	const char * regex_match;
+	const char * regex_no_match;
 	const char * comment;
 	const char * mark_start;
 	const char * mark_end;
@@ -31,7 +33,7 @@ struct prog_options
 };
 
 const char program_name[] = "blocks";
-const char program_version[] = "1.2";
+const char program_version[] = "1.3";
 
 #define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
 
@@ -63,6 +65,10 @@ static const char block_count_opt_short = 'c';
 static const char block_count_opt_long[] = "block-count";
 static const char skip_opt_short = 'k';
 static const char skip_opt_long[] = "skip";
+static const char regex_match_opt_short = 'r';
+static const char regex_match_opt_long[] = "regex-match";
+static const char regex_no_match_opt_short = 'R';
+static const char regex_no_match_opt_long[] = "regex-no-match";
 static const char fatal_error_opt_short = 'F';
 static const char fatal_error_opt_long[] = "fatal-error";
 static const char line_numbers_opt_short = 'l';
@@ -254,6 +260,34 @@ void help_skip(char * short_name, char * long_name)
 printf("-%s|--%s=<number-of-blocks>\n", short_name, long_name);
 puts("Don't print the first <number-of-blocks>.");
 puts("<number-of-blocks> is a positive integer.");
+puts("");
+}
+
+// --regex-match|-r
+void handle_regex_match(char * opt, char * opt_arg, void * callback_arg)
+{
+	prog_options * context = (prog_options *)callback_arg;
+	context->regex_match = opt_arg;
+}
+
+void help_regex_match(char * short_name, char * long_name)
+{
+printf("-%s|--%s=<regex>\n", short_name, long_name);
+puts("Print only blocks which contain a match of <regex>.");
+puts("");
+}
+
+// --regex-no-match|-R
+void handle_regex_no_match(char * opt, char * opt_arg, void * callback_arg)
+{
+	prog_options * context = (prog_options *)callback_arg;
+	context->regex_no_match = opt_arg;
+}
+
+void help_regex_no_match(char * short_name, char * long_name)
+{
+printf("-%s|--%s=<regex>\n", short_name, long_name);
+puts("Print only blocks which do not contain a match of <regex>.");
 puts("");
 }
 
@@ -518,6 +552,22 @@ int handle_options(int argc,
 			.takes_arg = true,
 		},
 		{
+			.callback = handle_regex_match,
+			.callback_arg = (void *)context,
+			.print_help = help_regex_match,
+			.long_name = regex_match_opt_long,
+			.short_name = regex_match_opt_short,
+			.takes_arg = true,
+		},
+		{
+			.callback = handle_regex_no_match,
+			.callback_arg = (void *)context,
+			.print_help = help_regex_no_match,
+			.long_name = regex_no_match_opt_long,
+			.short_name = regex_no_match_opt_short,
+			.takes_arg = true,
+		},
+		{
 			.callback = handle_fatal_error,
 			.callback_arg = (void *)context,
 			.print_help = help_fatal_error,
@@ -606,7 +656,7 @@ int handle_options(int argc,
 }
 
 int main(int argc, char * argv[])
-{	
+{		
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
  
@@ -626,93 +676,90 @@ int main(int argc, char * argv[])
 		regex_flags |= std::regex_constants::icase;
 	
 	int ret = 1;
+
+	struct regex_wrap
+	{
+		regex_wrap() : rx(nullptr) {}
+		~regex_wrap() {if (rx) delete rx;}
+
+		typedef std::regex_constants::syntax_option_type regex_flags;
+		void make_regex(const char * str, regex_flags flags)
+		{rx = (str) ? new std::regex(str, flags) : nullptr;}
+		
+		const std::regex * rx;
+	} b_name, b_start, b_end, b_comment, r_match, r_no_match;
 	
 	try
 	{
-		std::vector<std::regex> the_regex;
-		the_regex.push_back(
-			std::regex(gather_opts.block_name, regex_flags)
-		);	
-		the_regex.push_back(
-			std::regex(gather_opts.block_start, regex_flags)
-		);
-		the_regex.push_back(
-			std::regex(gather_opts.block_end, regex_flags)
-		);
-		
-		if (gather_opts.comment)
-		{
-			the_regex.push_back(
-				std::regex(gather_opts.comment, regex_flags)
-			);
-		}
-
-		const std::regex * prname = the_regex.data()+0;
-		const std::regex * prstart = the_regex.data()+1;
-		const std::regex * prend = the_regex.data()+2;
-		const std::regex * prcomment = nullptr;
-		
-		if (gather_opts.comment)
-			prcomment = the_regex.data()+3;
-
-		std::ostream * slog = (gather_opts.debug_trace) ? &std::clog : nullptr;
-	
-		block_parser::stream_info streams(&std::cin,
-			&std::cout,
-			&std::cerr,
-			slog,
-			program_name
-		);
-		
-		block_parser::regexps expressions(prname, prstart, prend, prcomment);
-		
-		const char str_stdin[] = "-";
-		const char * current_file = str_stdin;
-		block_parser::parser_options opts(gather_opts.mark_start,
-			gather_opts.mark_end,
-			&current_file,
-			gather_opts.block_count,
-			gather_opts.skip_count,
-			gather_opts.fatal_error,
-			gather_opts.line_numbers,
-			gather_opts.ignore_top,
-			gather_opts.quiet
-		);
-		
-		block_parser b_parser(streams, expressions, opts);
-		
-		if (file_names.size())
-		{
-			for (auto fname : file_names)
-			{
-				current_file = fname;
-				if (freopen(fname, "r", stdin))
-				{
-					if (gather_opts.print_fnames && !gather_opts.quiet)
-						std::cout << current_file << ":" << std::endl;
-						
-					if (b_parser.parse())
-						ret = 0;
-				}
-				else
-				{
-					std::cerr << program_name << " error: "
-						<< "file " << current_file << ": "
-						<< std::strerror(errno) << std::endl;
-				}
-			}
-		}
-		else
-		{
-			if (gather_opts.print_fnames && !gather_opts.quiet)
-				std::cout << current_file << ":" << std::endl;
-			ret = !b_parser.parse();
-		}
+		b_name.make_regex(gather_opts.block_name, regex_flags);	
+		b_start.make_regex(gather_opts.block_start, regex_flags);
+		b_end.make_regex(gather_opts.block_end, regex_flags);
+		b_comment.make_regex(gather_opts.comment, regex_flags);
+		r_match.make_regex(gather_opts.regex_match, regex_flags);
+		r_no_match.make_regex(gather_opts.regex_no_match, regex_flags);
 	}
 	catch(const std::runtime_error& e)
 	{
 		std::cerr << program_name << " error: " << e.what() << std::endl;
-		return ret = -1;
+		exit(EXIT_FAILURE);
+	}
+	
+	block_parser::stream_info streams(&std::cin,
+		&std::cout,
+		&std::cerr,
+		(gather_opts.debug_trace) ? &std::clog : nullptr,
+		program_name
+	);
+	
+	block_parser::regexps expressions(b_name.rx,
+		b_start.rx,
+		b_end.rx,
+		b_comment.rx,
+		r_match.rx,
+		r_no_match.rx
+	);
+	
+	const char str_stdin[] = "-";
+	const char * current_file = str_stdin;
+	block_parser::parser_options opts(gather_opts.mark_start,
+		gather_opts.mark_end,
+		&current_file,
+		gather_opts.block_count,
+		gather_opts.skip_count,
+		gather_opts.fatal_error,
+		gather_opts.line_numbers,
+		gather_opts.ignore_top,
+		gather_opts.quiet
+	);
+	
+	block_parser b_parser(streams, expressions, opts);
+	
+	if (file_names.size())
+	{
+		for (auto fname : file_names)
+		{
+			current_file = fname;
+			if (freopen(fname, "r", stdin))
+			{
+				if (gather_opts.print_fnames && !gather_opts.quiet)
+					std::cout << current_file << ":" << std::endl;
+					
+				if (b_parser.parse())
+					ret = 0;
+			}
+			else
+			{
+				std::cerr << program_name << " error: "
+					<< "file " << current_file << ": "
+					<< std::strerror(errno) << std::endl;
+			}
+		}
+	}
+	else
+	{
+		if (gather_opts.print_fnames && !gather_opts.quiet)
+			std::cout << current_file << ":" << std::endl;
+		ret = !b_parser.parse();
 	}
 	
 	return ret;

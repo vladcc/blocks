@@ -4,9 +4,13 @@ G_BLOCKS_BIN=""
 G_TESTS_FILE_OK="./tests_file_ok.txt"
 G_TESTS_FILE_ERRORS="./tests_file_errors.txt"
 G_TESTS_FILE_COMMENTS="./tests_file_comments.txt"
+G_TESTS_FILE_REGEX="./tests_file_regex.txt"
+
 G_TESTS_FILE_OK_ACC="./tests_ok_accepted.txt"
 G_TESTS_FILE_ERR_ACC="./tests_error_accepted.txt"
 G_TESTS_FILE_COMMENTS_ACC="./tests_comments_accepted.txt"
+G_TESTS_FILE_REGEX_ACC="./tests_regex_accepted.txt"
+
 G_TESTS_OUT="./tests_out.txt"
 
 function test_ok_short_opts
@@ -84,6 +88,19 @@ function test_comments
 	compare_with "$G_TESTS_FILE_COMMENTS_ACC"
 }
 
+function test_regexp
+{
+	#G_TESTS_OUT="/dev/stdout"
+	local BIN="$G_BLOCKS_BIN"
+	local TFILE="$G_TESTS_FILE_REGEX"
+	
+	> "$G_TESTS_OUT"
+	run_cmd "$BIN --block-name main --regex-match thing $TFILE -l"
+	run_cmd "$BIN --block-name main --regex-no-match thing $TFILE"
+	run_cmd "$BIN --block-name main -r thing -R another $TFILE"
+	compare_with "$G_TESTS_FILE_REGEX_ACC"
+}
+
 function run_cmd
 {
 	eval "$@" >> "$G_TESTS_OUT" 2>&1
@@ -95,6 +112,7 @@ function run_tests
 	test_ok_long_opts
 	test_errors
 	test_comments
+	test_regexp
 }
 
 function compare_with

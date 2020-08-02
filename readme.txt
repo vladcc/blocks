@@ -14,7 +14,14 @@ data is usually kept properly formed because it tends to get fed into a parser
 of some kind. This tool takes advantage of this. For example:
 
 ./blocks.bin -n while ./block_parser.cpp -l
-will print all the while loops from its own source file with their line numbers
+will print all the while loops from its own source file with their line numbers,
+
+./blocks.bin -n while ./block_parser.cpp -l -r 'has_input()'
+will print all while loops which call the function has_input(),
+
+./blocks.bin -n while ./block_parser.cpp -l -r 'has_input()' -R OPEN
+will print all while loops which call has_input() and do not use the constant
+OPEN in their body,
 
 and
 
@@ -42,7 +49,7 @@ from the tests/ directory. You should see no output either.
 
 For more details about the program, here's the help message:
 
--- blocks v1.2 --
+-- blocks v1.3 --
 grep for nested data
 
 Prints proper nested blocks like so:
@@ -111,6 +118,12 @@ Print the first <number-of-blocks>.
 -k|--skip=<number-of-blocks>
 Don't print the first <number-of-blocks>.
 <number-of-blocks> is a positive integer.
+
+-r|--regex-match=<regex>
+Print only blocks which contain a match of <regex>.
+
+-R|--regex-no-match=<regex>
+Print only blocks which do not contain a match of <regex>.
 
 -F|--fatal-error
 Quit after the first error.

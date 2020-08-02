@@ -6,6 +6,8 @@
 #-E|--mark-end=<string>
 #-c|--block-count=<num>
 #-k|--skip=<num>
+#-r|--regex-match=<regex>
+#-R|--regex-no-match=<regex>
 #-F|--fatal-error
 #-l|--line-numbers
 #-p|--print-file-names
@@ -57,6 +59,16 @@ end
 
 long_name skip
 short_name k
+takes_args true
+end
+
+long_name regex-match
+short_name r
+takes_args true
+end
+
+long_name regex-no-match
+short_name R
 takes_args true
 end
 

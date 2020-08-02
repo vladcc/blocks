@@ -5,3 +5,7 @@ Option generator defines options names instead of generating literals.
 
 v1.1 -> v1.2
 -C|--comment option added.
+
+2020-08-03
+v1.2 -> v1.3
+-r|--regex-match and -R|--regex-no-match options added.

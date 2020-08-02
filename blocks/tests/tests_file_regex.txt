@@ -1,0 +1,23 @@
+main0 {
+	another thing
+}
+
+main1 {
+	one thing 
+}
+
+main2 {
+	another thing
+}
+
+main3 {
+	one thing 
+}
+
+main4 {
+	foo
+}
+
+main5 {
+	one thing 
+eof

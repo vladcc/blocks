@@ -578,7 +578,14 @@ static bool test_block_parser()
 		std::regex_constants::optimize
 	);
 	
-	block_parser::regexps expressions(&r_name, &r_open, &r_close, nullptr);
+	block_parser::regexps expressions(&r_name,
+		&r_open,
+		&r_close,
+		nullptr,
+		nullptr,
+		nullptr
+	);
+	
 	block_parser::parser_options options;
 	
 	/*** forever loop no more ***/
@@ -688,7 +695,9 @@ static bool test_block_parser()
 		block_parser::regexps expressions(&r_name,
 			&r_open,
 			&r_close,
-			&r_comment
+			&r_comment,
+			nullptr,
+			nullptr
 		);
 		
 		std::stringstream isstrm;

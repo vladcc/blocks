@@ -215,12 +215,35 @@ void block_parser::save_line_once(int token)
 	log_return();
 }
 
+bool block_parser::match_block(const std::regex * rx)
+{
+	bool ret = false;
+	std::cmatch match;
+	
+	for (auto line : _current_block)
+	{
+		if (std::regex_search(line.line.c_str(), match, *rx))
+		{
+			ret = true;
+			break;
+		}
+	}
+	
+	return ret;
+}
+
 void block_parser::print_block()
 {
 	log_call();
 	
 	if (!_parse_opts.quiet)
 	{
+		if (_regexps.regex_match && !match_block(_regexps.regex_match))
+			return;
+		
+		if (_regexps.regex_no_match && match_block(_regexps.regex_no_match))
+			return;
+		
 		if (!_parse_opts.skip_count)
 		{ 
 			if (-1 == _parse_opts.block_count)

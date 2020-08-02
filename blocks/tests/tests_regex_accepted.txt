@@ -1,0 +1,36 @@
+       1 main0 {
+       2 	another thing
+       3 }
+       5 main1 {
+       6 	one thing 
+       7 }
+       9 main2 {
+      10 	another thing
+      11 }
+      13 main3 {
+      14 	one thing 
+      15 }
+      21 main5 {
+      22 	one thing 
+      23 eof
+blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks error: eof
+blocks error: ^
+main4 {
+	foo
+}
+blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks error: eof
+blocks error: ^
+main1 {
+	one thing 
+}
+main3 {
+	one thing 
+}
+main5 {
+	one thing 
+eof
+blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks error: eof
+blocks error: ^
