@@ -552,8 +552,8 @@ static bool test_block_parser()
 		int until_open_or_close()
 		{return block_parser::until_open_or_close();}
 		
-		parser_io& expose_parser()
-		{return block_parser::expose_parser();}
+		parser_io& expose_parser_io()
+		{return block_parser::expose_parser_io();}
 		
 		inline std::vector<block_parser::block_line_info>& expose_vector()
 		{return block_parser::expose_vector();}
@@ -601,7 +601,7 @@ static bool test_block_parser()
 			
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
 		cls_test_parser pars(streams, expressions, options);
-		pars.parse();
+		pars.parse("n/a");
 	}
 	
 	/*** test trivial case ***/
@@ -622,7 +622,7 @@ static bool test_block_parser()
 		check(!pars.until_name());
 		check(!pars.until_open_or_close());
 		
-		pars.expose_parser().read_line();
+		pars.expose_parser_io().read_line();
 		check(pars.until_open_or_close() == 2);
 		check(pars.until_open_or_close() == 1);
 		check(pars.until_open_or_close() == 1);
@@ -660,7 +660,7 @@ static bool test_block_parser()
 		check(!pars.until_open_or_close());
 		check(!pars.expose_vector().size());
 		
-		check(pars.expose_parser().read_line());
+		check(pars.expose_parser_io().read_line());
 		check(!pars.expose_vector().size());
 		check(pars.until_name());
 		
@@ -725,7 +725,7 @@ static bool test_block_parser()
 		check(!pars.until_open_or_close());
 		check(!pars.expose_vector().size());
 		
-		check(pars.expose_parser().read_line());
+		check(pars.expose_parser_io().read_line());
 		check(!pars.expose_vector().size());
 		
 		check(pars.until_name());

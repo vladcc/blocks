@@ -10,6 +10,7 @@ G_TESTS_FILE_OK_ACC="./tests_ok_accepted.txt"
 G_TESTS_FILE_ERR_ACC="./tests_error_accepted.txt"
 G_TESTS_FILE_COMMENTS_ACC="./tests_comments_accepted.txt"
 G_TESTS_FILE_REGEX_ACC="./tests_regex_accepted.txt"
+G_TESTS_FILE_PRINT_FILES_ACC="./tests_file_print_files.txt"
 
 G_TESTS_OUT="./tests_out.txt"
 
@@ -101,6 +102,20 @@ function test_regexp
 	compare_with "$G_TESTS_FILE_REGEX_ACC"
 }
 
+function test_print_file_names
+{
+	#G_TESTS_OUT="/dev/stdout"
+	local BIN="$G_BLOCKS_BIN"
+	local TFILES="$G_TESTS_FILE_OK $G_TESTS_FILE_REGEX"
+	
+	> "$G_TESTS_OUT"
+	run_cmd "$BIN --block-name inner --print-file-names $TFILES"
+	run_cmd "$BIN --block-name inner --print-file-names-match $TFILES"
+	run_cmd "$BIN --block-name inner -p $TFILES"
+	run_cmd "$BIN --block-name inner -P $TFILES"
+	compare_with "$G_TESTS_FILE_PRINT_FILES_ACC"
+}
+
 function run_cmd
 {
 	eval "$@" >> "$G_TESTS_OUT" 2>&1
@@ -113,6 +128,7 @@ function run_tests
 	test_errors
 	test_comments
 	test_regexp
+	test_print_file_names
 }
 
 function compare_with

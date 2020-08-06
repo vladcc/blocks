@@ -1,0 +1,38 @@
+./tests_file_ok.txt:
+	inner1 {
+	}
+	inner2
+	// something
+	{
+	
+	}
+	inner3 {}
+./tests_file_regex.txt:
+./tests_file_ok.txt:
+	inner1 {
+	}
+	inner2
+	// something
+	{
+	
+	}
+	inner3 {}
+./tests_file_ok.txt:
+	inner1 {
+	}
+	inner2
+	// something
+	{
+	
+	}
+	inner3 {}
+./tests_file_regex.txt:
+./tests_file_ok.txt:
+	inner1 {
+	}
+	inner2
+	// something
+	{
+	
+	}
+	inner3 {}

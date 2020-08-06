@@ -1,5 +1,5 @@
 /*  parse_opts.h -- command line options parsing
-    v1.0112
+    v1.1
     Command line option parsing for the classic syntax you'd find on *nix
     systems, implemented with callbacks.
     Options can have a single character short name beginning with a dash and
@@ -24,7 +24,7 @@
     
     Author: Vladimir Dinev
     vld.dinev@gmail.com
-    2020-07-26
+    2020-08-06
 */
 
 #ifndef PARSE_OPTS_H
@@ -59,20 +59,25 @@ typedef struct opts_table {
     int length;
 } opts_table;
 
-void opts_parse(int argc, char * argv[],
-    opts_table * the_tbl,
-    opts_handler unbound_arg, void * unbound_arg_arg,
-    opts_handler unknown_opt
-);
+typedef struct opts_parse_data {
+	const char * program_name;
+	opts_table * the_tbl;
+	opts_handler handle_unbound_arg;
+	void * unbound_arg_arg;
+	opts_handler handle_unknown_opt;
+} opts_parse_data;
+
+void opts_parse(int argc, char * argv[], opts_parse_data * parse_data);
 /*
 Returns: Nothing.
 Description: Parses the strings in argv, calling a handler when an option
-from the_tbl is encountered, unbound_arg when an argument not belonging to any
-option is met, and unknown_opt when an unknown option is seen. unbound_arg_arg is
-passed to unbound_arg when unbound_arg is called and can be NULL if not used. Inside
-unbound_arg, opt is also NULL. When unknown_opt is called, both opt_arg and
-callback_arg are NULL. To skip the program name call with opts_parse(argc-1,
-argv+1...
+from parse_data->the_tbl is encountered, parse_data->handle_unbound_arg when an
+argument not belonging to any option is met, and parse_data->handle_unknown_opt 
+when an unknown option is seen. parse_data->unbound_arg_arg is passed to
+parse_data->handle_unbound_arg when it is called and can be NULL if not used.
+Inside parse_data->handle_unbound_arg, opt is also NULL. When
+parse_data->handle_unknown_opt is called, both opt_arg and callback_arg are
+NULL. To skip the program name call with opts_parse(argc-1, argv+1...
 Note: Prints an error message to stderr and calls exit(EXIT_FAILURE) when
 an option that requires an argument does not have one, or when assignment
 syntax is used on an option that does not take an argument.

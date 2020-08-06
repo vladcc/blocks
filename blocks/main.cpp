@@ -26,6 +26,7 @@ struct prog_options
 	bool fatal_error;
 	bool line_numbers;
 	bool print_fnames;
+	bool print_fnames_match_only;
 	bool case_insensitive;
 	bool ignore_top;
 	bool quiet;
@@ -33,7 +34,7 @@ struct prog_options
 };
 
 const char program_name[] = "blocks";
-const char program_version[] = "1.3";
+const char program_version[] = "1.4";
 
 #define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
 
@@ -75,6 +76,8 @@ static const char line_numbers_opt_short = 'l';
 static const char line_numbers_opt_long[] = "line-numbers";
 static const char print_file_names_opt_short = 'p';
 static const char print_file_names_opt_long[] = "print-file-names";
+static const char print_file_names_match_opt_short = 'P';
+static const char print_file_names_match_opt_long[] = "print-file-names-match";
 static const char case_insensitive_opt_short = 'i';
 static const char case_insensitive_opt_long[] = "case-insensitive";
 static const char ignore_top_opt_short = 'I';
@@ -329,7 +332,22 @@ void handle_print_file_names(char * opt, char * opt_arg, void * callback_arg)
 void help_print_file_names(char * short_name, char * long_name)
 {
 printf("-%s|--%s\n" ,short_name, long_name);
-puts("Print the name of each file before matching.");
+puts("Print the name of each file before processing.");
+puts("");
+}
+
+// --print-file-names-match|-P
+void handle_print_file_names_match(char * opt, char * opt_arg, void * callback_arg)
+{
+	prog_options * context = (prog_options *)callback_arg;
+	context->print_fnames_match_only = true;
+}
+
+void help_print_file_names_match(char * short_name, char * long_name)
+{
+printf("-%s|--%s\n", short_name, long_name);
+puts("Print the file name only before the first match. Do not print when");
+puts("there is no match.");
 puts("");
 }
 
@@ -343,7 +361,8 @@ void handle_case_insensitive(char * opt, char * opt_arg, void * callback_arg)
 void help_case_insensitive(char * short_name, char * long_name)
 {
 printf("-%s|--%s\n", short_name, long_name);
-puts("Match block name, start, and end regardless of case.");
+puts("Match all regular expressions regardless of case. This includes block");
+puts("name, start, and end.");
 puts("");
 }
 
@@ -426,7 +445,11 @@ void handle_help(char * opt, char * opt_arg, void * callback_arg)
 		short_name_str[0] = popt->short_name;
 		popt->print_help(short_name_str, (char *)popt->long_name);
 	}
-	
+	puts("");
+	puts("");
+	puts("Author      : Vladimir Dinev");
+	puts("Bug reports : vld.dinev@gmail.com");
+	puts("Compile date: 2020-08-07");
 	exit(EXIT_SUCCESS);
 }
 
@@ -592,6 +615,14 @@ int handle_options(int argc,
 			.takes_arg = false,
 		},
 		{
+			.callback = handle_print_file_names_match,
+			.callback_arg = (void *)context,
+			.print_help = help_print_file_names_match,
+			.long_name = print_file_names_match_opt_long,
+			.short_name = print_file_names_match_opt_short,
+			.takes_arg = false,
+		},
+		{
 			.callback = handle_case_insensitive,
 			.callback_arg = (void *)context,
 			.print_help = help_case_insensitive,
@@ -644,14 +675,15 @@ int handle_options(int argc,
 	the_tbl.tbl = all_entries;
 	the_tbl.length = sizeof(all_entries)/sizeof(*all_entries);
 	
-	opts_parse(argc-1,
-		argv+1,
-		&the_tbl,
-		handle_unbound_arg,
-		(void*)(&file_names),
-		handle_unknown_opt
-	);
-
+	opts_parse_data parse_data = {
+		.program_name = program_name,
+		.the_tbl = &the_tbl,
+		.handle_unbound_arg = handle_unbound_arg,
+		.unbound_arg_arg = (void*)(&file_names),
+		.handle_unknown_opt = handle_unknown_opt
+	};
+	
+	opts_parse(argc-1, argv+1, &parse_data);
     return 0;
 }
 
@@ -728,6 +760,7 @@ int main(int argc, char * argv[])
 		gather_opts.skip_count,
 		gather_opts.fatal_error,
 		gather_opts.line_numbers,
+		gather_opts.print_fnames_match_only,
 		gather_opts.ignore_top,
 		gather_opts.quiet
 	);
@@ -743,8 +776,8 @@ int main(int argc, char * argv[])
 			{
 				if (gather_opts.print_fnames && !gather_opts.quiet)
 					std::cout << current_file << ":" << std::endl;
-					
-				if (b_parser.parse())
+				
+				if (b_parser.parse(current_file))
 					ret = 0;
 			}
 			else
@@ -759,7 +792,7 @@ int main(int argc, char * argv[])
 	{
 		if (gather_opts.print_fnames && !gather_opts.quiet)
 			std::cout << current_file << ":" << std::endl;
-		ret = !b_parser.parse();
+		ret = !b_parser.parse(current_file);
 	}
 	
 	return ret;

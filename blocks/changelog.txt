@@ -9,3 +9,8 @@ v1.1 -> v1.2
 2020-08-03
 v1.2 -> v1.3
 -r|--regex-match and -R|--regex-no-match options added.
+
+2020-08-07
+v1.3 -> v1.4
+Help message updated. Now signed.
+-P|--print-file-names-match option added.

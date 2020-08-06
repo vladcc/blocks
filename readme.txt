@@ -49,7 +49,7 @@ from the tests/ directory. You should see no output either.
 
 For more details about the program, here's the help message:
 
--- blocks v1.3 --
+-- blocks v1.4 --
 grep for nested data
 
 Prints proper nested blocks like so:
@@ -132,10 +132,15 @@ Quit after the first error.
 Prepend line numbers.
 
 -p|--print-file-names
-Print the name of each file before matching.
+Print the name of each file before processing.
+
+-P|--print-file-names-match
+Print the file name only before the first match. Do not print when
+there is no match.
 
 -i|--case-insensitive
-Match block name, start, and end regardless of case.
+Match all regular expressions regardless of case. This includes block
+name, start, and end.
 
 -I|--ignore-top
 Print only the body of the block. Useful when you want to address the
@@ -173,3 +178,8 @@ Print this screen and quit.
 
 -v|--version
 Print version info and quit.
+
+
+Author      : Vladimir Dinev
+Bug reports : vld.dinev@gmail.com
+Compile date: 2020-08-07

@@ -11,6 +11,7 @@
 #-F|--fatal-error
 #-l|--line-numbers
 #-p|--print-file-names
+#-P|--print-file-name-match
 
 #-i|--case-insensitive
 #-I|--ignore-top
@@ -84,6 +85,11 @@ end
 
 long_name print-file-names
 short_name p
+takes_args false
+end
+
+long_name print-file-names-match
+short_name P
 takes_args false
 end
 

@@ -11,13 +11,15 @@
 #define LONG_NAME_BUFF_LEN  128
 
 enum {SHORT, LONG, ARG, DOUBLE_DASH};
-//------------------------------------------------------------------------------
+
+static const char * program_name = NULL;
+//-----------------------------------------------------------------------------
 
 static void equit(const char * msg, ...)
 {
     va_list args;
     va_start(args, msg);
-    fprintf(stderr, "error: ");
+    fprintf(stderr, "%s: error: ", program_name);
     vfprintf(stderr, msg, args);
     va_end (args);
     fputc('\n', stderr);
@@ -49,14 +51,16 @@ equit("option '%s' requires an argument", (popt))
 #define req_no_arg_error(popt)\
 equit("option '%s' does not take an argument", (popt))
 
-void opts_parse(int argc, char * argv[],
-    opts_table * the_tbl,
-    opts_handler wild_arg, void * wild_arg_arg,
-    opts_handler unknown_opt
-    )
+void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
 {
     char sname_str[SHORT_NAME_BUFF_LEN];
-
+	
+	program_name = parse_data->program_name;
+	opts_table * the_tbl = parse_data->the_tbl;
+	opts_handler unbound_arg = parse_data->handle_unbound_arg;
+	void * unbound_arg_arg = parse_data->unbound_arg_arg;
+	opts_handler unknown_opt = parse_data->handle_unknown_opt;
+	
     char * str;
     opts_entry * this_opt;
     opts_handler cbk;
@@ -183,7 +187,7 @@ void opts_parse(int argc, char * argv[],
         else
         {
 no_opt_arg:
-            wild_arg(NULL, str, wild_arg_arg);
+            unbound_arg(NULL, str, unbound_arg_arg);
         }
 
 next_argv:

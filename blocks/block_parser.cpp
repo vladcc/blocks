@@ -33,12 +33,13 @@ void block_parser::dbg_log(const char * action, const char * fname, int val)
 	}
 }
 
-bool block_parser::parse()
+bool block_parser::parse(const char * fname)
 {
 	_parse_io.reset();
 	_parse_io.read_line();
 	_current_block.clear();
 	_was_line_saved = false;
+	_fname = fname;
 	
 	bool ret = false;
 	while (_parse_io.has_input())
@@ -264,6 +265,15 @@ void block_parser::print_block()
 void block_parser::actual_print_block()
 {
 	log_call();
+	
+	if (_parse_opts.print_fname_on_match && _fname)
+	{
+		std::string fname(_fname);
+		fname += ":";
+		
+		_parse_io.print_line(fname);
+		_fname = nullptr;
+	}
 	
 	if (_parse_opts.mark_start)
 		_parse_io.print_line(_parse_opts.mark_start);

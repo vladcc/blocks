@@ -72,6 +72,7 @@ class block_parser
 			int skip_this_many_blocks = 0,
 			bool fatal_error = false,
 			bool print_line_numbers = false,
+			bool print_fname_on_match = false,
 			bool dont_print_top_block = false,
 			bool quiet_output = false
 		) :
@@ -82,6 +83,7 @@ class block_parser
 			skip_count(skip_this_many_blocks),
 			fatal_error(fatal_error),
 			line_numbers(print_line_numbers),
+			print_fname_on_match(print_fname_on_match),
 			ignore_top(dont_print_top_block),
 			quiet(quiet_output)
 		{}
@@ -95,6 +97,7 @@ class block_parser
 		int skip_count;
 		bool fatal_error;
 		bool line_numbers;
+		bool print_fname_on_match;
 		bool ignore_top;
 		bool quiet;
 	};
@@ -106,11 +109,12 @@ class block_parser
 		_parse_io(*streams.in, *streams.out, *streams.err),
 		_regexps(expressions),
 		_was_line_saved(false),
+		_fname(nullptr),
 		_streams(streams),
 		_parse_opts(options)
 	{}
 	
-	bool parse();
+	bool parse(const char * fname);
 	
 	protected:
 	struct block_line_info
@@ -129,7 +133,7 @@ class block_parser
 	bool until_name();
 	int until_open_or_close();
 	
-	inline parser_io& expose_parser()
+	inline parser_io& expose_parser_io()
 	{return _parse_io;}
 	
 	inline std::vector<block_line_info>& expose_vector()
@@ -157,6 +161,7 @@ class block_parser
 	regexps _regexps;
 	bool _was_line_saved;
 	
+	const char * _fname;
 	stream_info _streams;
 	parser_options _parse_opts;
 };
