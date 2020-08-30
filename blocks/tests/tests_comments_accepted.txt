@@ -7,9 +7,9 @@
        7 main3 {
        8 	//}
        9 }
-blocks error: file ./tests_file_comments.txt, line 9, col 1: improper nesting from line 1
-blocks error: }
-blocks error: ^
+blocks: error: file ./tests_file_comments.txt, line 9, col 1: improper nesting from line 1
+blocks: error: }
+blocks: error: ^
 main1 {
 	//{
 }

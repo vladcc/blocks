@@ -26,8 +26,8 @@ class block_parser
 			err(error),
 			log(log)
 		{
-			err_pref += " ";
-			log_pref += " ";
+			err_pref += ": ";
+			log_pref += ": ";
 		}
 		
 		std::string err_pref;

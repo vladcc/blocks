@@ -14,7 +14,7 @@ if (_streams.log) {dbg_log(act, __func__, (val));} else {}
 #define logv_call(val)   logv(CALL, val)
 #define logv_return(val) logv(RETURN, val)
 
-const char block_parser::default_prefix[] = "block_parser:";
+const char block_parser::default_prefix[] = "block_parser";
 
 void block_parser::dbg_log(const char * action, const char * fname, int val)
 {

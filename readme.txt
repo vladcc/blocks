@@ -49,7 +49,7 @@ from the tests/ directory. You should see no output either.
 
 For more details about the program, here's the help message:
 
--- blocks v1.4 --
+-- blocks v1.41 --
 grep for nested data
 
 Prints proper nested blocks like so:
@@ -86,44 +86,46 @@ Input is advanced when either block start or block end are matched and
 subsequent searching begins one character after the start match.
 
 The available options are:
--n|--block-name=<name-of-block>
+-n|--block-name <name-of-block>
 Print only blocks beginning with that name. Default is '{'
 <name-of-block> is a regular expression.
 
--s|--block-start=<block-start>
+-s|--block-start <block-start>
 Describes the open block symbol. Default is '{', same as the name.
 <block-start> is a regular expression.
 
--e|--block-end=<block-end>
+-e|--block-end <block-end>
 Describes the close block symbol. Default is '}'
 <block-end> is a regular expression.
 
--C|--comment=<comment-sequence>
+-C|--comment <comment-sequence>
 Imitates single line comments. When given, all block name, open, and
 close matches which appear after a <comment-sequence> are disregarded.
 <comment-sequence> is a regular expression.
 
--S|--mark-start=<start-mark>
+-S|--mark-start <start-mark>
 When given, <start-mark> will be printed before each block.
 <start-mark> is a string.
 
--E|--mark-end=<end-mark>
+-E|--mark-end <end-mark>
 When given, <end-mark> will be printed after each block.
 <end-mark> is a string.
 
--c|--block-count=<number-of-blocks>
+-c|--block-count <number-of-blocks>
 Print the first <number-of-blocks>.
 <number-of-blocks> is a positive integer.
 
--k|--skip=<number-of-blocks>
+-k|--skip <number-of-blocks>
 Don't print the first <number-of-blocks>.
 <number-of-blocks> is a positive integer.
 
--r|--regex-match=<regex>
+-r|--regex-match <regex>
 Print only blocks which contain a match of <regex>.
+Matching is per line.
 
--R|--regex-no-match=<regex>
+-R|--regex-no-match <regex>
 Print only blocks which do not contain a match of <regex>.
+Matching is per line.
 
 -F|--fatal-error
 Quit after the first error.
@@ -168,7 +170,7 @@ Note: this option ignores all lines between and including the block
 name and block open, as well as the line containing the block close.
 
 -q|--quiet
-Suppress normal output.
+Suppress output to stdout.
 
 -D|--debug-trace
 Print debug information.
@@ -178,8 +180,3 @@ Print this screen and quit.
 
 -v|--version
 Print version info and quit.
-
-
-Author      : Vladimir Dinev
-Bug reports : vld.dinev@gmail.com
-Compile date: 2020-08-07

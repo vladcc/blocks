@@ -11,6 +11,7 @@ G_TESTS_FILE_ERR_ACC="./tests_error_accepted.txt"
 G_TESTS_FILE_COMMENTS_ACC="./tests_comments_accepted.txt"
 G_TESTS_FILE_REGEX_ACC="./tests_regex_accepted.txt"
 G_TESTS_FILE_PRINT_FILES_ACC="./tests_file_print_files.txt"
+G_TESTS_FILE_INPUT_ERR_ACC="./test_input_errors_accepted.txt"
 
 G_TESTS_OUT="./tests_out.txt"
 
@@ -116,6 +117,23 @@ function test_print_file_names
 	compare_with "$G_TESTS_FILE_PRINT_FILES_ACC"
 }
 
+function test_input_errors
+{
+	#G_TESTS_OUT="/dev/stdout"
+	local BIN="$G_BLOCKS_BIN"
+	
+	> "$G_TESTS_OUT"
+	run_cmd "$BIN --i-do-not-exist"
+	run_cmd "$BIN -z"
+	run_cmd "$BIN -c xxx"
+	run_cmd "$BIN --block-count -4"
+	run_cmd "$BIN -k xxx"
+	run_cmd "$BIN --skip -4"
+	run_cmd "$BIN --block-name"
+	run_cmd "$BIN --ignore-top=argument"
+	compare_with "$G_TESTS_FILE_INPUT_ERR_ACC"
+}
+
 function run_cmd
 {
 	eval "$@" >> "$G_TESTS_OUT" 2>&1
@@ -129,6 +147,7 @@ function run_tests
 	test_comments
 	test_regexp
 	test_print_file_names
+	test_input_errors
 }
 
 function compare_with

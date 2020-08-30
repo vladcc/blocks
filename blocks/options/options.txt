@@ -22,103 +22,380 @@
 #-v|--version
 
 context_arg_type prog_options
+context_var_name context
+
+unbound_arg_code
+	prog_options * context = (prog_options *)ctx;
+	context->file_names->push_back(arg);
+end_code
+
+on_error_code
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+
+	eprintf("%s: error: ", program_name);
+	switch (err_code)
+	{
+		case OPTS_UNKOWN_OPT_ERR:
+			eprintf("option '%s' unknown\n", err_opt);
+		break;
+		case OPTS_ARG_REQ_ERR:
+			eprintf("option '%s' requires an argument\n", err_opt);
+		break;
+		case OPTS_NO_ARG_REQ_ERR:
+			eprintf("option '%s' does not take arguments\n", err_opt);
+		break;
+		default:
+		break;
+	}
+	
+	print_use();
+	print_try();
+	
+	exit(EXIT_FAILURE);
+	
+#undef eprintf
+end_code
 
 long_name  block-name
 short_name n
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->block_name = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <name-of-block>\n", short_name, long_name);
+puts("Print only blocks beginning with that name. Default is '{'");
+puts("<name-of-block> is a regular expression.");
+puts("");
+end_code
 end
 
 long_name  block-start
 short_name s
 takes_args true
-end
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->block_start = opt_arg;
+end_code
 
-long_name comment
-short_name C
-takes_args true
+help_code
+printf("%s|%s <block-start>\n", short_name, long_name);
+puts("Describes the open block symbol. Default is '{', same as the name.");
+puts("<block-start> is a regular expression.");
+puts("");
+end_code
 end
 
 long_name  block-end
 short_name e
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->block_end = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <block-end>\n", short_name, long_name);
+puts("Describes the close block symbol. Default is '}'");
+puts("<block-end> is a regular expression.");
+puts("");
+end_code
+end
+
+long_name comment
+short_name C
+takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->comment = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <comment-sequence>\n", short_name, long_name);
+puts("Imitates single line comments. When given, all block name, open, and");
+puts("close matches which appear after a <comment-sequence> are disregarded.");
+puts("<comment-sequence> is a regular expression.");
+puts("");
+end_code
 end
 
 long_name  mark-start
 short_name S
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->mark_start = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <start-mark>\n", short_name, long_name);
+puts("When given, <start-mark> will be printed before each block.");
+puts("<start-mark> is a string.");
+puts("");
+end_code
 end
 
 long_name  mark-end
 short_name E
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->mark_end = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <end-mark>\n", short_name, long_name);
+puts("When given, <end-mark> will be printed after each block.");
+puts("<end-mark> is a string.");
+puts("");
+end_code
 end
 
 long_name  block-count
 short_name c
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	if (sscanf(opt_arg, "%d", &(context->block_count)) != 1)
+		equit("option '%s': '%s' bad number", opt, opt_arg);
+	if(context->block_count < 0)
+		equit("option '%s': '%s' has to be positive", opt, opt_arg);
+end_code
+
+help_code
+printf("%s|%s <number-of-blocks>\n", short_name, long_name);
+puts("Print the first <number-of-blocks>.");
+puts("<number-of-blocks> is a positive integer.");
+puts("");
+end_code
 end
 
 long_name skip
 short_name k
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	if (sscanf(opt_arg, "%d", &(context->skip_count)) != 1)
+		equit("option '%s': '%s' bad number", opt, opt_arg);
+	if(context->skip_count < 0)
+		equit("option '%s': '%s' has to be positive", opt, opt_arg);
+end_code
+
+help_code
+printf("%s|%s <number-of-blocks>\n", short_name, long_name);
+puts("Don't print the first <number-of-blocks>.");
+puts("<number-of-blocks> is a positive integer.");
+puts("");
+end_code
 end
 
 long_name regex-match
 short_name r
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->regex_match = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <regex>\n", short_name, long_name);
+puts("Print only blocks which contain a match of <regex>.");
+puts("Matching is per line.");
+puts("");
+end_code
 end
 
 long_name regex-no-match
 short_name R
 takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->regex_no_match = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <regex>\n", short_name, long_name);
+puts("Print only blocks which do not contain a match of <regex>.");
+puts("Matching is per line.");
+puts("");
+end_code
 end
 
 long_name fatal-error
 short_name F
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->fatal_error = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Quit after the first error.");
+puts("");
+end_code
 end
 
 long_name line-numbers
 short_name l
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->line_numbers = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Prepend line numbers.");
+puts("");
+end_code
 end
 
 long_name print-file-names
 short_name p
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->print_fnames = true;
+end_code
+
+help_code
+printf("%s|%s\n" ,short_name, long_name);
+puts("Print the name of each file before processing.");
+puts("");
+end_code
 end
 
 long_name print-file-names-match
 short_name P
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->print_fnames_match_only = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print the file name only before the first match. Do not print when");
+puts("there is no match.");
+puts("");
+end_code
 end
 
 long_name  case-insensitive
 short_name i
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->case_insensitive = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Match all regular expressions regardless of case. This includes block");
+puts("name, start, and end.");
+puts("");
+end_code
 end
 
 long_name  ignore-top
 short_name I
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->ignore_top = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print only the body of the block. Useful when you want to address the");
+puts("blocks inside the block. E.g. if your file looks like this:");
+puts("{");
+puts("\t{}");
+puts("\t{}");
+puts("}");
+puts("then:");
+printf("%s <my-file> -S@S -E@E\n", program_name);
+puts("@S");
+puts("{");
+puts("\t{}");
+puts("\t{}");
+puts("}");
+puts("@E");
+printf("%s <my-file> -I | %s -S@S -E@E\n", program_name, program_name);
+puts("@S");
+puts("\t{}");
+puts("@E");
+puts("@S");
+puts("\t{}");
+puts("@E");
+puts("Note: this option ignores all lines between and including the block");
+puts("name and block open, as well as the line containing the block close.");
+puts("");
+end_code
 end
 
 long_name  quiet
 short_name q
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->quiet = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Suppress output to stdout.");
+puts("");
+end_code
 end
 
 long_name  debug-trace
 short_name D
 takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->debug_trace = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print debug information.");
+puts("");
+end_code
 end
 
 long_name  help
 short_name h
 takes_args false
+handler_code
+	help_message();
+	opts_print_help((opts_table *)(ctx));
+	exit(EXIT_SUCCESS);
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print this screen and quit.");
+puts("");
+end_code
 end
 
 long_name  version
 short_name v
 takes_args false
+handler_code
+	printf("%s v%s\n", program_name, program_version);
+	puts("Author      : Vladimir Dinev");
+	puts("Bug reports : vld.dinev@gmail.com");
+	puts("Compile date: 2020-08-30");
+	exit(EXIT_SUCCESS);
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print version info and quit.");
+end_code
 end

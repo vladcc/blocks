@@ -1,0 +1,20 @@
+blocks: error: option 'i-do-not-exist' unknown
+Use: blocks [options] [files]
+Try 'blocks --help' for more information
+blocks: error: option 'z' unknown
+Use: blocks [options] [files]
+Try 'blocks --help' for more information
+blocks: error: option 'c': 'xxx' bad number
+Try 'blocks --help' for more information
+blocks: error: option 'block-count': '-4' has to be positive
+Try 'blocks --help' for more information
+blocks: error: option 'k': 'xxx' bad number
+Try 'blocks --help' for more information
+blocks: error: option 'skip': '-4' has to be positive
+Try 'blocks --help' for more information
+blocks: error: option 'block-name' requires an argument
+Use: blocks [options] [files]
+Try 'blocks --help' for more information
+blocks: error: option 'ignore-top' does not take arguments
+Use: blocks [options] [files]
+Try 'blocks --help' for more information

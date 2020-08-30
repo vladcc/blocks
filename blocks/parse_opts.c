@@ -1,8 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <stdbool.h>
 #include "parse_opts.h"
 
 #define OPTS_START          '-'
@@ -12,19 +9,7 @@
 
 enum {SHORT, LONG, ARG, DOUBLE_DASH};
 
-static const char * program_name = NULL;
 //-----------------------------------------------------------------------------
-
-static void equit(const char * msg, ...)
-{
-    va_list args;
-    va_start(args, msg);
-    fprintf(stderr, "%s: error: ", program_name);
-    vfprintf(stderr, msg, args);
-    va_end (args);
-    fputc('\n', stderr);
-    exit(EXIT_FAILURE);
-}
 
 static int what(char * str)
 {
@@ -45,21 +30,15 @@ static int what(char * str)
 }
 //------------------------------------------------------------------------------
 
-#define req_arg_error(popt)\
-equit("option '%s' requires an argument", (popt))
-
-#define req_no_arg_error(popt)\
-equit("option '%s' does not take an argument", (popt))
-
 void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
 {
     char sname_str[SHORT_NAME_BUFF_LEN];
 	
-	program_name = parse_data->program_name;
 	opts_table * the_tbl = parse_data->the_tbl;
-	opts_handler unbound_arg = parse_data->handle_unbound_arg;
-	void * unbound_arg_arg = parse_data->unbound_arg_arg;
-	opts_handler unknown_opt = parse_data->handle_unknown_opt;
+	opts_on_unbound_arg unbound_arg = parse_data->on_unbound.handler;
+	void * unbound_arg_arg = parse_data->on_unbound.context;
+	opts_on_error on_error = parse_data->on_error.handler;
+	void * err_ctx = parse_data->on_error.context;
 	
     char * str;
     opts_entry * this_opt;
@@ -91,10 +70,10 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                             for (j = 0; j < opts_tbl_size; ++j)
                             {
                                 this_opt = opts_tbl+j;
-                                if (this_opt->short_name == ch)
+                                if (this_opt->names.short_name == ch)
                                 {
-                                    cbk = this_opt->callback;
-                                    cbk_arg = this_opt->callback_arg;
+                                    cbk = this_opt->handler.handler;
+                                    cbk_arg = this_opt->handler.context;
                                     if (this_opt->takes_arg)
                                     {
                                         if (*(pstr+1))
@@ -109,7 +88,13 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                                             goto next_argv;
                                         }
                                         else
-                                            req_arg_error(sname_str);
+                                        {
+											on_error(
+												OPTS_ARG_REQ_ERR,
+												sname_str,
+												err_ctx
+											);
+										}
                                     }
                                     else
                                         cbk(sname_str, NULL, cbk_arg);
@@ -118,7 +103,13 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                             }
 
                             if (j == opts_tbl_size)
-                                unknown_opt(sname_str, NULL, NULL);
+                            {
+                                on_error(
+									OPTS_UNKOWN_OPT_ERR,
+									sname_str,
+									err_ctx
+								);
+                            }
                             ++pstr;
                         }
                     }
@@ -144,23 +135,29 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                     for (j = 0; j < opts_tbl_size; ++j)
                     {
                         this_opt = opts_tbl+j;
-                        if (this_opt->long_name &&
-                            (strcmp(pstr, this_opt->long_name) == 0))
+                        if (this_opt->names.long_name &&
+                            (strcmp(pstr, this_opt->names.long_name) == 0))
                         {
-                            cbk = this_opt->callback;
-                            cbk_arg = this_opt->callback_arg;
+                            cbk = this_opt->handler.handler;
+                            cbk_arg = this_opt->handler.context;
                             if (this_opt->takes_arg)
                             {
                                 if (!parg || !(*parg))
                                     parg = argv[++i];
 
                                 if (!parg)
-                                    req_arg_error(pstr);
+								{
+									on_error(
+										OPTS_ARG_REQ_ERR,
+										pstr,
+										err_ctx
+									);
+								}
 
                                 cbk(pstr, parg, cbk_arg);
                             }
                             else if (assigned)
-                                req_no_arg_error(pstr);
+                                on_error(OPTS_NO_ARG_REQ_ERR, pstr, err_ctx);
                             else
                                 cbk(pstr, NULL, cbk_arg);
 
@@ -169,7 +166,7 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                     }
 
                     if (j == opts_tbl_size)
-                        unknown_opt(pstr, NULL, NULL);
+                        on_error(OPTS_UNKOWN_OPT_ERR, pstr, err_ctx);
                 } break;
 
                 case ARG:
@@ -187,7 +184,7 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
         else
         {
 no_opt_arg:
-            unbound_arg(NULL, str, unbound_arg_arg);
+            unbound_arg(str, unbound_arg_arg);
         }
 
 next_argv:
@@ -196,7 +193,7 @@ next_argv:
 }
 //------------------------------------------------------------------------------
 
-char * opts_get_sub_arg(char ** parg, int delimiter)
+char * opts_get_sub_arg(char ** parg, char delimiter)
 {
     char * next = NULL;
 
@@ -243,11 +240,11 @@ void opts_print_help(opts_table * the_tbl)
     {
         this_opt = opts_tbl+i;
         snprintf(sname_str, SHORT_NAME_BUFF_LEN,
-            "%c%c", OPTS_START, this_opt->short_name
+            "%c%c", OPTS_START, this_opt->names.short_name
             );
 
         snprintf(lname_str, LONG_NAME_BUFF_LEN,
-         "%c%c%s", OPTS_START, OPTS_START, this_opt->long_name
+         "%c%c%s", OPTS_START, OPTS_START, this_opt->names.long_name
          );
 
         this_opt->print_help(sname_str, lname_str);

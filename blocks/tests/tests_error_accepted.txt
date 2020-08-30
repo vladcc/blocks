@@ -1,25 +1,25 @@
 main {}
 main {}
 main } {}
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^
 main {}
 main {}
 main } {}
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^
 main {}
 main {}
 main } {}
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^
 main }
-blocks error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
-blocks error: main }
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
+blocks: error: main }
+blocks: error:      ^
 main {
 
 }
@@ -30,28 +30,28 @@ main {
 main {
 
 eof
-blocks error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
-blocks error: eof
-blocks error: ^
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
-blocks error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
-blocks error: main }
-blocks error:      ^
-blocks error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
-blocks error: eof
-blocks error: ^
+blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: eof
+blocks: error: ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^
+blocks: error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
+blocks: error: main }
+blocks: error:      ^
+blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: eof
+blocks: error: ^
        1 main {}
        2 main {}
        3 main } {}
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^
        4 main }
-blocks error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
-blocks error: main }
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
+blocks: error: main }
+blocks: error:      ^
        5 main {
        6 
        7 }
@@ -62,15 +62,15 @@ blocks error:      ^
       12 main {
       13 
       14 eof
-blocks error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
-blocks error: eof
-blocks error: ^
+blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: eof
+blocks: error: ^
 ./tests_file_errors.txt:
 main {}
 main {}
 ./tests_file_errors.txt:
 main {}
 main } {}
-blocks error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
-blocks error: main } {}
-blocks error:      ^
+blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
+blocks: error: main } {}
+blocks: error:      ^

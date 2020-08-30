@@ -13,15 +13,15 @@
       21 main5 {
       22 	one thing 
       23 eof
-blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
-blocks error: eof
-blocks error: ^
+blocks: error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks: error: eof
+blocks: error: ^
 main4 {
 	foo
 }
-blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
-blocks error: eof
-blocks error: ^
+blocks: error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks: error: eof
+blocks: error: ^
 main1 {
 	one thing 
 }
@@ -31,6 +31,6 @@ main3 {
 main5 {
 	one thing 
 eof
-blocks error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
-blocks error: eof
-blocks error: ^
+blocks: error: file ./tests_file_regex.txt, line 23, col 0: improper nesting from line 21
+blocks: error: eof
+blocks: error: ^
