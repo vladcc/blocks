@@ -1,3 +1,5 @@
+# v1.1
+
 function get_cname(name) {
 	gsub("-", "_", name)
 	return name
@@ -36,37 +38,37 @@ function HANDLER_UNBOUND() {return "on_unbound_arg"}
 function HANDLER_ERROR() {return "on_error"}
 
 function gen_handler_defn(opt_num,
-    stat_names, fname, sign, long_name, arg_t, code) {
+    title_cmnt, opt_declr, fname, sign, long_name, arg_t, code) {
+    
 	long_name = get_long_name(opt_num)
 	arg_t = get_context_arg_type(1)
-	
 	name = get_cname(long_name)
-	stat_names = ""
+	title_cmnt = sprintf("// %s", long_name)
+	opt_declr = ""
+	code = ""
+	
 	if (match(long_name, HANDLER_UNBOUND())) {
-		print_line(sprintf("// %s", long_name))
 		code = get_unbound_arg_code(1)
-		name = long_name
 		sign = "const char * arg, void * ctx"
 	} else if (match(long_name, HANDLER_ERROR())) {
-		print_line(sprintf("// %s", long_name))
 		code = get_on_error_code(1)
-		name = long_name
 		sign = "opts_err_code err_code, const char * err_opt, void * ctx"
 	} else {
-		print_line(sprintf("// --%s|-%s", long_name, get_short_name(opt_num)))
+		title_cmnt = sprintf("// --%s|-%s", long_name, get_short_name(opt_num))
 		code = get_handler_code(opt_num)
 		name = sprintf("handle_%s", name)
 		sign = "const char * opt, char * opt_arg, void * ctx"
-		stat_names = gen_names(opt_num)
+		opt_declr = gen_names(opt_num)
 	}
 	
-	if (stat_names)
-		print_string(stat_names)
+	print_line(title_cmnt)	
+	
+	if (opt_declr)
+		print_string(opt_declr)
 		
 	print_line(sprintf("%s %s(%s)", RET_TYPE(), name, sign))
 		
 	print_line("{")
-	#print_line(sprintf("%s * context = (%s *)callback_arg;", arg_t, arg_t))
 	print_string(code)
 	print_line("}")
 	print_line()
@@ -80,7 +82,6 @@ function gen_help_defn(opt_num,    long_name) {
 		RET_TYPE(), get_cname(long_name))\
 	)
 	print_line("{")
-	#print_line("printf(\"-%s|--%s\\n\", short_name, long_name);")
 	print_string(get_help_code(opt_num))
 	print_line("}")
 	print_line()
@@ -158,10 +159,7 @@ function opts_parse_data() {
 function main(    i, end, opt) {
 	end = get_long_name_count()
 	
-	#for (i = 1; i <= end; ++i)
-	#	gen_names(i)
 	print_line()
-	
 	for (i = 1; i <= end; ++i) {
 		gen_handler_defn(i)
 		gen_help_defn(i)
@@ -176,7 +174,5 @@ function main(    i, end, opt) {
 	opts_parse_data()
 	
 	print_line()
-	print_line(\
-		"opts_parse(argc-1, argv+1, &parse_data);"\
-	)
+	print_line("opts_parse(argc-1, argv+1, &parse_data);")
 }

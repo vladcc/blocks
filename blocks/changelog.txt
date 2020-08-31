@@ -21,3 +21,6 @@ parse_opts library updated along with the options code generator. Now all option
 code is generated from options/options.txt.
 'Use' and 'Try' messages now print on input errors.
 Input error test introduced.
+
+2020-09-01
+options/user_code.awk updated to v1.1
