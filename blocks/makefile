@@ -1,14 +1,5 @@
 .PHONY: help
-help:
-	@echo 'make release - release build'
-	@echo 'make debug   - debug build'
-	@echo 'make blocks  - compile only blocks'
-	@echo 'make unit    - compile only unit tests'
-	@echo 'make test    - run all tests'
-	@echo 'make btest   - run binary tests'
-	@echo 'make utest   - run unit tests'
-	@echo 'make clean   - clean up'
-	@echo 'make help    - this screen'
+help: _help
 
 CMPL := g++
 EXTRA_FLAGS := 
@@ -30,51 +21,90 @@ MAIN_BASE := main
 MAIN_SRC := $(SRC_DIR)/$(MAIN_BASE).cpp
 MAIN_O := $(OBJ_DIR)/$(MAIN_BASE).o
 $(MAIN_O): $(MAIN_SRC)
-	$(CMPL) -c $? -o $@ $(FLAGS)
-
-PARSER_IO_BASE := parser_io
-PARSER_IO_SRC := $(SRC_DIR)/$(PARSER_IO_BASE).cpp
-PARSER_IO_O := $(OBJ_DIR)/$(PARSER_IO_BASE).o
-$(PARSER_IO_O): $(PARSER_IO_SRC)
-	$(CMPL) -c $? -o $@ $(FLAGS)
-
-BLOCK_PARSER_BASE := block_parser
-BLOCK_PARSER_SRC := $(SRC_DIR)/$(BLOCK_PARSER_BASE).cpp
-BLOCK_PARSER_O := $(OBJ_DIR)/$(BLOCK_PARSER_BASE).o
-$(BLOCK_PARSER_O): $(BLOCK_PARSER_SRC)
-	$(CMPL) -c $? -o $@ $(FLAGS)
+	$(CMPL) -c $< -o $@ $(FLAGS)
 
 PARSE_OPTS_BASE := parse_opts
 PARSE_OPTS_SRC := $(SRC_DIR)/$(PARSE_OPTS_BASE).c
 PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
 $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
-	$(CMPL) -c $? -o $@ $(FLAGS)
+	$(CMPL) -c $< -o $@ $(FLAGS)
+
+MATCHER_BASE := matcher
+MATCHER_SRC := $(SRC_DIR)/$(MATCHER_BASE).cpp
+MATCHER_HDR := $(SRC_DIR)/$(MATCHER_BASE).hpp
+MATCHER_O := $(OBJ_DIR)/$(MATCHER_BASE).o
+$(MATCHER_O): $(MATCHER_SRC) $(MATCHER_HDR)
+	$(CMPL) -c $< -o $@ $(FLAGS)
+
+PARSER_IO_BASE := parser_io
+PARSER_IO_SRC := $(SRC_DIR)/$(PARSER_IO_BASE).cpp
+PARSER_IO_HDR := $(SRC_DIR)/$(PARSER_IO_BASE).hpp
+PARSER_IO_O := $(OBJ_DIR)/$(PARSER_IO_BASE).o
+$(PARSER_IO_O): $(PARSER_IO_SRC) $(PARSER_IO_HDR)
+	$(CMPL) -c $< -o $@ $(FLAGS)
+
+BLOCK_PARSER_BASE := block_parser
+BLOCK_PARSER_SRC := $(SRC_DIR)/$(BLOCK_PARSER_BASE).cpp
+BLOCK_PARSER_HDR := $(SRC_DIR)/$(BLOCK_PARSER_BASE).hpp
+BLOCK_PARSER_O := $(OBJ_DIR)/$(BLOCK_PARSER_BASE).o
+$(BLOCK_PARSER_O): $(BLOCK_PARSER_SRC) $(BLOCK_PARSER_HDR)
+	$(CMPL) -c $< -o $@ $(FLAGS)
 	
 UNIT_TESTS_BASE := unit_tests
 UNIT_TESTS_SRC := $(SRC_DIR)/$(UNIT_TESTS_BASE).cpp
 UNIT_TESTS_O := $(OBJ_DIR)/$(UNIT_TESTS_BASE).o
 $(UNIT_TESTS_O): $(UNIT_TESTS_SRC)
-	$(CMPL) -c $? -o $@ $(FLAGS)
+	$(CMPL) -c $< -o $@ $(FLAGS)
 # </obj_files_compilation>
 
 # <binary_files_compilation>
 BLOCKS_BASE := blocks
 BLOCKS_BIN := $(BLOCKS_BASE)
-BLOCKS_DEP := $(MAIN_O) $(PARSER_IO_O) $(BLOCK_PARSER_O) $(PARSE_OPTS_O)
+BLOCKS_DEP := $(MAIN_O) $(MATCHER_O) $(PARSER_IO_O) $(BLOCK_PARSER_O)
+BLOCKS_DEP += $(PARSE_OPTS_O)
 $(BLOCKS_BIN): $(BLOCKS_DEP)
-	$(CMPL) $? -o ./$@ $(FLAGS)
+	$(CMPL) $^ -o ./$@ $(FLAGS)
 	
 UNIT_TESTS_BIN := unit-tests
-UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(PARSER_IO_O) $(BLOCK_PARSER_O)
+UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(MATCHER_O) $(PARSER_IO_O) $(BLOCK_PARSER_O)
 $(UNIT_TESTS_BIN): $(UNIT_TESTS_DEP)
-	$(CMPL) $? -o ./$@ $(FLAGS)
+	$(CMPL) $^ -o ./$@ $(FLAGS)
 
 .PHONY: compile
 compile: $(BLOCKS_BIN) $(UNIT_TESTS_BIN)
 # </binary_files_compilation>
+
+# <testing>
+TEST_DIR := ./tests
+
+.PHONY: test
+test: utest btest
+
+.PHONY: btest
+btest:
+	cd $(TEST_DIR) && bash run_tests.sh ../$(BLOCKS_BIN)
+	
+.PHONY: utest
+utest:
+	./$(UNIT_TESTS_BIN)
+# </testing>
 
 # <cleanup>
 .PHONY: clean
 clean:
 	rm -f $(OBJ_DIR)/* ./$(BLOCKS_BIN) ./$(UNIT_TESTS_BIN)
 # </cleanup>
+
+# <help>
+.PHONY: _help
+_help:
+	@echo 'make release    - release build'
+	@echo 'make debug      - debug build'
+	@echo 'make $(BLOCKS_BIN)     - compile blocks'
+	@echo 'make $(UNIT_TESTS_BIN) - compile unit tests'
+	@echo 'make test    - run all tests'
+	@echo 'make btest   - run binary tests'
+	@echo 'make utest   - run unit tests'
+	@echo 'make clean   - clean up'
+	@echo 'make help    - this screen'
+# </help>

@@ -1,13 +1,14 @@
 #ifndef PARSER_IO_HPP
 #define PARSER_IO_HPP
 
-#include <regex>
 #include <vector>
 #include <iostream>
 
+#include "matcher.hpp"
+
 class parser_io
 {
-	public:
+public:
 	inline parser_io(std::istream& ins,
 		std::ostream& outs,
 		std::ostream& errs
@@ -21,7 +22,7 @@ class parser_io
 		_has_input(false)
 	{reset();}
 	
-	size_t match_leftmost_of(const std::regex * rparr[], size_t len);
+	size_t match_leftmost_of(const matcher * m[], size_t len);
 	
 	bool read_line();
 	
@@ -67,11 +68,10 @@ class parser_io
 	inline int line_pos()
 	{return _match_so_far;}
 	
-	private:
+private:
 	std::istream& _ins;
 	std::ostream& _outs;
 	std::ostream& _cerr;
-	std::cmatch _match;
 	std::string _line;
 	size_t _match_so_far;
 	size_t _line_no;

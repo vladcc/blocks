@@ -1,7 +1,8 @@
-#include "parser_io.hpp"
 #include <limits>
 
-size_t parser_io::match_leftmost_of(const std::regex* rparr[], size_t len)
+#include "parser_io.hpp"
+
+size_t parser_io::match_leftmost_of(const matcher * m[], size_t len)
 {
 	size_t which_one = 0;
 	
@@ -10,16 +11,14 @@ size_t parser_io::match_leftmost_of(const std::regex* rparr[], size_t len)
 		ptrdiff_t mpos = 0;
 		ptrdiff_t pos = std::numeric_limits<ptrdiff_t>::max();
 		const char * pstr = _line.c_str();
-		const std::regex * prg = nullptr;
 		
+		matcher * pm = nullptr;
 		for (size_t i = 0; i < len; ++i)
 		{
-			prg = rparr[i];
-			if (prg && std::regex_search((pstr + _match_so_far), _match, *prg)
-			)
+			if ((pm = const_cast<matcher *>(m[i])))
 			{
-				mpos = _match.position();
-				if (mpos < pos)
+				mpos = pm->match(pstr + _match_so_far);
+				if (mpos != matcher::NO_MATCH && mpos < pos)
 				{
 					pos = mpos;
 					which_one = i+1;

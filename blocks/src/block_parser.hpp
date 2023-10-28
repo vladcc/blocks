@@ -1,13 +1,15 @@
 #ifndef BLOCK_PARSER_HPP
 #define BLOCK_PARSER_HPP
 
-#include "parser_io.hpp"
 #include <vector>
 #include <string>
 
+#include "parser_io.hpp"
+#include "matcher.hpp"
+
 class block_parser
 {
-	public:
+public:
 	static const char default_prefix[];
 	
 	struct stream_info
@@ -38,14 +40,14 @@ class block_parser
 		std::ostream * log;
 	};
 	
-	struct regexps
+	struct matchers
 	{
-		regexps(const std::regex * block_name,
-			const std::regex * block_open,
-			const std::regex * block_close,
-			const std::regex * comment,
-			const std::regex * regex_match,
-			const std::regex * regex_no_match
+		matchers(const matcher * block_name,
+			const matcher * block_open,
+			const matcher * block_close,
+			const matcher * comment,
+			const matcher * regex_match,
+			const matcher * regex_no_match
 		) :
 			name(block_name),
 			open(block_open),
@@ -55,12 +57,12 @@ class block_parser
 			regex_no_match(regex_no_match)
 		{}
 		
-		const std::regex * name;
-		const std::regex * open;
-		const std::regex * close;
-		const std::regex * comment;
-		const std::regex * regex_match;
-		const std::regex * regex_no_match;
+		const matcher * name;
+		const matcher * open;
+		const matcher * close;
+		const matcher * comment;
+		const matcher * regex_match;
+		const matcher * regex_no_match;
 	};
 	
 	struct parser_options
@@ -103,11 +105,11 @@ class block_parser
 	};
 	
 	inline block_parser(const stream_info& streams,
-		const regexps& expressions,
+		const matchers& expressions,
 		const parser_options& options
 	) :
 		_parse_io(*streams.in, *streams.out, *streams.err),
-		_regexps(expressions),
+		_matchers(expressions),
 		_was_line_saved(false),
 		_fname(nullptr),
 		_streams(streams),
@@ -118,7 +120,7 @@ class block_parser
 	
 	enum tok {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02, COMMENT = 0x04, NONE};
 	
-	protected:
+protected:
 	struct block_line_info
 	{
 		block_line_info(std::string line, int what, int line_no) :
@@ -141,7 +143,7 @@ class block_parser
 	inline std::vector<block_line_info>& expose_vector()
 	{return _current_block;}
 	
-	private:
+private:
 	void dbg_log(const char * action, const char * fname, int val);
 	
 	bool get_block_body();
@@ -150,13 +152,14 @@ class block_parser
 	bool read_next_line();
 	void save_line_once(int token);
 	
-	bool match_in_block(const std::regex * rx);
+	bool match_in_block(const matcher * m);
 	void post_process_block();
 	void print_block();
 	
+private:
 	parser_io _parse_io;
 	std::vector<block_line_info> _current_block;
-	regexps _regexps;
+	matchers _matchers;
 	bool _was_line_saved;
 	
 	const char * _fname;

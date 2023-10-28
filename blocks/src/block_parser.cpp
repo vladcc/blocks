@@ -102,9 +102,9 @@ bool block_parser::find_block_name()
 	bool ret = false;
 	
 	const size_t rarr_size = 2;
-	const std::regex * rarr[rarr_size] = {
-		_regexps.name,
-		_regexps.comment // nullptr is ok
+	const matcher * rarr[rarr_size] = {
+		_matchers.name,
+		_matchers.comment // nullptr is ok
 	};
 	
 	size_t match = 0;
@@ -138,10 +138,10 @@ bool block_parser::find_open_or_close(tok * out_which)
 	size_t which_match = 0;
 	
 	const size_t rarr_size = 3;
-	const std::regex * rarr[rarr_size] = {
-			_regexps.open,
-			_regexps.close,
-			_regexps.comment // nullptr is ok
+	const matcher * rarr[rarr_size] = {
+			_matchers.open,
+			_matchers.close,
+			_matchers.comment // nullptr is ok
 	};
 	
 	while (_parse_io.has_input())
@@ -197,17 +197,20 @@ void block_parser::save_line_once(int token)
 	log_return();
 }
 
-bool block_parser::match_in_block(const std::regex * rx)
-{
+bool block_parser::match_in_block(const matcher * m)
+{	
 	bool ret = false;
-	std::cmatch match;
+	matcher * ccm = const_cast<matcher *>(m);
 	
-	for (auto line : _current_block)
+	if (ccm)
 	{
-		if (std::regex_search(line.line.c_str(), match, *rx))
+		for (auto line : _current_block)
 		{
-			ret = true;
-			break;
+			if (ccm->match(line.line.c_str()) != matcher::NO_MATCH)
+			{
+				ret = true;
+				break;
+			}
 		}
 	}
 	
@@ -220,10 +223,10 @@ void block_parser::post_process_block()
 	
 	if (!_parse_opts.quiet)
 	{
-		if (_regexps.regex_match && !match_in_block(_regexps.regex_match))
+		if (_matchers.regex_match && !match_in_block(_matchers.regex_match))
 			return;
 		
-		if (_regexps.regex_no_match && match_in_block(_regexps.regex_no_match))
+		if (_matchers.regex_no_match && match_in_block(_matchers.regex_no_match))
 			return;
 		
 		if (0 == _parse_opts.skip_count)

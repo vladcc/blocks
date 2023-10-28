@@ -10,6 +10,7 @@
 
 #include "parse_opts.h"
 #include "block_parser.hpp"
+#include "matcher.hpp"
 
 struct prog_options
 {
@@ -811,27 +812,27 @@ int main(int argc, char * argv[])
 		regex_flags |= std::regex_constants::icase;
 	
 	int ret = 1;
-
-	struct regex_wrap
-	{
-		regex_wrap() : rx(nullptr) {}
-		~regex_wrap() {if (rx) delete rx;}
-
-		typedef std::regex_constants::syntax_option_type regex_flags;
-		void make_regex(const char * str, regex_flags flags)
-		{rx = (str) ? new std::regex(str, flags) : nullptr;}
-		
-		const std::regex * rx;
-	} b_name, b_start, b_end, b_comment, r_match, r_no_match;
+	
+	std::unique_ptr<matcher>
+		b_name, b_start, b_end, b_comment, r_match, r_no_match;
 	
 	try
 	{
-		b_name.make_regex(gather_opts.block_name, regex_flags);	
-		b_start.make_regex(gather_opts.block_start, regex_flags);
-		b_end.make_regex(gather_opts.block_end, regex_flags);
-		b_comment.make_regex(gather_opts.comment, regex_flags);
-		r_match.make_regex(gather_opts.regex_match, regex_flags);
-		r_no_match.make_regex(gather_opts.regex_no_match, regex_flags);
+		matcher_factory mfact;
+		
+		b_name = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.block_name, regex_flags));
+		b_start = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.block_start, regex_flags));
+		b_end = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.block_end, regex_flags));
+		b_comment = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.comment, regex_flags));
+
+		r_match = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.regex_match, regex_flags));
+		r_no_match = std::move(mfact.create(matcher_factory::REGEX,
+			gather_opts.regex_no_match, regex_flags));
 	}
 	catch(const std::runtime_error& e)
 	{
@@ -839,24 +840,27 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	block_parser::stream_info streams(&std::cin,
+	block_parser::stream_info streams(
+		&std::cin,
 		&std::cout,
 		&std::cerr,
 		(gather_opts.debug_trace) ? &std::clog : nullptr,
 		program_name
 	);
 	
-	block_parser::regexps expressions(b_name.rx,
-		b_start.rx,
-		b_end.rx,
-		b_comment.rx,
-		r_match.rx,
-		r_no_match.rx
+	block_parser::matchers to_match(
+		b_name.get(),
+		b_start.get(),
+		b_end.get(),
+		b_comment.get(),
+		r_match.get(),
+		r_no_match.get()
 	);
 	
 	const char str_stdin[] = "-";
 	const char * current_file = str_stdin;
-	block_parser::parser_options opts(gather_opts.mark_start,
+	block_parser::parser_options opts(
+		gather_opts.mark_start,
 		gather_opts.mark_end,
 		&current_file,
 		gather_opts.block_count,
@@ -868,7 +872,7 @@ int main(int argc, char * argv[])
 		gather_opts.quiet
 	);
 	
-	block_parser b_parser(streams, expressions, opts);
+	block_parser b_parser(streams, to_match, opts);
 	
 	if (file_names.size())
 	{
