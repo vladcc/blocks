@@ -35,6 +35,9 @@ void block_parser::dbg_log(const char * action, const char * fname, int val)
 
 bool block_parser::parse(const char * fname)
 {
+	if (0 == _parse_opts.block_count)
+		return false;
+	
 	_parse_io.reset();
 	_parse_io.read_line();
 	_current_block.clear();
@@ -42,72 +45,45 @@ bool block_parser::parse(const char * fname)
 	_fname = fname;
 	
 	bool ret = false;
-	while (_parse_io.has_input())
+	bool block_correct = false;
+	while (find_block_name())
 	{
-		if (block_name())
+		block_correct = get_block_body();
+		
+		post_process_block();
+		
+		if (block_correct)
 			ret = true;
 		else
-			break;
-	}
-	
-	return ret;
-}
-
-bool block_parser::block_name()
-{
-	log_call();
-	
-	bool ret = false;
-	bool last = false;
-	while (until_name())
-	{
-		last = block_body();
-		
-		print_block();
-		
-		if (last)
-			ret = true;
-		else
-			error();
+			report_error();
 		
 		_current_block.clear();
 		
-		if (!_parse_opts.block_count)
-		{
-			ret = false;
+		if (0 == _parse_opts.block_count)
 			break;
-		}
 	}
 	
-	logv_return(ret);
 	return ret;
 }
 
-bool block_parser::block_body()
+bool block_parser::get_block_body()
 {	
 	log_call(); 
 	
 	bool ret = false;
-
-	int stack = 0;
-	int which = 0;
 	
-	while (_parse_io.has_input())
-	{		
-		which = until_open_or_close();
-		
+	tok which = NONE;
+	size_t stack = 0;
+	while (find_open_or_close(&which))
+	{
 		if (OPEN == which)
 			++stack;
 		else if (CLOSE == which)
 		{
-			if (stack)
-			{
-				--stack;
-				if (!stack)
-					break;
-			}
-			else
+			if (!stack)
 				goto out;
+			else if (!(--stack))
+				break;
 		}
 	}
 	
@@ -119,26 +95,26 @@ out:
 	return ret;
 }
 
-bool block_parser::until_name()
+bool block_parser::find_block_name()
 {
 	log_call();
 	
 	bool ret = false;
 	
-	const int rarr_size = 2;
+	const size_t rarr_size = 2;
 	const std::regex * rarr[rarr_size] = {
 		_regexps.name,
 		_regexps.comment // nullptr is ok
 	};
 	
-	int match = 0;
+	size_t match = 0;
 	while (_parse_io.has_input())
 	{
-		if ((match = _parse_io.match_first_of(rarr, rarr_size)))
+		if ((match = _parse_io.match_leftmost_of(rarr, rarr_size)))
 		{	
-			if (rarr_size == match) // comment
+			if (rarr_size == match) // comment is found
 			{
-				next_line();
+				read_next_line();
 				continue;
 			}
 				
@@ -147,20 +123,21 @@ bool block_parser::until_name()
 			break;
 		}
 	
-		next_line();
+		read_next_line();
 	}
 	
 	logv_return(ret);
 	return ret;
 }
 
-int block_parser::until_open_or_close()
+bool block_parser::find_open_or_close(tok * out_which)
 {
 	log_call();
 	
-	int which_one = 0;
+	bool ret = false;
+	size_t which_match = 0;
 	
-	const int rarr_size = 3;
+	const size_t rarr_size = 3;
 	const std::regex * rarr[rarr_size] = {
 			_regexps.open,
 			_regexps.close,
@@ -169,28 +146,32 @@ int block_parser::until_open_or_close()
 	
 	while (_parse_io.has_input())
 	{
-		which_one = _parse_io.match_first_of(rarr, rarr_size);
+		which_match = _parse_io.match_leftmost_of(rarr, rarr_size);
 		
-		if (rarr_size == which_one)
-			which_one = COMMENT;
+		if (rarr_size == which_match)
+			which_match = COMMENT;
 		
-		save_line_once(which_one);
+		save_line_once(which_match);
 		
-		if (which_one)
+		if (which_match)
 		{
 			_parse_io.advance_past_match();
-			if ((OPEN == which_one) || (CLOSE == which_one))
+			if ((OPEN == which_match) || (CLOSE == which_match))
+			{
+				*out_which = static_cast<tok>(which_match);
+				ret = true;
 				break;
+			}
 		}
 		
-		next_line();
+		read_next_line();
 	}
 	
-	logv_return(which_one);
-	return which_one;
+	logv_return(which_match);
+	return ret;
 }
 
-bool block_parser::next_line()
+bool block_parser::read_next_line()
 {
 	log_call();
 	_was_line_saved = false;
@@ -206,8 +187,8 @@ void block_parser::save_line_once(int token)
 	log_call();
 	if (!_was_line_saved)
 	{
-		block_line_info nfo(_parse_io.give_line(), token, _parse_io.line_num());
-		_current_block.push_back(nfo);
+		_current_block.emplace_back(_parse_io.give_line(),
+			token, _parse_io.line_num());
 		_was_line_saved = true;
 	}
 	else if (_current_block.size())
@@ -216,7 +197,7 @@ void block_parser::save_line_once(int token)
 	log_return();
 }
 
-bool block_parser::match_block(const std::regex * rx)
+bool block_parser::match_in_block(const std::regex * rx)
 {
 	bool ret = false;
 	std::cmatch match;
@@ -233,25 +214,25 @@ bool block_parser::match_block(const std::regex * rx)
 	return ret;
 }
 
-void block_parser::print_block()
+void block_parser::post_process_block()
 {
 	log_call();
 	
 	if (!_parse_opts.quiet)
 	{
-		if (_regexps.regex_match && !match_block(_regexps.regex_match))
+		if (_regexps.regex_match && !match_in_block(_regexps.regex_match))
 			return;
 		
-		if (_regexps.regex_no_match && match_block(_regexps.regex_no_match))
+		if (_regexps.regex_no_match && match_in_block(_regexps.regex_no_match))
 			return;
 		
-		if (!_parse_opts.skip_count)
+		if (0 == _parse_opts.skip_count)
 		{ 
 			if (-1 == _parse_opts.block_count)
-				actual_print_block();
+				print_block();
 			else if (_parse_opts.block_count > 0)
 			{
-				actual_print_block();
+				print_block();
 				--_parse_opts.block_count;
 			}
 		}
@@ -262,7 +243,7 @@ void block_parser::print_block()
 	log_return();
 }
 
-void block_parser::actual_print_block()
+void block_parser::print_block()
 {
 	log_call();
 	
@@ -316,9 +297,17 @@ void block_parser::actual_print_block()
 	log_return();
 }
 
-void block_parser::error()
+void block_parser::report_error()
 {
 	log_call();
+	
+	static std::string err_pref("");
+	static std::string err("");
+	static std::string space("");
+	
+	err_pref.clear();
+	err.clear();
+	space.clear();
 	
 	const block_line_info& first = _current_block[0];
 	block_line_info first_line(first.line, first.what, first.line_no);
@@ -326,11 +315,10 @@ void block_parser::error()
 	const block_line_info& last = _current_block.back();
 	block_line_info bad_line(last.line, last.what, last.line_no);
 	
-	std::string err_pref(_streams.err_pref);
+	err_pref = _streams.err_pref;
 	err_pref += "error: ";
 	
-	std::string err(err_pref);
-	
+	err = err_pref;
 	if (_parse_opts.current_file)
 	{
 		err += "file ";
@@ -353,7 +341,7 @@ void block_parser::error()
 	size_t real_pos = _parse_io.line_pos();
 	real_pos = (real_pos) ? real_pos-1 : 0;
 	
-	std::string space(real_pos, ' ');
+	space.insert(0, real_pos, ' ');
 	space += "^";
 	err = err_pref;
 	err += space;

@@ -76,7 +76,7 @@ static bool test_parser_io()
 		
 		// match main
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(name, name_last));
+		check(pio.match_leftmost_of(name, name_last));
 		check(pio.line_num() == 1);
 		
 		// match of block name doesn't advance the position
@@ -95,14 +95,14 @@ static bool test_parser_io()
 		
 		// match {
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 1);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 		pio.advance_past_match();
 		check(pio.line_num() == 1);
 		check(pio.line_pos() == 5);
 		
 		// match }
 		check(pio.line_pos() == 5);
-		check(pio.match_first_of(block_delim, block_delim_last) == 2);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 		pio.advance_past_match();
 		check(pio.line_num() == 1);
 		check(pio.line_pos() == 6);
@@ -111,12 +111,12 @@ static bool test_parser_io()
 		check(!pio.read_line());
 		
 		// no more lines; no more matches; no printing of input
-		check(!pio.match_first_of(name, name_last));
+		check(!pio.match_leftmost_of(name, name_last));
 		check(!pio.has_input());
 		check(pio.give_line().empty());
 		check(pio.line_num() == 1);
-		check(!pio.match_first_of(name, name_last));
-		check(!pio.match_first_of(block_delim, block_delim_last));
+		check(!pio.match_leftmost_of(name, name_last));
+		check(!pio.match_leftmost_of(block_delim, block_delim_last));
 		
 		// printing error is ok at any time
 		pio.print_error("no error; functionality test");
@@ -169,7 +169,7 @@ static bool test_parser_io()
 		
 		// match main
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(name, name_last));
+		check(pio.match_leftmost_of(name, name_last));
 		check(pio.line_num() == 1);
 		// match of block name doesn't advance the position
 		check(pio.line_pos() == 0);
@@ -181,21 +181,21 @@ static bool test_parser_io()
 		
 		// match {
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 1);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 		pio.advance_past_match();
 		check(pio.line_num() == 1);
 		check(pio.line_pos() == 6);
 		
 		// no more matches on the line; read another line
 		check(pio.line_pos() == 6);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		check(pio.read_line());
 		check(pio.line_num() == 2);
 		check(pio.line_pos() == 0);
 		
 		// match }
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 2);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 		pio.advance_past_match();
 		check(pio.line_num() == 2);
 		check(pio.line_pos() == 1);
@@ -207,21 +207,21 @@ static bool test_parser_io()
 		
 		// no more matches on the line; read another line
 		check(pio.line_pos() == 1);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		check(pio.read_line());
 		check(pio.line_num() == 3);
 		check(pio.line_pos() == 0);
 		
 		// no more matches on the line; read another line
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		check(pio.read_line());
 		check(pio.line_num() == 4);
 		check(pio.line_pos() == 0);
 		
 		// match }
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 2);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 		pio.advance_past_match();
 		check(pio.line_num() == 4);
 		check(pio.line_pos() == 1);
@@ -233,27 +233,27 @@ static bool test_parser_io()
 		
 		// match }
 		check(pio.line_pos() == 1);
-		check(pio.match_first_of(block_delim, block_delim_last) == 2);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 		pio.advance_past_match();
 		check(pio.line_num() == 4);
 		check(pio.line_pos() == 3);
 		
 		// no more matches on the line; read another line
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		check(pio.read_line());
 		check(pio.line_num() == 5);
 		
 		// match }
-		check(pio.match_first_of(block_delim, block_delim_last) == 2);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 		pio.advance_past_match();
 		
 		// match {
-		check(pio.match_first_of(block_delim, block_delim_last) == 1);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 		pio.advance_past_match();
 		check(pio.line_num() == 5);
 		
 		// no match for main; read another line
-		check(!pio.match_first_of(name, name_last));
+		check(!pio.match_leftmost_of(name, name_last));
 		check(pio.read_line());
 		check(pio.line_num() == 6);
 		// match of block name doesn't advance the position
@@ -261,14 +261,14 @@ static bool test_parser_io()
 		
 		// no match for main on this one also; read another line
 		check(pio.line_pos() == 0);
-		check(!pio.match_first_of(name, name_last));
+		check(!pio.match_leftmost_of(name, name_last));
 		check(pio.read_line());
 		check(pio.line_num() == 7);
 		check(pio.line_pos() == 0);
 		
 		// match main
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(name, name_last));
+		check(pio.match_leftmost_of(name, name_last));
 		check(pio.line_num() == 7);
 		check(pio.line_pos() == 4);
 		
@@ -279,14 +279,14 @@ static bool test_parser_io()
 		
 		// no more matches on the line; read another line
 		check(pio.line_pos() == 4);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		check(pio.read_line());
 		check(pio.line_num() == 8);
 		check(pio.line_pos() == 0);
 		
 		// match {
 		check(pio.line_pos() == 0);
-		check(pio.match_first_of(block_delim, block_delim_last) == 1);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 		pio.advance_past_match();
 		check(pio.line_num() == 8);
 		check(pio.line_pos() == 1);
@@ -301,7 +301,7 @@ static bool test_parser_io()
 		
 		// no more matches on the line
 		check(pio.line_pos() == 1);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counter
 		check(!pio.read_line());
 		check(pio.line_num() == 8);
@@ -312,7 +312,7 @@ static bool test_parser_io()
 		check(!pio.read_line());
 		check(!pio.has_input());
 		check(pio.line_pos() == 1);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counters
 		check(pio.line_num() == 8);
 		check(pio.line_pos() == 1);
@@ -325,7 +325,7 @@ static bool test_parser_io()
 		// read after input
 		check(!pio.read_line());
 		check(pio.line_pos() == 1);
-		check(pio.match_first_of(block_delim, block_delim_last) == 0);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counter
 		check(pio.line_num() == 8);
 		check(pio.line_pos() == 1);
@@ -387,7 +387,7 @@ static bool test_parser_io()
 			
 			// match main
 			check(pio.line_pos() == 0);
-			check(pio.match_first_of(name, name_last) == 1);
+			check(pio.match_leftmost_of(name, name_last) == 1);
 			check(pio.line_num() == 1);
 			// match of block name doesn't advance the position
 			check(pio.line_pos() == 3);
@@ -404,7 +404,7 @@ static bool test_parser_io()
 			
 			// match {
 			check(pio.line_pos() == 3);
-			check(pio.match_first_of(block_delim, block_delim_last) == 1);
+			check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 			pio.advance_past_match();
 			check(pio.line_num() == 1);
 			check(pio.line_pos() == 9);
@@ -448,7 +448,7 @@ static bool test_parser_io()
 			
 			// match main
 			check(pio.line_pos() == 0);
-			check(pio.match_first_of(name, name_last) == 2);
+			check(pio.match_leftmost_of(name, name_last) == 2);
 			
 			// match of comment advances the position
 			check(pio.line_pos() == 0);
@@ -462,9 +462,9 @@ static bool test_parser_io()
 			
 			
 			check(pio.read_line());
-			check(!pio.match_first_of(name, name_last));
+			check(!pio.match_leftmost_of(name, name_last));
 			check(pio.read_line());
-			check(pio.match_first_of(name, name_last) == 1);
+			check(pio.match_leftmost_of(name, name_last) == 1);
 			check(pio.line_num() == 3);
 			// match of block name doesn't advance the position
 			check(pio.line_pos() == 0);
@@ -475,7 +475,7 @@ static bool test_parser_io()
 			check(out == "main {");
 			
 			// match {
-			check(pio.match_first_of(block_delim, block_delim_last) == 1);
+			check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
 			check(pio.line_num() == 3);
 			check(pio.line_pos() == 5);
 			pio.advance_past_match();
@@ -488,7 +488,7 @@ static bool test_parser_io()
 			
 			check(pio.read_line());
 			// match //
-			check(pio.match_first_of(block_delim, block_delim_last) == 3);
+			check(pio.match_leftmost_of(block_delim, block_delim_last) == 3);
 			check(pio.line_num() == 4);
 			check(pio.line_pos() == 0);
 			pio.advance_past_match();
@@ -506,7 +506,7 @@ static bool test_parser_io()
 			
 			check(pio.read_line());
 			// match }
-			check(pio.match_first_of(block_delim, block_delim_last) == 2);
+			check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
 			check(pio.line_num() == 5);
 			check(pio.line_pos() == 0);
 			
@@ -519,10 +519,10 @@ static bool test_parser_io()
 			check(!pio.read_line());
 			
 			// no more lines; no more matches; no printing of input
-			check(!pio.match_first_of(name, name_last));
+			check(!pio.match_leftmost_of(name, name_last));
 			check(!pio.has_input());
-			check(!pio.match_first_of(name, name_last));
-			check(!pio.match_first_of(block_delim, block_delim_last));
+			check(!pio.match_leftmost_of(name, name_last));
+			check(!pio.match_leftmost_of(block_delim, block_delim_last));
 			
 			// printing error is ok at any time
 			pio.print_error("no error; functionality test");
@@ -546,11 +546,11 @@ static bool test_block_parser()
 		block_parser::block_parser(streams, expressions, options)
 		{}
 		
-		bool until_name()
-		{return block_parser::until_name();}
+		bool find_block_name()
+		{return block_parser::find_block_name();}
 		
-		int until_open_or_close()
-		{return block_parser::until_open_or_close();}
+		bool find_open_or_close(tok * out_which)
+		{return block_parser::find_open_or_close(out_which);}
 		
 		parser_io& expose_parser_io()
 		{return block_parser::expose_parser_io();}
@@ -619,14 +619,25 @@ static bool test_block_parser()
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
 		cls_test_parser pars(streams, expressions, options);
 		
-		check(!pars.until_name());
-		check(!pars.until_open_or_close());
+		check(!pars.find_block_name());
+		
+		cls_test_parser::tok out_which = cls_test_parser::NONE;
+		check(!pars.find_open_or_close(&out_which));
+		check(cls_test_parser::NONE == out_which);
 		
 		pars.expose_parser_io().read_line();
-		check(pars.until_open_or_close() == 2);
-		check(pars.until_open_or_close() == 1);
-		check(pars.until_open_or_close() == 1);
-		check(pars.until_open_or_close() == 2);
+		
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::CLOSE == out_which);
+		
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::OPEN == out_which);
+		
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::OPEN == out_which);
+		
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::CLOSE == out_which);
 	}
 	
 	/*** test multi line case ***/
@@ -656,30 +667,36 @@ static bool test_block_parser()
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
 		cls_test_parser pars(streams, expressions, options);
 		
-		check(!pars.until_name());
-		check(!pars.until_open_or_close());
+		check(!pars.find_block_name());
+		
+		cls_test_parser::tok out_which = cls_test_parser::NONE;
+		check(!pars.find_open_or_close(&out_which));
+		
 		check(!pars.expose_vector().size());
 		
 		check(pars.expose_parser_io().read_line());
 		check(!pars.expose_vector().size());
-		check(pars.until_name());
+		check(pars.find_block_name());
 		
 		check(pars.expose_vector().size() == 1);
 		check(pars.expose_vector()[0].line == "main {   ");
 		
-		check(pars.until_open_or_close() == 1);
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::OPEN == out_which);
 		
 		// line saved only once
 		check(pars.expose_vector().size() == 1);
 		check(pars.expose_vector()[0].line == "main {   ");
 		
-		check(pars.until_open_or_close() == 2);
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::CLOSE == out_which);
+		
 		check(pars.expose_vector().size() == 3);
 		check(pars.expose_vector()[1].line == "something\t");
 		check(pars.expose_vector()[2].line == "}");
 		
-		check(!pars.until_name());
-		check(!pars.until_open_or_close());
+		check(!pars.find_block_name());
+		check(!pars.find_open_or_close(&out_which));
 		check(pars.expose_vector().size() == 3);
 	}
 	
@@ -721,26 +738,32 @@ static bool test_block_parser()
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
 		cls_test_parser pars(streams, expressions, options);
 		
-		check(!pars.until_name());
-		check(!pars.until_open_or_close());
+		cls_test_parser::tok out_which = cls_test_parser::NONE;
+		
+		check(!pars.find_block_name());
+		check(!pars.find_open_or_close(&out_which));
 		check(!pars.expose_vector().size());
 		
 		check(pars.expose_parser_io().read_line());
 		check(!pars.expose_vector().size());
 		
-		check(pars.until_name());
+		check(pars.find_block_name());
+		check(pars.expose_vector().size() == 1);
+		check(pars.expose_vector()[0].line == "main {");
+
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::OPEN == out_which);
+		
 		check(pars.expose_vector().size() == 1);
 		check(pars.expose_vector()[0].line == "main {");
 		
-		check(pars.until_open_or_close() == 1);
-		check(pars.expose_vector().size() == 1);
-		check(pars.expose_vector()[0].line == "main {");
+		check(pars.find_open_or_close(&out_which));
+		check(cls_test_parser::CLOSE == out_which);
 		
-		check(pars.until_open_or_close() == 2);
 		check(pars.expose_vector().size() == 3);
 		check(pars.expose_vector()[2].line == "} //");
 		
-		check(!pars.until_name());
+		check(!pars.find_block_name());
 	}
 	
 	return true;

@@ -1,20 +1,21 @@
 #include "parser_io.hpp"
 #include <limits>
 
-int parser_io::match_first_of(const std::regex* rparr[], int len)
+size_t parser_io::match_leftmost_of(const std::regex* rparr[], size_t len)
 {
-	int which_one = 0;
+	size_t which_one = 0;
 	
 	if(_has_input)
 	{
-		int mpos = 0;
-		int pos = std::numeric_limits<int>::max();
+		ptrdiff_t mpos = 0;
+		ptrdiff_t pos = std::numeric_limits<ptrdiff_t>::max();
 		const char * pstr = _line.c_str();
+		const std::regex * prg = nullptr;
 		
-		for (int i = 0; i < len; ++i)
+		for (size_t i = 0; i < len; ++i)
 		{
-			if (rparr[i] &&
-				std::regex_search((pstr + _match_so_far), _match, *(rparr[i]))
+			prg = rparr[i];
+			if (prg && std::regex_search((pstr + _match_so_far), _match, *prg)
 			)
 			{
 				mpos = _match.position();

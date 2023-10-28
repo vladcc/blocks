@@ -116,6 +116,8 @@ class block_parser
 	
 	bool parse(const char * fname);
 	
+	enum tok {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02, COMMENT = 0x04, NONE};
+	
 	protected:
 	struct block_line_info
 	{
@@ -130,8 +132,8 @@ class block_parser
 		int line_no;
 	};
 	
-	bool until_name();
-	int until_open_or_close();
+	bool find_block_name();
+	bool find_open_or_close(tok * out_which);
 	
 	inline parser_io& expose_parser_io()
 	{return _parse_io;}
@@ -139,22 +141,18 @@ class block_parser
 	inline std::vector<block_line_info>& expose_vector()
 	{return _current_block;}
 	
-	
 	private:
-	enum {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02, COMMENT = 0x04};
-	
 	void dbg_log(const char * action, const char * fname, int val);
 	
-	bool block_name();
-	bool block_body();
-	void error();
+	bool get_block_body();
+	void report_error();
 	
-	bool next_line();
+	bool read_next_line();
 	void save_line_once(int token);
 	
-	bool match_block(const std::regex * rx);
+	bool match_in_block(const std::regex * rx);
+	void post_process_block();
 	void print_block();
-	void actual_print_block();
 	
 	parser_io _parse_io;
 	std::vector<block_line_info> _current_block;

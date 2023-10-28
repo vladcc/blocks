@@ -21,7 +21,7 @@ class parser_io
 		_has_input(false)
 	{reset();}
 	
-	int match_first_of(const std::regex * rparr[], int len);
+	size_t match_leftmost_of(const std::regex * rparr[], size_t len);
 	
 	bool read_line();
 	
@@ -73,8 +73,8 @@ class parser_io
 	std::ostream& _cerr;
 	std::cmatch _match;
 	std::string _line;
-	int _match_so_far;
-	int _line_no;
+	size_t _match_so_far;
+	size_t _line_no;
 	bool _has_input;
 };
 #endif
