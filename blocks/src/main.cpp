@@ -805,12 +805,6 @@ int main(int argc, char * argv[])
 		std::string(gather_opts.block_end))
 		equit("%s", "ambiguous: block start and block end cannot be the same.");
 	
-	auto regex_flags_ = (std::regex_constants::ECMAScript |
-		std::regex_constants::optimize);
-		
-	if (gather_opts.case_insensitive)
-		regex_flags_ |= std::regex_constants::icase;
-	
 	uint32_t matcher_flags = matcher::flags::NONE;
 	if (gather_opts.case_insensitive)
 		matcher_flags |= matcher::flags::ICASE;
@@ -824,14 +818,14 @@ int main(int argc, char * argv[])
 	{
 		matcher_factory mfact;
 		
-		b_name = std::move(mfact.create(matcher_factory::type::REGEX,
-			gather_opts.block_name, matcher_flags));
-		b_start = std::move(mfact.create(matcher_factory::type::REGEX,
-			gather_opts.block_start, matcher_flags));
-		b_end = std::move(mfact.create(matcher_factory::type::REGEX,
-			gather_opts.block_end, matcher_flags));
-		b_comment = std::move(mfact.create(matcher_factory::type::REGEX,
-			gather_opts.comment, matcher_flags));
+		b_name = mfact.create(matcher_factory::type::REGEX,
+			gather_opts.block_name, matcher_flags);
+		b_start = mfact.create(matcher_factory::type::REGEX,
+			gather_opts.block_start, matcher_flags);
+		b_end = mfact.create(matcher_factory::type::REGEX,
+			gather_opts.block_end, matcher_flags);
+		b_comment = mfact.create(matcher_factory::type::REGEX,
+			gather_opts.comment, matcher_flags);
 
 		r_match = std::move(mfact.create(matcher_factory::type::REGEX,
 			gather_opts.regex_match, matcher_flags));

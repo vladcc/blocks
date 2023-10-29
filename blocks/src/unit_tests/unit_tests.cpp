@@ -1,10 +1,10 @@
-#include "parser_io.hpp"
-#include "block_parser.hpp"
-
-#include <regex>
 #include <string>
 #include <iostream>
 #include <sstream>
+
+#include "matcher.hpp"
+#include "parser_io.hpp"
+#include "block_parser.hpp"
 
 typedef const char * cpstr;
 bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, int line);
@@ -28,32 +28,24 @@ static bool test_parser_io()
 	std::string s_name("main");
 	std::string s_open("{");
 	std::string s_close("}");
-	
-	std::regex r_name("main",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
-	
-	std::regex r_open("\\{",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
-	
-	std::regex r_close("\\}",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
+
+	matcher_factory mfact;
+
+	std::unique_ptr<matcher> r_name, r_open, r_close;
+	r_name = mfact.create(matcher_factory::type::REGEX, "main");
+	r_open = mfact.create(matcher_factory::type::REGEX, "\\{");
+	r_close = mfact.create(matcher_factory::type::REGEX, "\\}");
 	
 	const int name_last = 2;
-	const std::regex * name[name_last] = {
-		&r_name,
+	const matcher * name[name_last] = {
+		r_name.get(),
 		nullptr
 	};
 	
 	const int block_delim_last = 3;
-	const std::regex * block_delim[block_delim_last] = {
-		&r_open,
-		&r_close,
+	const matcher * block_delim[block_delim_last] = {
+		r_open.get(),
+		r_close.get(),
 		nullptr
 	};
 	
@@ -339,22 +331,21 @@ static bool test_parser_io()
 	/*** test comment feature ***/
 	{
 		std::string s_comment("//");
-		std::regex r_comment("//",
-			std::regex_constants::ECMAScript |
-			std::regex_constants::optimize
-		);
 		
+		std::unique_ptr<matcher> r_comment;
+		r_comment = std::move(mfact.create(matcher_factory::type::REGEX, "//"));
+
 		const int name_last = 2;
-		const std::regex * name[name_last] = {
-			&r_name,
-			nullptr // &r_comment
+		const matcher * name[name_last] = {
+			r_name.get(),
+			nullptr // r_comment
 		};
 		
 		const int block_delim_last = 3;
-		const std::regex * block_delim[block_delim_last] = {
-			&r_open,
-			&r_close,
-			nullptr // &r_comment
+		const matcher * block_delim[block_delim_last] = {
+			r_open.get(),
+			r_close.get(),
+			nullptr // r_comment
 		};
 		
 		{
@@ -435,8 +426,8 @@ static bool test_parser_io()
 				<< s_comment << ' ' << s_open << '\n'
 				<< s_close << ' ' << s_comment;
 				
-			name[name_last-1] = &r_comment;
-			block_delim[block_delim_last-1] = &r_comment;
+			name[name_last-1] = r_comment.get();
+			block_delim[block_delim_last-1] = r_comment.get();
 			
 			parser_io pio(isstrm, osstrm, esstrm);
 			
@@ -540,10 +531,10 @@ static bool test_block_parser()
 	{
 		public:
 		inline cls_test_parser(const stream_info& streams,
-			const regexps& expressions,
+			const matchers& patterns,
 			const parser_options& options
 		) :
-		block_parser::block_parser(streams, expressions, options)
+		block_parser::block_parser(streams, patterns, options)
 		{}
 		
 		bool find_block_name()
@@ -563,24 +554,17 @@ static bool test_block_parser()
 	std::string s_open("{");
 	std::string s_close("}");
 	
-	std::regex r_name("main",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
+	matcher_factory mfact;
 	
-	std::regex r_open("\\{",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
+	std::unique_ptr<matcher> r_name, r_open, r_close;
+	r_name = mfact.create(matcher_factory::type::REGEX, "main");
+	r_open = mfact.create(matcher_factory::type::REGEX, "\\{");
+	r_close = mfact.create(matcher_factory::type::REGEX, "\\}");
 	
-	std::regex r_close("\\}",
-		std::regex_constants::ECMAScript |
-		std::regex_constants::optimize
-	);
-	
-	block_parser::regexps expressions(&r_name,
-		&r_open,
-		&r_close,
+	block_parser::matchers patterns(
+		r_name.get(),
+		r_open.get(),
+		r_close.get(),
 		nullptr,
 		nullptr,
 		nullptr
@@ -600,7 +584,7 @@ static bool test_block_parser()
 		isstrm << "{} } {}\n";
 			
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
-		cls_test_parser pars(streams, expressions, options);
+		cls_test_parser pars(streams, patterns, options);
 		pars.parse("n/a");
 	}
 	
@@ -617,7 +601,7 @@ static bool test_block_parser()
 			<< s_open << ' ' << s_open << ' ' << s_close << '\n';
 			
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
-		cls_test_parser pars(streams, expressions, options);
+		cls_test_parser pars(streams, patterns, options);
 		
 		check(!pars.find_block_name());
 		
@@ -665,7 +649,7 @@ static bool test_block_parser()
 			<< "something  ";
 			
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
-		cls_test_parser pars(streams, expressions, options);
+		cls_test_parser pars(streams, patterns, options);
 		
 		check(!pars.find_block_name());
 		
@@ -704,15 +688,14 @@ static bool test_block_parser()
 	{
 		std::string s_comment("//");
 		
-		std::regex r_comment("//",
-			std::regex_constants::ECMAScript |
-			std::regex_constants::optimize
-		);
+		std::unique_ptr<matcher> r_comment;
+		r_comment = mfact.create(matcher_factory::type::REGEX, "//");
 	
-		block_parser::regexps expressions(&r_name,
-			&r_open,
-			&r_close,
-			&r_comment,
+		block_parser::matchers patterns(
+			r_name.get(),
+			r_open.get(),
+			r_close.get(),
+			r_comment.get(),
 			nullptr,
 			nullptr
 		);
@@ -736,7 +719,7 @@ static bool test_block_parser()
 			<< s_close << ' ' << s_comment;
 			
 		block_parser::stream_info streams(&isstrm, &osstrm, &esstrm);
-		cls_test_parser pars(streams, expressions, options);
+		cls_test_parser pars(streams, patterns, options);
 		
 		cls_test_parser::tok out_which = cls_test_parser::NONE;
 		

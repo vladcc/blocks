@@ -105,11 +105,11 @@ public:
 	};
 	
 	inline block_parser(const stream_info& streams,
-		const matchers& expressions,
+		const matchers& patterns,
 		const parser_options& options
 	) :
 		_parse_io(*streams.in, *streams.out, *streams.err),
-		_matchers(expressions),
+		_matchers(patterns),
 		_was_line_saved(false),
 		_fname(nullptr),
 		_streams(streams),
