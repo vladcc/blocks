@@ -101,8 +101,8 @@ bool block_parser::find_block_name()
 	
 	bool ret = false;
 	
-	const size_t rarr_size = 2;
-	const matcher * rarr[rarr_size] = {
+	const size_t marr_size = 2;
+	const matcher * marr[marr_size] = {
 		_matchers.name,
 		_matchers.comment // nullptr is ok
 	};
@@ -110,9 +110,9 @@ bool block_parser::find_block_name()
 	size_t match = 0;
 	while (_parse_io.has_input())
 	{
-		if ((match = _parse_io.match_leftmost_of(rarr, rarr_size)))
+		if ((match = _parse_io.match_leftmost_of(marr, marr_size)))
 		{	
-			if (rarr_size == match) // comment is found
+			if (marr_size == match) // comment is found
 			{
 				read_next_line();
 				continue;
@@ -137,8 +137,8 @@ bool block_parser::find_open_or_close(tok * out_which)
 	bool ret = false;
 	size_t which_match = 0;
 	
-	const size_t rarr_size = 3;
-	const matcher * rarr[rarr_size] = {
+	const size_t marr_size = 3;
+	const matcher * marr[marr_size] = {
 			_matchers.open,
 			_matchers.close,
 			_matchers.comment // nullptr is ok
@@ -146,9 +146,9 @@ bool block_parser::find_open_or_close(tok * out_which)
 	
 	while (_parse_io.has_input())
 	{
-		which_match = _parse_io.match_leftmost_of(rarr, rarr_size);
+		which_match = _parse_io.match_leftmost_of(marr, marr_size);
 		
-		if (rarr_size == which_match)
+		if (marr_size == which_match)
 			which_match = COMMENT;
 		
 		save_line_once(which_match);

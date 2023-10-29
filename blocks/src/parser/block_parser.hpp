@@ -118,7 +118,13 @@ public:
 	
 	bool parse(const char * fname);
 	
-	enum tok {NAME = 0x00, OPEN = 0x01, CLOSE = 0x02, COMMENT = 0x04, NONE};
+	enum tok : uint32_t {
+		NAME    = 0x00,
+		OPEN    = 0x01,
+		CLOSE   = 0x02,
+		COMMENT = 0x04,
+		NONE
+	};
 	
 protected:
 	struct block_line_info
