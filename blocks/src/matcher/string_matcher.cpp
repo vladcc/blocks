@@ -5,7 +5,7 @@
 str_matcher::str_matcher(const char * pattern, uint32_t opts) :
 	_pattern(pattern ? pattern : ""), _icase_buff(""), _opts(opts)
 {
-	if (!_pattern.empty() && (_opts & matcher::flags::ICASE))
+	if ((_opts & matcher::flags::ICASE) && !_pattern.empty())
 		_tolower(_pattern);
 }
 

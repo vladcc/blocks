@@ -23,31 +23,15 @@ static ftest tests[] = {
 	test_block_parser
 };
 
-static bool test_parser_io()
-{	
+static bool test_parser_io_tests_trivial_multiline_comment(
+	const matcher * name[], const int name_last,
+	const matcher * block_delim[], const int block_delim_last,
+	const matcher * m_comment
+)
+{
 	std::string s_name("main");
 	std::string s_open("{");
 	std::string s_close("}");
-
-	matcher_factory mfact;
-
-	std::unique_ptr<matcher> r_name, r_open, r_close;
-	r_name = mfact.create(matcher_factory::type::REGEX, "main");
-	r_open = mfact.create(matcher_factory::type::REGEX, "\\{");
-	r_close = mfact.create(matcher_factory::type::REGEX, "\\}");
-	
-	const int name_last = 2;
-	const matcher * name[name_last] = {
-		r_name.get(),
-		nullptr
-	};
-	
-	const int block_delim_last = 3;
-	const matcher * block_delim[block_delim_last] = {
-		r_open.get(),
-		r_close.get(),
-		nullptr
-	};
 	
 	/*** test trivial case ***/
 	{
@@ -329,207 +313,262 @@ static bool test_parser_io()
 	}
 	
 	/*** test comment feature ***/
+	
+	std::string s_comment("//");
+	
 	{
-		std::string s_comment("//");
+		// no comment
+		std::stringstream isstrm;
+		std::stringstream osstrm;
+		std::stringstream esstrm;
+		std::string out;
 		
-		std::unique_ptr<matcher> r_comment;
-		r_comment = std::move(mfact.create(matcher_factory::type::REGEX, "//"));
-
-		const int name_last = 2;
-		const matcher * name[name_last] = {
-			r_name.get(),
-			nullptr // r_comment
-		};
+		isstrm.clear();
+		// // main { 
+		// }
+		// main {
+		// // {
+		// }
 		
-		const int block_delim_last = 3;
-		const matcher * block_delim[block_delim_last] = {
-			r_open.get(),
-			r_close.get(),
-			nullptr // r_comment
-		};
+		isstrm << s_comment << ' ' << s_name << ' ' << s_open << '\n'
+			<< s_close << '\n'
+			<< s_name << ' ' << s_open << '\n'
+			<< s_comment << ' ' << s_open << '\n'
+			<< s_close;
+			
+		parser_io pio(isstrm, osstrm, esstrm);
 		
-		{
-			// no comment
-			std::stringstream isstrm;
-			std::stringstream osstrm;
-			std::stringstream esstrm;
-			std::string out;
-			
-			isstrm.clear();
-			// // main { 
-			// }
-			// main {
-			// // {
-			// }
-			
-			isstrm << s_comment << ' ' << s_name << ' ' << s_open << '\n'
-				<< s_close << '\n'
-				<< s_name << ' ' << s_open << '\n'
-				<< s_comment << ' ' << s_open << '\n'
-				<< s_close;
-				
-			parser_io pio(isstrm, osstrm, esstrm);
-			
-			check(pio.line_num() == 0);
-			check(!pio.has_input());
-			check(pio.read_line());
-			check(pio.has_input());
-			check(pio.line_num() == 1);
-			
-			// match main
-			check(pio.line_pos() == 0);
-			check(pio.match_leftmost_of(name, name_last) == 1);
-			check(pio.line_num() == 1);
-			// match of block name doesn't advance the position
-			check(pio.line_pos() == 3);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "// main {");
-			
-			// printing error is ok any time
-			pio.print_error("no error; functionality test");
-			std::getline(esstrm, out);
-			check(out == "no error; functionality test");
-			
-			// match {
-			check(pio.line_pos() == 3);
-			check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-			pio.advance_past_match();
-			check(pio.line_num() == 1);
-			check(pio.line_pos() == 9);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "// main {");
-		}
+		check(pio.line_num() == 0);
+		check(!pio.has_input());
+		check(pio.read_line());
+		check(pio.has_input());
+		check(pio.line_num() == 1);
 		
-		{
-			// comment
-			std::stringstream isstrm;
-			std::stringstream osstrm;
-			std::stringstream esstrm;
-			std::string out;
+		// match main
+		check(pio.line_pos() == 0);
+		check(pio.match_leftmost_of(name, name_last) == 1);
+		check(pio.line_num() == 1);
+		// match of block name doesn't advance the position
+		check(pio.line_pos() == 3);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "// main {");
+		
+		// printing error is ok any time
+		pio.print_error("no error; functionality test");
+		std::getline(esstrm, out);
+		check(out == "no error; functionality test");
+		
+		// match {
+		check(pio.line_pos() == 3);
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
+		pio.advance_past_match();
+		check(pio.line_num() == 1);
+		check(pio.line_pos() == 9);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "// main {");
+	}
+	
+	{
+		// comment
+		std::stringstream isstrm;
+		std::stringstream osstrm;
+		std::stringstream esstrm;
+		std::string out;
+		
+		isstrm.clear();
+		// // main { 
+		// }
+		// main {
+		// // {
+		// } //
+		
+		isstrm << s_comment << ' ' << s_name << ' ' << s_open << '\n'
+			<< s_close << '\n'
+			<< s_name << ' ' << s_open << '\n'
+			<< s_comment << ' ' << s_open << '\n'
+			<< s_close << ' ' << s_comment;
 			
-			isstrm.clear();
-			// // main { 
-			// }
-			// main {
-			// // {
-			// } //
-			
-			isstrm << s_comment << ' ' << s_name << ' ' << s_open << '\n'
-				<< s_close << '\n'
-				<< s_name << ' ' << s_open << '\n'
-				<< s_comment << ' ' << s_open << '\n'
-				<< s_close << ' ' << s_comment;
-				
-			name[name_last-1] = r_comment.get();
-			block_delim[block_delim_last-1] = r_comment.get();
-			
-			parser_io pio(isstrm, osstrm, esstrm);
-			
-			check(pio.line_num() == 0);
-			check(!pio.has_input());
-			check(pio.read_line());
-			check(pio.has_input());
-			check(pio.line_num() == 1);
-			
-			// match main
-			check(pio.line_pos() == 0);
-			check(pio.match_leftmost_of(name, name_last) == 2);
-			
-			// match of comment advances the position
-			check(pio.line_pos() == 0);
-			pio.advance_past_match();
-			check(pio.line_pos() == 1);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "// main {");
-			
-			
-			check(pio.read_line());
-			check(!pio.match_leftmost_of(name, name_last));
-			check(pio.read_line());
-			check(pio.match_leftmost_of(name, name_last) == 1);
-			check(pio.line_num() == 3);
-			// match of block name doesn't advance the position
-			check(pio.line_pos() == 0);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "main {");
-			
-			// match {
-			check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-			check(pio.line_num() == 3);
-			check(pio.line_pos() == 5);
-			pio.advance_past_match();
-			check(pio.line_pos() == 6);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "main {");
-			
-			check(pio.read_line());
-			// match //
-			check(pio.match_leftmost_of(block_delim, block_delim_last) == 3);
-			check(pio.line_num() == 4);
-			check(pio.line_pos() == 0);
-			pio.advance_past_match();
-			check(pio.line_pos() == 1);
-			
-			// printing error is ok any time
-			pio.print_error("no error; functionality test");
-			std::getline(esstrm, out);
-			check(out == "no error; functionality test");
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "// {");
-			
-			check(pio.read_line());
-			// match }
-			check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-			check(pio.line_num() == 5);
-			check(pio.line_pos() == 0);
-			
-			// print line with match
-			pio.print_line(pio.give_line());
-			std::getline(osstrm, out);
-			check(out == "} //");
-			
-			// last line
-			check(!pio.read_line());
-			
-			// no more lines; no more matches; no printing of input
-			check(!pio.match_leftmost_of(name, name_last));
-			check(!pio.has_input());
-			check(!pio.match_leftmost_of(name, name_last));
-			check(!pio.match_leftmost_of(block_delim, block_delim_last));
-			
-			// printing error is ok at any time
-			pio.print_error("no error; functionality test");
-			std::getline(esstrm, out);
-			check(out == "no error; functionality test");
-		}
+		name[name_last-1] = m_comment;
+		block_delim[block_delim_last-1] = m_comment;
+		
+		parser_io pio(isstrm, osstrm, esstrm);
+		
+		check(pio.line_num() == 0);
+		check(!pio.has_input());
+		check(pio.read_line());
+		check(pio.has_input());
+		check(pio.line_num() == 1);
+		
+		// match main
+		check(pio.line_pos() == 0);
+		check(pio.match_leftmost_of(name, name_last) == 2);
+		
+		// match of comment advances the position
+		check(pio.line_pos() == 0);
+		pio.advance_past_match();
+		check(pio.line_pos() == 1);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "// main {");
+		
+		
+		check(pio.read_line());
+		check(!pio.match_leftmost_of(name, name_last));
+		check(pio.read_line());
+		check(pio.match_leftmost_of(name, name_last) == 1);
+		check(pio.line_num() == 3);
+		// match of block name doesn't advance the position
+		check(pio.line_pos() == 0);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "main {");
+		
+		// match {
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
+		check(pio.line_num() == 3);
+		check(pio.line_pos() == 5);
+		pio.advance_past_match();
+		check(pio.line_pos() == 6);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "main {");
+		
+		check(pio.read_line());
+		// match //
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 3);
+		check(pio.line_num() == 4);
+		check(pio.line_pos() == 0);
+		pio.advance_past_match();
+		check(pio.line_pos() == 1);
+		
+		// printing error is ok any time
+		pio.print_error("no error; functionality test");
+		std::getline(esstrm, out);
+		check(out == "no error; functionality test");
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "// {");
+		
+		check(pio.read_line());
+		// match }
+		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
+		check(pio.line_num() == 5);
+		check(pio.line_pos() == 0);
+		
+		// print line with match
+		pio.print_line(pio.give_line());
+		std::getline(osstrm, out);
+		check(out == "} //");
+		
+		// last line
+		check(!pio.read_line());
+		
+		// no more lines; no more matches; no printing of input
+		check(!pio.match_leftmost_of(name, name_last));
+		check(!pio.has_input());
+		check(!pio.match_leftmost_of(name, name_last));
+		check(!pio.match_leftmost_of(block_delim, block_delim_last));
+		
+		// printing error is ok at any time
+		pio.print_error("no error; functionality test");
+		std::getline(esstrm, out);
+		check(out == "no error; functionality test");
 	}
 	
 	return true;
 }
 
-static bool test_block_parser()
+static bool test_parser_io()
+{	
+	/*** regex matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
+		rm_name = mfact.create(matcher_factory::type::REGEX, "main");
+		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher_factory::type::REGEX, "//");
+	
+		const int name_last = 2;
+		const matcher * name[name_last] = {
+			rm_name.get(),
+			nullptr
+		};
+		
+		const int block_delim_last = 3;
+		const matcher * block_delim[block_delim_last] = {
+			rm_open.get(),
+			rm_close.get(),
+			nullptr
+		};
+		
+		check(test_parser_io_tests_trivial_multiline_comment(
+				name, name_last,
+				block_delim, block_delim_last,
+				rm_comment.get()
+			)
+		);
+	}
+	
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
+		sm_name = mfact.create(matcher_factory::type::STRING, "main");
+		sm_open = mfact.create(matcher_factory::type::STRING, "{");
+		sm_close = mfact.create(matcher_factory::type::STRING, "}");
+		sm_comment = mfact.create(matcher_factory::type::STRING, "//");
+	
+		const int name_last = 2;
+		const matcher * name[name_last] = {
+			sm_name.get(),
+			nullptr
+		};
+		
+		const int block_delim_last = 3;
+		const matcher * block_delim[block_delim_last] = {
+			sm_open.get(),
+			sm_close.get(),
+			nullptr
+		};
+		
+		check(test_parser_io_tests_trivial_multiline_comment(
+				name, name_last,
+				block_delim, block_delim_last,
+				sm_comment.get()
+			)
+		);
+	}
+		
+	return true;
+}
+
+static bool test_block_parser_run_tests(
+	const matcher * m_name,
+	const matcher * m_open,
+	const matcher * m_close,
+	const matcher * m_comment
+)
 {
 	class cls_test_parser : public block_parser
 	{
-		public:
+	public:
 		inline cls_test_parser(const stream_info& streams,
 			const matchers& patterns,
 			const parser_options& options
@@ -554,17 +593,10 @@ static bool test_block_parser()
 	std::string s_open("{");
 	std::string s_close("}");
 	
-	matcher_factory mfact;
-	
-	std::unique_ptr<matcher> r_name, r_open, r_close;
-	r_name = mfact.create(matcher_factory::type::REGEX, "main");
-	r_open = mfact.create(matcher_factory::type::REGEX, "\\{");
-	r_close = mfact.create(matcher_factory::type::REGEX, "\\}");
-	
 	block_parser::matchers patterns(
-		r_name.get(),
-		r_open.get(),
-		r_close.get(),
+		m_name,
+		m_open,
+		m_close,
 		nullptr,
 		nullptr,
 		nullptr
@@ -687,15 +719,12 @@ static bool test_block_parser()
 	/*** comment case ***/
 	{
 		std::string s_comment("//");
-		
-		std::unique_ptr<matcher> r_comment;
-		r_comment = mfact.create(matcher_factory::type::REGEX, "//");
 	
 		block_parser::matchers patterns(
-			r_name.get(),
-			r_open.get(),
-			r_close.get(),
-			r_comment.get(),
+			m_name,
+			m_open,
+			m_close,
+			m_comment,
 			nullptr,
 			nullptr
 		);
@@ -747,6 +776,49 @@ static bool test_block_parser()
 		check(pars.expose_vector()[2].line == "} //");
 		
 		check(!pars.find_block_name());
+	}
+	
+	return true;
+}
+
+static bool test_block_parser()
+{	
+	/*** regexp matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
+		rm_name = mfact.create(matcher_factory::type::REGEX, "main");
+		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher_factory::type::REGEX, "//");
+		
+		check(test_block_parser_run_tests(
+				rm_name.get(),
+				rm_open.get(),
+				rm_close.get(),
+				rm_comment.get()
+			)
+		);
+	}
+	
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
+		sm_name = mfact.create(matcher_factory::type::STRING, "main");
+		sm_open = mfact.create(matcher_factory::type::STRING, "{");
+		sm_close = mfact.create(matcher_factory::type::STRING, "}");
+		sm_comment = mfact.create(matcher_factory::type::STRING, "//");
+		
+		check(test_block_parser_run_tests(
+				sm_name.get(),
+				sm_open.get(),
+				sm_close.get(),
+				sm_comment.get()
+			)
+		);
 	}
 	
 	return true;
