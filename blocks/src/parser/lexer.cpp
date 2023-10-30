@@ -1,8 +1,8 @@
 #include <limits>
 
-#include "parser_io.hpp"
+#include "lexer.hpp"
 
-size_t parser_io::match_leftmost_of(const matcher * m[], size_t len)
+size_t lexer::match_leftmost_of(const matcher * m[], size_t len)
 {
 	size_t which_one = 0;
 	
@@ -33,7 +33,7 @@ size_t parser_io::match_leftmost_of(const matcher * m[], size_t len)
 	return which_one;
 }
 
-bool parser_io::read_line()
+bool lexer::read_line()
 {
 	if ((_has_input = bool(std::getline(_ins, _line))))
 	{

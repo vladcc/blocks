@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "matcher.hpp"
-#include "parser_io.hpp"
+#include "lexer.hpp"
 #include "block_parser.hpp"
 
 typedef const char * cpstr;
@@ -15,15 +15,15 @@ return false
 
 typedef bool(*ftest)(void);
 
-static bool test_parser_io();
+static bool test_lexer();
 static bool test_block_parser();
 
 static ftest tests[] = {
-	test_parser_io,
+	test_lexer,
 	test_block_parser
 };
 
-static bool test_parser_io_tests_trivial_multiline_comment(
+static bool test_lexer_tests_trivial_multiline_comment(
 	const matcher * name[], const int name_last,
 	const matcher * block_delim[], const int block_delim_last,
 	const matcher * m_comment
@@ -44,58 +44,58 @@ static bool test_parser_io_tests_trivial_multiline_comment(
 		// main{}
 		isstrm << s_name << s_open << s_close << '\n';
 		
-		parser_io pio(isstrm, osstrm, esstrm);
+		lexer lex(isstrm, osstrm, esstrm);
 		
-		check(!pio.has_input());
-		check(pio.read_line());
-		check(pio.has_input());
+		check(!lex.has_input());
+		check(lex.read_line());
+		check(lex.has_input());
 		
 		// match main
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(name, name_last));
-		check(pio.line_num() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(name, name_last));
+		check(lex.line_num() == 1);
 		
 		// match of block name doesn't advance the position
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
 		
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// print match line
-		check(pio.give_line() == "main{}");
-		pio.print_line(pio.give_line());
+		check(lex.get_line() == "main{}");
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "main{}");
 		
 		// match {
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		pio.advance_past_match();
-		check(pio.line_num() == 1);
-		check(pio.line_pos() == 5);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		lex.advance_past_match();
+		check(lex.line_num() == 1);
+		check(lex.line_pos() == 5);
 		
 		// match }
-		check(pio.line_pos() == 5);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		pio.advance_past_match();
-		check(pio.line_num() == 1);
-		check(pio.line_pos() == 6);
-		check(pio.give_line() == "main{}");
+		check(lex.line_pos() == 5);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		lex.advance_past_match();
+		check(lex.line_num() == 1);
+		check(lex.line_pos() == 6);
+		check(lex.get_line() == "main{}");
 		// last line
-		check(!pio.read_line());
+		check(!lex.read_line());
 		
 		// no more lines; no more matches; no printing of input
-		check(!pio.match_leftmost_of(name, name_last));
-		check(!pio.has_input());
-		check(pio.give_line().empty());
-		check(pio.line_num() == 1);
-		check(!pio.match_leftmost_of(name, name_last));
-		check(!pio.match_leftmost_of(block_delim, block_delim_last));
+		check(!lex.match_leftmost_of(name, name_last));
+		check(!lex.has_input());
+		check(lex.get_line().empty());
+		check(lex.line_num() == 1);
+		check(!lex.match_leftmost_of(name, name_last));
+		check(!lex.match_leftmost_of(block_delim, block_delim_last));
 		
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 	}
@@ -125,189 +125,189 @@ static bool test_parser_io_tests_trivial_multiline_comment(
 			<< "foo " << s_name << '\n'
 			<< s_open;
 		
-		parser_io pio(isstrm, osstrm, esstrm);
+		lexer lex(isstrm, osstrm, esstrm);
 		
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
-		check(pio.line_num() == 0);
-		check(!pio.has_input());
-		check(pio.read_line());
-		check(pio.has_input());
-		check(pio.line_num() == 1);
+		check(lex.line_num() == 0);
+		check(!lex.has_input());
+		check(lex.read_line());
+		check(lex.has_input());
+		check(lex.line_num() == 1);
 		
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// match main
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(name, name_last));
-		check(pio.line_num() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(name, name_last));
+		check(lex.line_num() == 1);
 		// match of block name doesn't advance the position
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "main {");
 		
 		// match {
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		pio.advance_past_match();
-		check(pio.line_num() == 1);
-		check(pio.line_pos() == 6);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		lex.advance_past_match();
+		check(lex.line_num() == 1);
+		check(lex.line_pos() == 6);
 		
 		// no more matches on the line; read another line
-		check(pio.line_pos() == 6);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
-		check(pio.read_line());
-		check(pio.line_num() == 2);
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 6);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.read_line());
+		check(lex.line_num() == 2);
+		check(lex.line_pos() == 0);
 		
 		// match }
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		pio.advance_past_match();
-		check(pio.line_num() == 2);
-		check(pio.line_pos() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		lex.advance_past_match();
+		check(lex.line_num() == 2);
+		check(lex.line_pos() == 1);
 
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// no more matches on the line; read another line
-		check(pio.line_pos() == 1);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
-		check(pio.read_line());
-		check(pio.line_num() == 3);
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.read_line());
+		check(lex.line_num() == 3);
+		check(lex.line_pos() == 0);
 		
 		// no more matches on the line; read another line
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
-		check(pio.read_line());
-		check(pio.line_num() == 4);
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.read_line());
+		check(lex.line_num() == 4);
+		check(lex.line_pos() == 0);
 		
 		// match }
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		pio.advance_past_match();
-		check(pio.line_num() == 4);
-		check(pio.line_pos() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		lex.advance_past_match();
+		check(lex.line_num() == 4);
+		check(lex.line_pos() == 1);
 		
 		// print line with mach
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "} }");
 		
 		// match }
-		check(pio.line_pos() == 1);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		pio.advance_past_match();
-		check(pio.line_num() == 4);
-		check(pio.line_pos() == 3);
+		check(lex.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		lex.advance_past_match();
+		check(lex.line_num() == 4);
+		check(lex.line_pos() == 3);
 		
 		// no more matches on the line; read another line
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
-		check(pio.read_line());
-		check(pio.line_num() == 5);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.read_line());
+		check(lex.line_num() == 5);
 		
 		// match }
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		pio.advance_past_match();
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		lex.advance_past_match();
 		
 		// match {
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		pio.advance_past_match();
-		check(pio.line_num() == 5);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		lex.advance_past_match();
+		check(lex.line_num() == 5);
 		
 		// no match for main; read another line
-		check(!pio.match_leftmost_of(name, name_last));
-		check(pio.read_line());
-		check(pio.line_num() == 6);
+		check(!lex.match_leftmost_of(name, name_last));
+		check(lex.read_line());
+		check(lex.line_num() == 6);
 		// match of block name doesn't advance the position
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
 		
 		// no match for main on this one also; read another line
-		check(pio.line_pos() == 0);
-		check(!pio.match_leftmost_of(name, name_last));
-		check(pio.read_line());
-		check(pio.line_num() == 7);
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
+		check(!lex.match_leftmost_of(name, name_last));
+		check(lex.read_line());
+		check(lex.line_num() == 7);
+		check(lex.line_pos() == 0);
 		
 		// match main
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(name, name_last));
-		check(pio.line_num() == 7);
-		check(pio.line_pos() == 4);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(name, name_last));
+		check(lex.line_num() == 7);
+		check(lex.line_pos() == 4);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "foo main");
 		
 		// no more matches on the line; read another line
-		check(pio.line_pos() == 4);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
-		check(pio.read_line());
-		check(pio.line_num() == 8);
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 4);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.read_line());
+		check(lex.line_num() == 8);
+		check(lex.line_pos() == 0);
 		
 		// match {
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		pio.advance_past_match();
-		check(pio.line_num() == 8);
-		check(pio.line_pos() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		lex.advance_past_match();
+		check(lex.line_num() == 8);
+		check(lex.line_pos() == 1);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "{");
 		
 		// still has input on the last line
-		check(pio.has_input());
+		check(lex.has_input());
 		
 		// no more matches on the line
-		check(pio.line_pos() == 1);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(lex.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counter
-		check(!pio.read_line());
-		check(pio.line_num() == 8);
-		check(pio.line_pos() == 1);
-		check(!pio.has_input());
+		check(!lex.read_line());
+		check(lex.line_num() == 8);
+		check(lex.line_pos() == 1);
+		check(!lex.has_input());
 		
 		// read after input
-		check(!pio.read_line());
-		check(!pio.has_input());
-		check(pio.line_pos() == 1);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(!lex.read_line());
+		check(!lex.has_input());
+		check(lex.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counters
-		check(pio.line_num() == 8);
-		check(pio.line_pos() == 1);
+		check(lex.line_num() == 8);
+		check(lex.line_pos() == 1);
 		
 		// printing error is ok any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// read after input
-		check(!pio.read_line());
-		check(pio.line_pos() == 1);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 0);
+		check(!lex.read_line());
+		check(lex.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 0);
 		// no more lines; don't advance the counter
-		check(pio.line_num() == 8);
-		check(pio.line_pos() == 1);
+		check(lex.line_num() == 8);
+		check(lex.line_pos() == 1);
 		
 		// printing error is ok any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 	}
@@ -336,40 +336,40 @@ static bool test_parser_io_tests_trivial_multiline_comment(
 			<< s_comment << ' ' << s_open << '\n'
 			<< s_close;
 			
-		parser_io pio(isstrm, osstrm, esstrm);
+		lexer lex(isstrm, osstrm, esstrm);
 		
-		check(pio.line_num() == 0);
-		check(!pio.has_input());
-		check(pio.read_line());
-		check(pio.has_input());
-		check(pio.line_num() == 1);
+		check(lex.line_num() == 0);
+		check(!lex.has_input());
+		check(lex.read_line());
+		check(lex.has_input());
+		check(lex.line_num() == 1);
 		
 		// match main
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(name, name_last) == 1);
-		check(pio.line_num() == 1);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(name, name_last) == 1);
+		check(lex.line_num() == 1);
 		// match of block name doesn't advance the position
-		check(pio.line_pos() == 3);
+		check(lex.line_pos() == 3);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "// main {");
 		
 		// printing error is ok any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// match {
-		check(pio.line_pos() == 3);
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		pio.advance_past_match();
-		check(pio.line_num() == 1);
-		check(pio.line_pos() == 9);
+		check(lex.line_pos() == 3);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		lex.advance_past_match();
+		check(lex.line_num() == 1);
+		check(lex.line_pos() == 9);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "// main {");
 	}
@@ -397,94 +397,94 @@ static bool test_parser_io_tests_trivial_multiline_comment(
 		name[name_last-1] = m_comment;
 		block_delim[block_delim_last-1] = m_comment;
 		
-		parser_io pio(isstrm, osstrm, esstrm);
+		lexer lex(isstrm, osstrm, esstrm);
 		
-		check(pio.line_num() == 0);
-		check(!pio.has_input());
-		check(pio.read_line());
-		check(pio.has_input());
-		check(pio.line_num() == 1);
+		check(lex.line_num() == 0);
+		check(!lex.has_input());
+		check(lex.read_line());
+		check(lex.has_input());
+		check(lex.line_num() == 1);
 		
 		// match main
-		check(pio.line_pos() == 0);
-		check(pio.match_leftmost_of(name, name_last) == 2);
+		check(lex.line_pos() == 0);
+		check(lex.match_leftmost_of(name, name_last) == 2);
 		
 		// match of comment advances the position
-		check(pio.line_pos() == 0);
-		pio.advance_past_match();
-		check(pio.line_pos() == 1);
+		check(lex.line_pos() == 0);
+		lex.advance_past_match();
+		check(lex.line_pos() == 1);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "// main {");
 		
 		
-		check(pio.read_line());
-		check(!pio.match_leftmost_of(name, name_last));
-		check(pio.read_line());
-		check(pio.match_leftmost_of(name, name_last) == 1);
-		check(pio.line_num() == 3);
+		check(lex.read_line());
+		check(!lex.match_leftmost_of(name, name_last));
+		check(lex.read_line());
+		check(lex.match_leftmost_of(name, name_last) == 1);
+		check(lex.line_num() == 3);
 		// match of block name doesn't advance the position
-		check(pio.line_pos() == 0);
+		check(lex.line_pos() == 0);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "main {");
 		
 		// match {
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 1);
-		check(pio.line_num() == 3);
-		check(pio.line_pos() == 5);
-		pio.advance_past_match();
-		check(pio.line_pos() == 6);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 1);
+		check(lex.line_num() == 3);
+		check(lex.line_pos() == 5);
+		lex.advance_past_match();
+		check(lex.line_pos() == 6);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "main {");
 		
-		check(pio.read_line());
+		check(lex.read_line());
 		// match //
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 3);
-		check(pio.line_num() == 4);
-		check(pio.line_pos() == 0);
-		pio.advance_past_match();
-		check(pio.line_pos() == 1);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 3);
+		check(lex.line_num() == 4);
+		check(lex.line_pos() == 0);
+		lex.advance_past_match();
+		check(lex.line_pos() == 1);
 		
 		// printing error is ok any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "// {");
 		
-		check(pio.read_line());
+		check(lex.read_line());
 		// match }
-		check(pio.match_leftmost_of(block_delim, block_delim_last) == 2);
-		check(pio.line_num() == 5);
-		check(pio.line_pos() == 0);
+		check(lex.match_leftmost_of(block_delim, block_delim_last) == 2);
+		check(lex.line_num() == 5);
+		check(lex.line_pos() == 0);
 		
 		// print line with match
-		pio.print_line(pio.give_line());
+		lex.print_line(lex.get_line());
 		std::getline(osstrm, out);
 		check(out == "} //");
 		
 		// last line
-		check(!pio.read_line());
+		check(!lex.read_line());
 		
 		// no more lines; no more matches; no printing of input
-		check(!pio.match_leftmost_of(name, name_last));
-		check(!pio.has_input());
-		check(!pio.match_leftmost_of(name, name_last));
-		check(!pio.match_leftmost_of(block_delim, block_delim_last));
+		check(!lex.match_leftmost_of(name, name_last));
+		check(!lex.has_input());
+		check(!lex.match_leftmost_of(name, name_last));
+		check(!lex.match_leftmost_of(block_delim, block_delim_last));
 		
 		// printing error is ok at any time
-		pio.print_error("no error; functionality test");
+		lex.print_error("no error; functionality test");
 		std::getline(esstrm, out);
 		check(out == "no error; functionality test");
 	}
@@ -492,7 +492,7 @@ static bool test_parser_io_tests_trivial_multiline_comment(
 	return true;
 }
 
-static bool test_parser_io()
+static bool test_lexer()
 {	
 	/*** regex matchers ***/
 	{
@@ -517,7 +517,7 @@ static bool test_parser_io()
 			nullptr
 		};
 		
-		check(test_parser_io_tests_trivial_multiline_comment(
+		check(test_lexer_tests_trivial_multiline_comment(
 				name, name_last,
 				block_delim, block_delim_last,
 				rm_comment.get()
@@ -548,7 +548,7 @@ static bool test_parser_io()
 			nullptr
 		};
 		
-		check(test_parser_io_tests_trivial_multiline_comment(
+		check(test_lexer_tests_trivial_multiline_comment(
 				name, name_last,
 				block_delim, block_delim_last,
 				sm_comment.get()
@@ -582,8 +582,8 @@ static bool test_block_parser_run_tests(
 		bool find_open_or_close(tok * out_which)
 		{return block_parser::find_open_or_close(out_which);}
 		
-		parser_io& expose_parser_io()
-		{return block_parser::expose_parser_io();}
+		lexer& expose_lexer()
+		{return block_parser::expose_lexer();}
 		
 		inline std::vector<block_parser::block_line_info>& expose_vector()
 		{return block_parser::expose_vector();}
@@ -641,7 +641,7 @@ static bool test_block_parser_run_tests(
 		check(!pars.find_open_or_close(&out_which));
 		check(cls_test_parser::NONE == out_which);
 		
-		pars.expose_parser_io().read_line();
+		pars.expose_lexer().read_line();
 		
 		check(pars.find_open_or_close(&out_which));
 		check(cls_test_parser::CLOSE == out_which);
@@ -690,7 +690,7 @@ static bool test_block_parser_run_tests(
 		
 		check(!pars.expose_vector().size());
 		
-		check(pars.expose_parser_io().read_line());
+		check(pars.expose_lexer().read_line());
 		check(!pars.expose_vector().size());
 		check(pars.find_block_name());
 		
@@ -756,7 +756,7 @@ static bool test_block_parser_run_tests(
 		check(!pars.find_open_or_close(&out_which));
 		check(!pars.expose_vector().size());
 		
-		check(pars.expose_parser_io().read_line());
+		check(pars.expose_lexer().read_line());
 		check(!pars.expose_vector().size());
 		
 		check(pars.find_block_name());
@@ -783,7 +783,7 @@ static bool test_block_parser_run_tests(
 
 static bool test_block_parser()
 {	
-	/*** regexp matchers ***/
+	/*** regex matchers ***/
 	{
 		matcher_factory mfact;
 		

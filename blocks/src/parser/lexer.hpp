@@ -6,10 +6,10 @@
 
 #include "matcher.hpp"
 
-class parser_io
+class lexer
 {
 public:
-	inline parser_io(std::istream& ins,
+	inline lexer(std::istream& ins,
 		std::ostream& outs,
 		std::ostream& errs
 	) :
@@ -56,7 +56,7 @@ public:
 	inline void print_str(const char * str)
 	{_outs << str;}
 	
-	inline const std::string& give_line()
+	inline const std::string& get_line()
 	{return _line;}
 	
 	inline bool has_input()

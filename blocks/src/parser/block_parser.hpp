@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "parser_io.hpp"
+#include "lexer.hpp"
 #include "matcher.hpp"
 
 class block_parser
@@ -46,23 +46,23 @@ public:
 			const matcher * block_open,
 			const matcher * block_close,
 			const matcher * comment,
-			const matcher * regex_match,
-			const matcher * regex_no_match
+			const matcher * pat_match,
+			const matcher * pat_no_match
 		) :
 			name(block_name),
 			open(block_open),
 			close(block_close),
 			comment(comment),
-			regex_match(regex_match),
-			regex_no_match(regex_no_match)
+			pat_match(pat_match),
+			pat_no_match(pat_no_match)
 		{}
 		
 		const matcher * name;
 		const matcher * open;
 		const matcher * close;
 		const matcher * comment;
-		const matcher * regex_match;
-		const matcher * regex_no_match;
+		const matcher * pat_match;
+		const matcher * pat_no_match;
 	};
 	
 	struct parser_options
@@ -92,8 +92,8 @@ public:
 			
 		const char * mark_start;
 		const char * mark_end;
-		const char * regex_match;
-		const char * regex_no_match;
+		const char * pat_match;
+		const char * pat_no_match;
 		const char ** current_file;
 		int block_count;
 		int skip_count;
@@ -108,12 +108,16 @@ public:
 		const matchers& patterns,
 		const parser_options& options
 	) :
-		_parse_io(*streams.in, *streams.out, *streams.err),
+		_lexer(*streams.in, *streams.out, *streams.err),
 		_matchers(patterns),
 		_was_line_saved(false),
 		_fname(nullptr),
 		_streams(streams),
-		_parse_opts(options)
+		_parse_opts(options),
+		_err_pref(""),
+		_err_text(""),
+		_spaces(""),
+		_fname_on_match("")
 	{}
 	
 	bool parse(const char * fname);
@@ -143,27 +147,25 @@ protected:
 	bool find_block_name();
 	bool find_open_or_close(tok * out_which);
 	
-	inline parser_io& expose_parser_io()
-	{return _parse_io;}
+	inline lexer& expose_lexer()
+	{return _lexer;}
 	
 	inline std::vector<block_line_info>& expose_vector()
 	{return _current_block;}
 	
 private:
-	void dbg_log(const char * action, const char * fname, int val);
-	
-	bool get_block_body();
-	void report_error();
-	
-	bool read_next_line();
-	void save_line_once(int token);
-	
-	bool match_in_block(const matcher * m);
-	void post_process_block();
-	void print_block();
+	void _dbg_log(const char * action, const char * fname, int val);
+	bool _get_block_body();
+	void _report_error();
+	bool _read_next_line();
+	void _save_line_once(tok token);
+	bool _match_in_block(const matcher * m);
+	void _post_process_block();
+	void _print_block();
+	void _init_state(const char * fname);
 	
 private:
-	parser_io _parse_io;
+	lexer _lexer;
 	std::vector<block_line_info> _current_block;
 	matchers _matchers;
 	bool _was_line_saved;
@@ -171,5 +173,10 @@ private:
 	const char * _fname;
 	stream_info _streams;
 	parser_options _parse_opts;
+	
+	std::string _err_pref;
+	std::string _err_text;
+	std::string _spaces;
+	std::string _fname_on_match;
 };
 #endif

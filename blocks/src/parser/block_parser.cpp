@@ -4,19 +4,19 @@
 #define CALL   "call  "
 #define RETURN "return"
 
-#define log(act) if (_streams.log) {dbg_log(act, __func__, -1);} else {}
+#define log(act) if (_streams.log) {_dbg_log(act, __func__, -1);} else {}
 #define log_call()     log(CALL)
 #define log_return()   log(RETURN)
 
 #define logv(act, val)\
-if (_streams.log) {dbg_log(act, __func__, (val));} else {}
+if (_streams.log) {_dbg_log(act, __func__, (val));} else {}
 
 #define logv_call(val)   logv(CALL, val)
 #define logv_return(val) logv(RETURN, val)
 
 const char block_parser::default_prefix[] = "block_parser";
 
-void block_parser::dbg_log(const char * action, const char * fname, int val)
+void block_parser::_dbg_log(const char * action, const char * fname, int val)
 {
 	if (_streams.log)
 	{
@@ -27,10 +27,20 @@ void block_parser::dbg_log(const char * action, const char * fname, int val)
 		if (val != -1)
 			log_strm << " val " << val;
 			
-		log_strm << " line " << _parse_io.line_num()
-			<< " position " << _parse_io.line_pos()
+		log_strm << " line " << _lexer.line_num()
+			<< " position " << _lexer.line_pos()
 			<< '\n';
 	}
+}
+
+void block_parser::_init_state(const char * fname)
+{
+	_lexer.reset();
+	_lexer.read_line();
+	_current_block.clear();
+	_was_line_saved = false;
+	_fname = fname;
+	_fname_on_match.assign(_fname).append(":");
 }
 
 bool block_parser::parse(const char * fname)
@@ -38,24 +48,20 @@ bool block_parser::parse(const char * fname)
 	if (0 == _parse_opts.block_count)
 		return false;
 	
-	_parse_io.reset();
-	_parse_io.read_line();
-	_current_block.clear();
-	_was_line_saved = false;
-	_fname = fname;
+	_init_state(fname);
 	
 	bool ret = false;
 	bool block_correct = false;
 	while (find_block_name())
 	{
-		block_correct = get_block_body();
+		block_correct = _get_block_body();
 		
-		post_process_block();
+		_post_process_block();
 		
 		if (block_correct)
 			ret = true;
 		else
-			report_error();
+			_report_error();
 		
 		_current_block.clear();
 		
@@ -66,7 +72,7 @@ bool block_parser::parse(const char * fname)
 	return ret;
 }
 
-bool block_parser::get_block_body()
+bool block_parser::_get_block_body()
 {	
 	log_call(); 
 	
@@ -108,22 +114,22 @@ bool block_parser::find_block_name()
 	};
 	
 	size_t match = 0;
-	while (_parse_io.has_input())
+	while (_lexer.has_input())
 	{
-		if ((match = _parse_io.match_leftmost_of(marr, marr_size)))
+		if ((match = _lexer.match_leftmost_of(marr, marr_size)))
 		{	
 			if (marr_size == match) // comment is found
 			{
-				read_next_line();
+				_read_next_line();
 				continue;
 			}
 				
-			save_line_once(NAME);
+			_save_line_once(NAME);
 			ret = true;
 			break;
 		}
 	
-		read_next_line();
+		_read_next_line();
 	}
 	
 	logv_return(ret);
@@ -144,18 +150,18 @@ bool block_parser::find_open_or_close(tok * out_which)
 			_matchers.comment // nullptr is ok
 	};
 	
-	while (_parse_io.has_input())
+	while (_lexer.has_input())
 	{
-		which_match = _parse_io.match_leftmost_of(marr, marr_size);
+		which_match = _lexer.match_leftmost_of(marr, marr_size);
 		
 		if (marr_size == which_match)
 			which_match = COMMENT;
 		
-		save_line_once(which_match);
+		_save_line_once(static_cast<tok>(which_match));
 		
 		if (which_match)
 		{
-			_parse_io.advance_past_match();
+			_lexer.advance_past_match();
 			if ((OPEN == which_match) || (CLOSE == which_match))
 			{
 				*out_which = static_cast<tok>(which_match);
@@ -164,31 +170,31 @@ bool block_parser::find_open_or_close(tok * out_which)
 			}
 		}
 		
-		read_next_line();
+		_read_next_line();
 	}
 	
 	logv_return(which_match);
 	return ret;
 }
 
-bool block_parser::read_next_line()
+bool block_parser::_read_next_line()
 {
 	log_call();
 	_was_line_saved = false;
 	
-	bool ret = _parse_io.read_line();
+	bool ret = _lexer.read_line();
 	
 	logv_return(ret);
 	return ret;
 }
 
-void block_parser::save_line_once(int token)
+void block_parser::_save_line_once(tok token)
 {
 	log_call();
 	if (!_was_line_saved)
 	{
-		_current_block.emplace_back(_parse_io.give_line(),
-			token, _parse_io.line_num());
+		_current_block.emplace_back(_lexer.get_line(),
+			token, _lexer.line_num());
 		_was_line_saved = true;
 	}
 	else if (_current_block.size())
@@ -197,7 +203,7 @@ void block_parser::save_line_once(int token)
 	log_return();
 }
 
-bool block_parser::match_in_block(const matcher * m)
+bool block_parser::_match_in_block(const matcher * m)
 {	
 	bool ret = false;
 	matcher * ccm = const_cast<matcher *>(m);
@@ -217,25 +223,25 @@ bool block_parser::match_in_block(const matcher * m)
 	return ret;
 }
 
-void block_parser::post_process_block()
+void block_parser::_post_process_block()
 {
 	log_call();
 	
 	if (!_parse_opts.quiet)
 	{
-		if (_matchers.regex_match && !match_in_block(_matchers.regex_match))
+		if (_matchers.pat_match && !_match_in_block(_matchers.pat_match))
 			return;
 		
-		if (_matchers.regex_no_match && match_in_block(_matchers.regex_no_match))
+		if (_matchers.pat_no_match && _match_in_block(_matchers.pat_no_match))
 			return;
 		
 		if (0 == _parse_opts.skip_count)
 		{ 
 			if (-1 == _parse_opts.block_count)
-				print_block();
+				_print_block();
 			else if (_parse_opts.block_count > 0)
 			{
-				print_block();
+				_print_block();
 				--_parse_opts.block_count;
 			}
 		}
@@ -246,21 +252,18 @@ void block_parser::post_process_block()
 	log_return();
 }
 
-void block_parser::print_block()
+void block_parser::_print_block()
 {
 	log_call();
 	
 	if (_parse_opts.print_fname_on_match && _fname)
 	{
-		std::string fname(_fname);
-		fname += ":";
-		
-		_parse_io.print_line(fname);
+		_lexer.print_line(_fname_on_match);
 		_fname = nullptr;
 	}
 	
 	if (_parse_opts.mark_start)
-		_parse_io.print_line(_parse_opts.mark_start);
+		_lexer.print_line(_parse_opts.mark_start);
 
 	for (size_t i = 0, end = _current_block.size(); i < end; ++i)
 	{
@@ -284,71 +287,64 @@ void block_parser::print_block()
 		
 		if (_parse_opts.line_numbers)
 		{
-			const int cMax = 16;
-			char num[cMax] = {0};
+			const int num_max_len = 16;
+			char num[num_max_len] = {0};
 			
-			snprintf(num, cMax, "%8d ", _current_block[i].line_no);
-			_parse_io.print_str(num);
+			snprintf(num, num_max_len, "%8d ", _current_block[i].line_no);
+			_lexer.print_str(num);
 		}
 			
-		_parse_io.print_line(_current_block[i].line);
+		_lexer.print_line(_current_block[i].line);
 	}
 
 	if (_parse_opts.mark_end)
-		_parse_io.print_line(_parse_opts.mark_end);
+		_lexer.print_line(_parse_opts.mark_end);
 		
 	log_return();
 }
 
-void block_parser::report_error()
+void block_parser::_report_error()
 {
 	log_call();
 	
-	static std::string err_pref("");
-	static std::string err("");
-	static std::string space("");
+	_err_pref.clear();
+	_err_text.clear();
+	_spaces.clear();
 	
-	err_pref.clear();
-	err.clear();
-	space.clear();
+	const block_line_info& first_line = _current_block.front();
+	const block_line_info& bad_line = _current_block.back();
 	
-	const block_line_info& first = _current_block[0];
-	block_line_info first_line(first.line, first.what, first.line_no);
+	_err_pref = _streams.err_pref;
+	_err_pref += "error: ";
 	
-	const block_line_info& last = _current_block.back();
-	block_line_info bad_line(last.line, last.what, last.line_no);
-	
-	err_pref = _streams.err_pref;
-	err_pref += "error: ";
-	
-	err = err_pref;
+	_err_text = _err_pref;
 	if (_parse_opts.current_file)
 	{
-		err += "file ";
-		err += *_parse_opts.current_file;
-		err += ",";
+		_err_text += "file ";
+		_err_text += *_parse_opts.current_file;
+		_err_text += ",";
 	}
 	
-	err += " line ";
-	err += std::to_string(_parse_io.line_num());
-	err += ", col ";
-	err += std::to_string(_parse_io.line_pos());
-	err += ": improper nesting from line ";
-	err += std::to_string(first_line.line_no);
-	_parse_io.print_error(err);
+	_err_text += " line ";
+	_err_text += std::to_string(_lexer.line_num());
+	_err_text += ", col ";
+	_err_text += std::to_string(_lexer.line_pos());
+	_err_text += ": improper nesting from line ";
+	_err_text += std::to_string(first_line.line_no);
+	_lexer.print_error(_err_text);
 	
-	err = err_pref;
-	err += bad_line.line;
-	_parse_io.print_error(err);
+	_err_text = _err_pref;
+	_err_text += bad_line.line;
+	_lexer.print_error(_err_text);
 	
-	size_t real_pos = _parse_io.line_pos();
+	size_t real_pos = _lexer.line_pos();
 	real_pos = (real_pos) ? real_pos-1 : 0;
 	
-	space.insert(0, real_pos, ' ');
-	space += "^";
-	err = err_pref;
-	err += space;
-	_parse_io.print_error(err);
+	_spaces.insert(0, real_pos, ' ');
+	_spaces += "^";
+	_err_text = _err_pref;
+	_err_text += _spaces;
+	_lexer.print_error(_err_text);
 	
 	if (_parse_opts.fatal_error)
 		exit(EXIT_FAILURE);
