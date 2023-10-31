@@ -4,7 +4,8 @@ help: _help
 CMPL := g++
 EXTRA_FLAGS := 
 INLC_PATHS := -I ./src/matcher -I ./src/parser
-FLAGS := $(INLC_PATHS) -Wall -Wfatal-errors $(EXTRA_FLAGS)
+WARN_FLAGS := -Wall -Wfatal-errors
+FLAGS := $(INLC_PATHS) $(WARN_FLAGS) $(EXTRA_FLAGS)
 
 SRC_DIR := ./src
 OBJ_DIR := ./obj

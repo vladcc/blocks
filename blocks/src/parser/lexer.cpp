@@ -2,40 +2,56 @@
 
 #include "lexer.hpp"
 
-size_t lexer::match_leftmost_of(const matcher * m[], size_t len)
+lexer::tok lexer::_match_leftmost_of(const tok_match * tms, size_t len)
 {
-	size_t which_one = 0;
+	tok next_tok = EOI;
 	
-	if(_has_input)
+	if (_has_input)
 	{
+		next_tok = NONE;
 		ptrdiff_t mpos = 0;
 		ptrdiff_t pos = std::numeric_limits<ptrdiff_t>::max();
 		const char * pstr = _line.c_str();
 		
-		matcher * pm = nullptr;
+		const tok_match * ptm = nullptr;
+		matcher * m = nullptr;
 		for (size_t i = 0; i < len; ++i)
 		{
-			if ((pm = const_cast<matcher *>(m[i])))
+			ptm = tms+i;
+			if ((m = const_cast<matcher *>(ptm->m)))
 			{
-				mpos = pm->match(pstr + _match_so_far);
+				mpos = m->match(pstr + _match_so_far);
 				if (mpos != matcher::NO_MATCH && mpos < pos)
 				{
 					pos = mpos;
-					which_one = i+1;
+					next_tok = ptm->t;
 				}
 			}
 		}
 		
-		if (which_one)
+		if (next_tok != NONE)
 			_match_so_far += pos;
 	}
 	
-	return which_one;
+	return next_tok;
 }
 
-bool lexer::read_line()
+lexer::tok lexer::block_name_or_comment()
 {
-	if ((_has_input = bool(std::getline(_ins, _line))))
+	return _match_leftmost_of(_name_or_comment.data(), _name_or_comment.size());
+}
+
+lexer::tok lexer::block_open_close_or_comment()
+{
+	return _match_leftmost_of(
+		_open_close_or_comment.data(),
+		_open_close_or_comment.size()
+	);
+}
+
+bool lexer::next_line()
+{
+	if ((_has_input = static_cast<bool>(std::getline(_in, _line))))
 	{
 		++_line_no;
 		_match_so_far = 0;

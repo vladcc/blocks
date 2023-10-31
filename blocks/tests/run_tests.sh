@@ -136,6 +136,7 @@ function test_input_errors
 
 function run_cmd
 {
+	#echo "$@"
 	eval "$@" >> "$G_TESTS_OUT" 2>&1
 }
 
