@@ -46,21 +46,23 @@ public:
 	const std::vector<std::string>& get_error_report()
 	{return _error_report;}
 	
-protected:	
-	bool find_block_name();
-	bool find_open_or_close(lexer::tok * out_which);
-	
-	inline lexer& expose_lexer()
-	{return _lexer;}
-	
-	inline std::vector<block_line>& expose_vector()
-	{return _current_block;}
-	
 private:
+	bool _find_block_name();
+	bool _find_open_or_close(lexer::tok * out_which);
 	bool _get_block_body();
 	void _error_report_generate();
 	void _error_report_clear();
 	void _save_line_unique(lexer::tok token);
+	
+protected:	
+	bool find_block_name_()
+	{return _find_block_name();}
+	
+	bool find_open_or_close_(lexer::tok * out_which)
+	{return _find_open_or_close(out_which);}
+	
+	inline lexer& get_lexer_()
+	{return _lexer;}
 	
 private:
 	std::vector<block_line> _current_block;

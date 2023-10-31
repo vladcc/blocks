@@ -20,7 +20,7 @@ lexer::tok lexer::_match_leftmost_of(const tok_match * tms, size_t len)
 			ptm = tms+i;
 			if ((m = const_cast<matcher *>(ptm->m)))
 			{
-				mpos = m->match(pstr + _match_so_far);
+				mpos = m->match(pstr + _line_pos);
 				if (mpos != matcher::NO_MATCH && mpos < pos)
 				{
 					pos = mpos;
@@ -30,7 +30,7 @@ lexer::tok lexer::_match_leftmost_of(const tok_match * tms, size_t len)
 		}
 		
 		if (next_tok != NONE)
-			_match_so_far += pos;
+			_line_pos += pos;
 	}
 	
 	return next_tok;
@@ -54,7 +54,7 @@ bool lexer::next_line()
 	if ((_has_input = static_cast<bool>(std::getline(_in, _line))))
 	{
 		++_line_no;
-		_match_so_far = 0;
+		_line_pos = 0;
 	}
 	return _has_input;
 }

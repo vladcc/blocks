@@ -14,7 +14,7 @@ bool block_parser::parse_block()
 	_current_block.clear();
 	_error_report_clear();
 	
-	bool has_block_start = find_block_name();
+	bool has_block_start = _find_block_name();
 	
 	if (has_block_start && !_get_block_body())
 		_error_report_generate();
@@ -28,7 +28,7 @@ bool block_parser::_get_block_body()
 	size_t stack = 0;
 	lexer::tok which = lexer::tok::NONE;
 	
-	while (find_open_or_close(&which))
+	while (_find_open_or_close(&which))
 	{
 		if (lexer::tok::OPEN == which)
 			++stack;
@@ -47,7 +47,7 @@ out:
 	return ret;
 }
 
-bool block_parser::find_block_name()
+bool block_parser::_find_block_name()
 {
 	lexer::tok which = lexer::tok::NONE;
 	
@@ -68,7 +68,7 @@ bool block_parser::find_block_name()
 	return (lexer::tok::NAME == which);
 }
 
-bool block_parser::find_open_or_close(lexer::tok * out_which)
+bool block_parser::_find_open_or_close(lexer::tok * out_which)
 {
 	bool ret = false;
 	lexer::tok which = lexer::tok::NONE;
@@ -81,13 +81,13 @@ bool block_parser::find_open_or_close(lexer::tok * out_which)
 			_lexer.next_line();
 		else if ((lexer::tok::OPEN == which) || (lexer::tok::CLOSE == which))
 		{
-			_lexer.advance_past_match();	
-			*out_which = which;
+			_lexer.advance_past_match();
 			ret = true;
 			break;
 		}
 	}
 	
+	*out_which = which;
 	return ret;
 }
 
