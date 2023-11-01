@@ -1016,18 +1016,18 @@ int main(int argc, char * argv[])
 	{
 		matcher_factory mfact;
 		
-		b_name = mfact.create(matcher_factory::type::REGEX,
+		b_name = mfact.create(matcher::type::REGEX,
 			gather_opts.block_name, matcher_flags);
-		b_start = mfact.create(matcher_factory::type::REGEX,
+		b_start = mfact.create(matcher::type::REGEX,
 			gather_opts.block_start, matcher_flags);
-		b_end = mfact.create(matcher_factory::type::REGEX,
+		b_end = mfact.create(matcher::type::REGEX,
 			gather_opts.block_end, matcher_flags);
-		b_comment = mfact.create(matcher_factory::type::REGEX,
+		b_comment = mfact.create(matcher::type::REGEX,
 			gather_opts.comment, matcher_flags);
 	
-		r_match = std::move(mfact.create(matcher_factory::type::REGEX,
+		r_match = std::move(mfact.create(matcher::type::REGEX,
 			gather_opts.regex_match, matcher_flags));
-		r_no_match = std::move(mfact.create(matcher_factory::type::REGEX,
+		r_no_match = std::move(mfact.create(matcher::type::REGEX,
 			gather_opts.regex_no_match, matcher_flags));
 	}
 	catch(const std::runtime_error& e)

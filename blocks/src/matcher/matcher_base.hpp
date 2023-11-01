@@ -11,6 +11,8 @@ public:
 		NO_MATCH = -1
 	}; 
 	
+	enum class type {STRING, REGEX};
+	
 	enum flags : uint32_t {
 		NONE  = 0x00,
 		ICASE = 0x01,

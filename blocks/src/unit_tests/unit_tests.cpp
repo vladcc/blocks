@@ -239,10 +239,10 @@ static bool test_lexer()
 		matcher_factory mfact;
 		
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
-		rm_name = mfact.create(matcher_factory::type::REGEX, "main");
-		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher_factory::type::REGEX, "//");
+		rm_name = mfact.create(matcher::type::REGEX, "main");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher::type::REGEX, "//");
 	
 		lexer::matchers pats(
 			rm_name.get(),
@@ -259,10 +259,10 @@ static bool test_lexer()
 		matcher_factory mfact;
 		
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
-		sm_name = mfact.create(matcher_factory::type::STRING, "main");
-		sm_open = mfact.create(matcher_factory::type::STRING, "{");
-		sm_close = mfact.create(matcher_factory::type::STRING, "}");
-		sm_comment = mfact.create(matcher_factory::type::STRING, "//");
+		sm_name = mfact.create(matcher::type::STRING, "main");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_comment = mfact.create(matcher::type::STRING, "//");
 	
 		lexer::matchers pats(
 			sm_name.get(),
@@ -296,148 +296,143 @@ static bool test_block_parser_test_blocks(
 	const matcher * m_comment,
 	const matcher * m_name2
 )
-{
-	class cls_test_parser : public block_parser
-	{
-	public:
-		cls_test_parser(lexer& lex) : block_parser::block_parser(lex)
-		{}
-		
-		bool find_block_name()
-		{return block_parser::find_block_name_();}
-		
-		bool find_open_or_close(lexer::tok * out_which)
-		{return block_parser::find_open_or_close_(out_which);}
-		
-		lexer& get_lexer()
-		{return block_parser::get_lexer_();}
-	};
-	
-	std::string s_name("main");
-	std::string s_open("{");
-	std::string s_close("}");
-	
+{	
 	/*** test trivial case ***/
 	{
 		std::string input("{} } {}\n");
 		std::stringstream isstrm;
 		lexer::matchers pats(m_name, m_open, m_close);
 		lexer lex(isstrm, pats);
-		cls_test_parser pars(lex);
+		block_parser pars(lex);
 		
-		isstrm.str(input);
-		
-		pars.init("n/a");
-		
-		check(pars.get_lexer().line_pos() == 0);
-		check(pars.get_lexer().line_num() == 1);
-		check(pars.get_lexer().has_input() == 1);
-		
-		check(pars.parse_block());
-		check(!pars.had_error());
-		check(pars.parse_block());
-		check(!pars.had_error());
-		
-		check(!pars.parse_block());
-		check(!pars.had_error());
-		
-		check(pars.get_lexer().line_pos() == 7);
-		check(pars.get_lexer().line_num() == 1);
-		check(!pars.get_lexer().has_input() == 1);
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+			
+			pars.init("n/a");
+			
+			check(pars.parse_block());
+			check(!pars.had_error());
+			check(pars.parse_block());
+			check(!pars.had_error());
+			
+			check(!pars.parse_block());
+			check(!pars.had_error());
+		}
 	}
 	
 	/*** test parser find_*() ***/
 	{
+		class cls_test_parser : public block_parser
 		{
-			std::string input("foo main } { { } ");
-			std::stringstream isstrm;
-			lexer::matchers pats(m_name, m_open, m_close);
-			lexer lex(isstrm, pats);
-			cls_test_parser pars(lex);
+		public:
+			cls_test_parser(lexer& lex) : block_parser::block_parser(lex)
+			{}
 			
-			isstrm.str(input);
+			bool find_block_name()
+			{return block_parser::find_block_name_();}
 			
-			pars.init("n/a");
+			bool find_open_or_close(lexer::tok * out_which)
+			{return block_parser::find_open_or_close_(out_which);}
 			
-			check(pars.get_lexer().line_pos() == 0);
-			check(pars.get_lexer().line_num() == 1);
-			check(pars.get_lexer().has_input() == 1);
-			
-			// block name same as block open
-			check(pars.find_block_name());
-			check(pars.get_lexer().line_pos() == 11);
-			check(pars.get_lexer().line_num() == 1);
-			
-			lexer::tok out_which = lexer::tok::NONE;
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::OPEN == out_which);
-			
-			// find_open_or_close() advances automatically
-			check(pars.get_lexer().line_pos() == 12);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::OPEN == out_which);
-			check(pars.get_lexer().line_pos() == 14);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::CLOSE == out_which);
-			check(pars.get_lexer().line_pos() == 16);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(!pars.find_open_or_close(&out_which));
-			check(lexer::tok::EOI == out_which);
-			
-			check(pars.get_lexer().line_pos() == 16);
-			check(pars.get_lexer().line_num() == 1);
-			check(!pars.get_lexer().has_input() == 1);
-		}
+			lexer& get_lexer()
+			{return block_parser::get_lexer_();}
+		};
 		
 		{
-			std::string input("foo main }{{}");
-			std::stringstream isstrm;
-			lexer::matchers pats(m_name, m_open, m_close);
-			lexer lex(isstrm, pats);
-			cls_test_parser pars(lex);
+			/*** test matching with spaces ***/
+			{
+				std::string input("foo main } { { } ");
+				std::stringstream isstrm;
+				lexer::matchers pats(m_name, m_open, m_close);
+				lexer lex(isstrm, pats);
+				cls_test_parser pars(lex);
+				
+				isstrm.str(input);
+				
+				pars.init("n/a");
+				
+				check(pars.get_lexer().line_pos() == 0);
+				check(pars.get_lexer().line_num() == 1);
+				check(pars.get_lexer().has_input() == 1);
+				
+				// block name same as block open
+				check(pars.find_block_name());
+				check(pars.get_lexer().line_pos() == 11);
+				check(pars.get_lexer().line_num() == 1);
+				
+				lexer::tok out_which = lexer::tok::NONE;
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::OPEN == out_which);
+				
+				// find_open_or_close() advances automatically
+				check(pars.get_lexer().line_pos() == 12);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::OPEN == out_which);
+				check(pars.get_lexer().line_pos() == 14);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::CLOSE == out_which);
+				check(pars.get_lexer().line_pos() == 16);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(!pars.find_open_or_close(&out_which));
+				check(lexer::tok::EOI == out_which);
+				
+				check(pars.get_lexer().line_pos() == 16);
+				check(pars.get_lexer().line_num() == 1);
+				check(!pars.get_lexer().has_input() == 1);
+			}
 			
-			isstrm.str(input);
-			
-			pars.init("n/a");
-			
-			check(pars.get_lexer().line_pos() == 0);
-			check(pars.get_lexer().line_num() == 1);
-			check(pars.get_lexer().has_input() == 1);
-			
-			// block name same as block open
-			check(pars.find_block_name());
-			check(pars.get_lexer().line_pos() == 10);
-			check(pars.get_lexer().line_num() == 1);
-			
-			lexer::tok out_which = lexer::tok::NONE;
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::OPEN == out_which);
-			
-			// find_open_or_close() advances automatically
-			check(pars.get_lexer().line_pos() == 11);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::OPEN == out_which);
-			check(pars.get_lexer().line_pos() == 12);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(pars.find_open_or_close(&out_which));
-			check(lexer::tok::CLOSE == out_which);
-			check(pars.get_lexer().line_pos() == 13);
-			check(pars.get_lexer().line_num() == 1);
-			
-			check(!pars.find_open_or_close(&out_which));
-			check(lexer::tok::EOI == out_which);
-			
-			check(pars.get_lexer().line_pos() == 13);
-			check(pars.get_lexer().line_num() == 1);
-			check(!pars.get_lexer().has_input() == 1);
+			/*** test matching without spaces ***/
+			{
+				std::string input("foo main }{{}");
+				std::stringstream isstrm;
+				lexer::matchers pats(m_name, m_open, m_close);
+				lexer lex(isstrm, pats);
+				cls_test_parser pars(lex);
+				
+				isstrm.str(input);
+				
+				pars.init("n/a");
+				
+				check(pars.get_lexer().line_pos() == 0);
+				check(pars.get_lexer().line_num() == 1);
+				check(pars.get_lexer().has_input() == 1);
+				
+				// block name same as block open
+				check(pars.find_block_name());
+				check(pars.get_lexer().line_pos() == 10);
+				check(pars.get_lexer().line_num() == 1);
+				
+				lexer::tok out_which = lexer::tok::NONE;
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::OPEN == out_which);
+				
+				// find_open_or_close() advances automatically
+				check(pars.get_lexer().line_pos() == 11);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::OPEN == out_which);
+				check(pars.get_lexer().line_pos() == 12);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(pars.find_open_or_close(&out_which));
+				check(lexer::tok::CLOSE == out_which);
+				check(pars.get_lexer().line_pos() == 13);
+				check(pars.get_lexer().line_num() == 1);
+				
+				check(!pars.find_open_or_close(&out_which));
+				check(lexer::tok::EOI == out_which);
+				
+				check(pars.get_lexer().line_pos() == 13);
+				check(pars.get_lexer().line_num() == 1);
+				check(!pars.get_lexer().has_input() == 1);
+			}
 		}
 	}
 	
@@ -461,7 +456,7 @@ static bool test_block_parser_test_blocks(
 		{
 			lexer::matchers pats(m_name2, m_open, m_close);
 			lexer lex(isstrm, pats);
-			cls_test_parser pars(lex);
+			block_parser pars(lex);
 			isstrm.str(input);
 			
 			pars.init("n/a");
@@ -471,8 +466,10 @@ static bool test_block_parser_test_blocks(
 			auto block = pars.get_block();		
 			check(4 == block[0].line_no);
 			check(lines[3] == block[0].line);
+			
 			check(5 == block[1].line_no);
 			check(lines[4] == block[1].line);
+			
 			check(6 == block[2].line_no);
 			check(lines[5] == block[2].line);
 		}
@@ -481,7 +478,7 @@ static bool test_block_parser_test_blocks(
 		{
 			lexer::matchers pats(m_name, m_open, m_close);
 			lexer lex(isstrm, pats);
-			cls_test_parser pars(lex);
+			block_parser pars(lex);
 			isstrm.str(input);
 			
 			pars.init("n/a");
@@ -518,7 +515,7 @@ static bool test_block_parser_test_blocks(
 			
 			lexer::matchers pats(m_name2, m_open, m_close);
 			lexer lex(isstrm, pats);
-			cls_test_parser pars(lex);
+			block_parser pars(lex);
 			
 			const std::string err[] = {
 				"file n/a, line 4, col 6: improper nesting from line 4",
@@ -537,8 +534,10 @@ static bool test_block_parser_test_blocks(
 				auto block = pars.get_block();		
 				check(1 == block[0].line_no);
 				check(lines[0] == block[0].line);
+				
 				check(2 == block[1].line_no);
 				check(lines[1] == block[1].line);
+				
 				check(3 == block[2].line_no);
 				check(lines[2] == block[2].line);
 				
@@ -574,7 +573,7 @@ static bool test_block_parser_test_blocks(
 		
 		lexer::matchers pats(m_name2, m_open, m_close, m_comment);
 		lexer lex(isstrm, pats);
-		cls_test_parser pars(lex);
+		block_parser pars(lex);
 		
 		for (int i = 0; i < 3; ++i)
 		{
@@ -587,8 +586,10 @@ static bool test_block_parser_test_blocks(
 			auto block = pars.get_block();		
 			check(4 == block[0].line_no);
 			check(lines[3] == block[0].line);
+			
 			check(5 == block[1].line_no);
 			check(lines[4] == block[1].line);
+			
 			check(6 == block[2].line_no);
 			check(lines[5] == block[2].line);
 			
@@ -607,13 +608,13 @@ static bool test_block_parser_blocks()
 		matcher_factory mfact;
 		
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
-		rm_name = mfact.create(matcher_factory::type::REGEX, "\\{");
-		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher_factory::type::REGEX, "//");
+		rm_name = mfact.create(matcher::type::REGEX, "\\{");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher::type::REGEX, "//");
 		
 		std::unique_ptr<matcher> rm_name2;
-		rm_name2 = mfact.create(matcher_factory::type::REGEX, "main");
+		rm_name2 = mfact.create(matcher::type::REGEX, "main");
 		
 		check(test_block_parser_test_blocks(
 				rm_name.get(),
@@ -630,13 +631,13 @@ static bool test_block_parser_blocks()
 		matcher_factory mfact;
 		
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
-		sm_name = mfact.create(matcher_factory::type::STRING, "{");
-		sm_open = mfact.create(matcher_factory::type::STRING, "{");
-		sm_close = mfact.create(matcher_factory::type::STRING, "}");
-		sm_comment = mfact.create(matcher_factory::type::STRING, "//");
+		sm_name = mfact.create(matcher::type::STRING, "{");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_comment = mfact.create(matcher::type::STRING, "//");
 		
 		std::unique_ptr<matcher> sm_name2;
-		sm_name2 = mfact.create(matcher_factory::type::REGEX, "main");
+		sm_name2 = mfact.create(matcher::type::REGEX, "main");
 		
 		check(test_block_parser_test_blocks(
 				sm_name.get(),
@@ -704,12 +705,12 @@ static bool test_block_parser_icase()
 		
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close;
 		rm_name = mfact.create(
-			matcher_factory::type::REGEX,
+			matcher::type::REGEX,
 			"mAin",
 			matcher::flags::ICASE
 		);
-		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
 		
 		lexer::matchers patterns(rm_name.get(), rm_open.get(), rm_close.get());
 		check(test_block_parser_test_icase(&patterns));
@@ -721,12 +722,12 @@ static bool test_block_parser_icase()
 		
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close;
 		sm_name = mfact.create(
-			matcher_factory::type::STRING,
+			matcher::type::STRING,
 			"maIn",
 			matcher::flags::ICASE
 		);
-		sm_open = mfact.create(matcher_factory::type::STRING, "{");
-		sm_close = mfact.create(matcher_factory::type::STRING, "}");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
 		
 		lexer::matchers patterns(sm_name.get(), sm_open.get(), sm_close.get());
 		check(test_block_parser_test_icase(&patterns));

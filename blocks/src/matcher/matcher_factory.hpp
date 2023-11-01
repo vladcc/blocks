@@ -8,11 +8,8 @@
 class matcher_factory
 {
 public:
-	enum class type {STRING, REGEX};
-	
-public:
 	std::unique_ptr<matcher> create(
-		type t,
+		matcher::type t,
 		const char * pattern,
 		uint32_t f = matcher::flags::NONE
 	);
