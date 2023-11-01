@@ -7,7 +7,7 @@
 #include "block_parser.hpp"
 
 typedef const char * cpstr;
-bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, int line);
+bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, size_t line);
 
 #define check(expr)\
 while (!check_(bool((expr)), #expr, __FILE__, __func__, __LINE__))\
@@ -277,7 +277,19 @@ static bool test_lexer()
 	return true;
 }
 
-static bool test_block_parser_run_tests(
+#define ARR_SIZE(arr) (sizeof(arr)/sizeof(*arr))
+static std::string cat(const std::string * arr, size_t len)
+{
+	std::string ret("");
+	for (size_t i = 0; i < len; ++i)
+	{
+		ret += arr[i];
+		ret += '\n';
+	}
+	return ret;
+}
+
+static bool test_block_parser_test_blocks(
 	const matcher * m_name,
 	const matcher * m_open,
 	const matcher * m_close,
@@ -443,12 +455,7 @@ static bool test_block_parser_run_tests(
 			"something", // 6
 		};
 		
-		std::string input("");
-		for (size_t i = 0; i < sizeof(lines)/sizeof(*lines); ++i)
-		{
-			input += lines[i];
-			input += '\n';
-		}
+		std::string input(cat(lines, ARR_SIZE(lines)));
 		
 		/*** no error case ***/
 		{
@@ -507,12 +514,7 @@ static bool test_block_parser_run_tests(
 				"something",      // 6
 			};
 			
-			std::string input("");
-			for (size_t i = 0; i < sizeof(lines)/sizeof(*lines); ++i)
-			{
-				input += lines[i];
-				input += '\n';
-			}
+			std::string input(cat(lines, ARR_SIZE(lines)));
 			
 			lexer::matchers pats(m_name2, m_open, m_close);
 			lexer lex(isstrm, pats);
@@ -568,12 +570,7 @@ static bool test_block_parser_run_tests(
 			"} //",      // 6
 		};
 		
-		std::string input("");
-		for (size_t i = 0; i < sizeof(lines)/sizeof(*lines); ++i)
-		{
-			input += lines[i];
-			input += '\n';
-		}
+		std::string input(cat(lines, ARR_SIZE(lines)));
 		
 		lexer::matchers pats(m_name2, m_open, m_close, m_comment);
 		lexer lex(isstrm, pats);
@@ -603,8 +600,8 @@ static bool test_block_parser_run_tests(
 	return true;
 }
 
-static bool test_block_parser()
-{	
+static bool test_block_parser_blocks()
+{
 	/*** regex matchers ***/
 	{
 		matcher_factory mfact;
@@ -618,7 +615,7 @@ static bool test_block_parser()
 		std::unique_ptr<matcher> rm_name2;
 		rm_name2 = mfact.create(matcher_factory::type::REGEX, "main");
 		
-		check(test_block_parser_run_tests(
+		check(test_block_parser_test_blocks(
 				rm_name.get(),
 				rm_open.get(),
 				rm_close.get(),
@@ -641,7 +638,7 @@ static bool test_block_parser()
 		std::unique_ptr<matcher> sm_name2;
 		sm_name2 = mfact.create(matcher_factory::type::REGEX, "main");
 		
-		check(test_block_parser_run_tests(
+		check(test_block_parser_test_blocks(
 				sm_name.get(),
 				sm_open.get(),
 				sm_close.get(),
@@ -654,17 +651,107 @@ static bool test_block_parser()
 	return true;
 }
 
-bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, int line)
+static bool test_block_parser_test_icase(const lexer::matchers * pats)
+{
+	{
+		std::stringstream isstrm;
+		
+		std::string lines[] = {
+			"foo bar",   // 0
+			"Main",      // 1
+			"{",         // 2
+			"text here", // 3
+			"}",         // 4
+			"zig zag",   // 5
+		};
+		
+		std::string input(cat(lines, ARR_SIZE(lines)));
+		
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+		
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+			
+			pars.init("n/a");
+			check(pars.parse_block());
+			check(!pars.had_error());
+			
+			auto block = pars.get_block();		
+			check(2 == block[0].line_no);
+			check(lines[1] == block[0].line);
+			check(3 == block[1].line_no);
+			check(lines[2] == block[1].line);
+			check(4 == block[2].line_no);
+			check(lines[3] == block[2].line);
+			check(5 == block[3].line_no);
+			check(lines[4] == block[3].line);
+						
+			check(!pars.parse_block());
+			check(!pars.had_error());
+		}
+	}
+	
+	return true;
+}
+
+static bool test_block_parser_icase()
+{
+	/*** regex matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close;
+		rm_name = mfact.create(
+			matcher_factory::type::REGEX,
+			"mAin",
+			matcher::flags::ICASE
+		);
+		rm_open = mfact.create(matcher_factory::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher_factory::type::REGEX, "\\}");
+		
+		lexer::matchers patterns(rm_name.get(), rm_open.get(), rm_close.get());
+		check(test_block_parser_test_icase(&patterns));
+	}
+	
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close;
+		sm_name = mfact.create(
+			matcher_factory::type::STRING,
+			"maIn",
+			matcher::flags::ICASE
+		);
+		sm_open = mfact.create(matcher_factory::type::STRING, "{");
+		sm_close = mfact.create(matcher_factory::type::STRING, "}");
+		
+		lexer::matchers patterns(sm_name.get(), sm_open.get(), sm_close.get());
+		check(test_block_parser_test_icase(&patterns));
+	}
+	
+	return true;
+}
+
+static bool test_block_parser()
+{	
+	check(test_block_parser_blocks());
+	check(test_block_parser_icase());
+	return true;
+}
+
+bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, size_t line)
 {
 	if (!expr_val)
 	{
-		std::cout << file << ": line "
+		std::cout << std::endl << file << ": line "
 			<< line << ": "
 			<< func << "()"
 			<< std::endl << "("
-			<< expr_ch << ")"
-			<< std::endl << "failed"
-			<< std::endl; 
+			<< expr_ch << ") " << std::endl
+			<< "failed" << std::endl;
 	
 	}
 		

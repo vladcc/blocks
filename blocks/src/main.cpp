@@ -1024,7 +1024,7 @@ int main(int argc, char * argv[])
 			gather_opts.block_end, matcher_flags);
 		b_comment = mfact.create(matcher_factory::type::REGEX,
 			gather_opts.comment, matcher_flags);
-
+	
 		r_match = std::move(mfact.create(matcher_factory::type::REGEX,
 			gather_opts.regex_match, matcher_flags));
 		r_no_match = std::move(mfact.create(matcher_factory::type::REGEX,
@@ -1036,16 +1036,14 @@ int main(int argc, char * argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	lexer::matchers lex_to_match(
+	lexer::matchers patterns(
 		b_name.get(),
 		b_start.get(),
 		b_end.get(),
-		b_comment.get(),
-		r_match.get(),
-		r_no_match.get()
+		b_comment.get()
 	);
 	
-	lexer lex(std::cin, lex_to_match);
+	lexer lex(std::cin, patterns);
 	
 	const char str_stdin[] = "-";
 	const char * current_file = str_stdin;

@@ -22,19 +22,16 @@ public:
 	
 	struct matchers
 	{
-		matchers(const matcher * block_name = nullptr,
+		matchers(
+			const matcher * block_name = nullptr,
 			const matcher * block_open = nullptr,
 			const matcher * block_close = nullptr,
-			const matcher * comment = nullptr,
-			const matcher * pat_match = nullptr,
-			const matcher * pat_no_match = nullptr
+			const matcher * comment = nullptr
 		) :
 			name(block_name),
 			open(block_open),
 			close(block_close),
-			comment(comment),
-			pat_match(pat_match),
-			pat_no_match(pat_no_match)
+			comment(comment)
 		{}
 		
 		const matcher * name;
