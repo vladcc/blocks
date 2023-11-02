@@ -2,18 +2,21 @@
 
 #include "lexer.hpp"
 
-lexer::tok lexer::_match_leftmost_of(const tok_match * tms, size_t len)
+lexer::_internal_tok lexer::_match_leftmost_of(
+	const _tok_match * tms,
+	size_t len
+)
 {
-	tok next_tok = EOI;
+	lexer::_internal_tok next_tok = lexer::_internal_tok::_EOI;
 	
 	if (_has_input)
 	{
-		next_tok = NONE;
+		next_tok = lexer::_internal_tok::_NONE;
 		ptrdiff_t mpos = 0;
 		ptrdiff_t pos = std::numeric_limits<ptrdiff_t>::max();
 		const char * pstr = _line.c_str();
 		
-		const tok_match * ptm = nullptr;
+		const _tok_match * ptm = nullptr;
 		matcher * m = nullptr;
 		for (size_t i = 0; i < len; ++i)
 		{
@@ -29,24 +32,41 @@ lexer::tok lexer::_match_leftmost_of(const tok_match * tms, size_t len)
 			}
 		}
 		
-		if (next_tok != NONE)
+		if (next_tok != lexer::_internal_tok::_NONE)
 			_line_pos += pos;
 	}
 	
 	return next_tok;
 }
 
-lexer::tok lexer::block_name_or_comment()
+lexer::_internal_tok lexer::_internal_any_or_comment(
+	const _tok_match * tm,
+	size_t len
+)
 {
-	return _match_leftmost_of(_name_or_comment.data(), _name_or_comment.size());
-}
-
-lexer::tok lexer::block_open_close_or_comment()
-{
-	return _match_leftmost_of(
-		_open_close_or_comment.data(),
-		_open_close_or_comment.size()
-	);
+	lexer::_internal_tok ret = lexer::_internal_tok::_NONE;
+	
+	if (_block_comment)
+	{
+		ret = _match_leftmost_of(_comment_end.data(), _comment_end.size());
+		if (lexer::_internal_tok::_COMMENT_END == ret)
+		{
+			_block_comment = false;
+			advance_past_match();
+			ret = _internal_any_or_comment(tm, len);
+		}
+	}
+	else
+	{
+		ret = _match_leftmost_of(tm, len);	
+		if (lexer::_internal_tok::_COMMENT_START == ret)
+		{
+			_block_comment = true;
+			ret = lexer::_internal_tok::_NONE;
+		}
+	}
+	
+	return ret;
 }
 
 bool lexer::next_line()

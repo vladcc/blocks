@@ -51,9 +51,9 @@ bool block_parser::_find_block_name()
 {
 	lexer::tok which = lexer::tok::NONE;
 	
-	while ((which = _lexer.block_name_or_comment()) != lexer::tok::EOI)
+	while ((which = _lexer.block_name()) != lexer::tok::EOI)
 	{
-		if ((lexer::tok::NONE == which) || (lexer::tok::COMMENT == which))
+		if (lexer::tok::NONE == which)
 		{
 			_lexer.next_line();
 			continue;
@@ -73,11 +73,11 @@ bool block_parser::_find_open_or_close(lexer::tok * out_which)
 	bool ret = false;
 	lexer::tok which = lexer::tok::NONE;
 	
-	while ((which = _lexer.block_open_close_or_comment()) != lexer::tok::EOI)
+	while ((which = _lexer.block_open_close()) != lexer::tok::EOI)
 	{
 		_save_line_unique(which);
 		
-		if ((lexer::tok::NONE == which) || (lexer::tok::COMMENT == which))
+		if (lexer::tok::NONE == which)
 			_lexer.next_line();
 		else if ((lexer::tok::OPEN == which) || (lexer::tok::CLOSE == which))
 		{

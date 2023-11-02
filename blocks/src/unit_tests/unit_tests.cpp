@@ -54,14 +54,14 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			// match main
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
-			check(lex.block_name_or_comment() == lexer::tok::NAME);
+			check(lex.block_name() == lexer::tok::NAME);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			
 			// match again, no advance
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
-			check(lex.block_name_or_comment() == lexer::tok::NAME);
+			check(lex.block_name() == lexer::tok::NAME);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			
@@ -71,10 +71,10 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 1);
 			
 			// no more name
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NONE);
 			
 			// match main{
-			check(lex.block_open_close_or_comment() == lexer::tok::OPEN);
+			check(lex.block_open_close() == lexer::tok::OPEN);
 			check(lex.line_pos() == 4);
 			check(lex.line_num() == 1);
 			
@@ -84,7 +84,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 1);
 			
 			// match main{}
-			check(lex.block_open_close_or_comment() == lexer::tok::CLOSE);
+			check(lex.block_open_close() == lexer::tok::CLOSE);
 			check(lex.line_pos() == 5);
 			
 			// advance
@@ -93,8 +93,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 1);
 			
 			// no more matches
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 6);
 			check(lex.line_num() == 1);
 			
@@ -108,8 +108,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 1);
 			
 			// no more matches
-			check(lex.block_name_or_comment() == lexer::tok::EOI);
-			check(lex.block_open_close_or_comment() == lexer::tok::EOI);
+			check(lex.block_name() == lexer::tok::EOI);
+			check(lex.block_open_close() == lexer::tok::EOI);
 			check(lex.line_pos() == 6);
 			check(lex.line_num() == 1);
 		}
@@ -141,7 +141,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.has_input());
 			
 			// match main
-			check(lex.block_name_or_comment() == lexer::tok::NAME);
+			check(lex.block_name() == lexer::tok::NAME);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			
@@ -150,8 +150,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_pos() == 1);
 			check(lex.line_num() == 1);
 			
-			// match main //
-			check(lex.block_open_close_or_comment() == lexer::tok::COMMENT);
+			// 'main // {' show NONE because of comment, but marks the comment
+			check(lex.block_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 5);
 			check(lex.line_num() == 1);
 			
@@ -161,8 +161,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 1);
 			
 			// match main // {
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::OPEN);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::OPEN);
 			check(lex.line_pos() == 8);
 			check(lex.line_num() == 1);
 			
@@ -172,8 +172,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 2);
 			
 			// match {
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::CLOSE);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::CLOSE);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 2);
 			
@@ -183,8 +183,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 3);
 			
 			// empty line
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::NONE);
 			
 			// next line
 			check(lex.next_line());
@@ -192,8 +192,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 4);
 			
 			// no matches in 'something something'
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::NONE);
 			
 			// next line
 			check(lex.next_line());
@@ -201,8 +201,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 5);
 			
 			// // foo main
-			check(lex.block_name_or_comment() == lexer::tok::COMMENT);
-			check(lex.block_open_close_or_comment() == lexer::tok::COMMENT);
+			//check(lex.block_name() == lexer::tok::COMMENT);
+			//check(lex.block_open_close() == lexer::tok::COMMENT);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 5);
 			
@@ -211,8 +211,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_pos() == 1);
 			check(lex.line_num() == 5);
 			
-			check(lex.block_name_or_comment() == lexer::tok::NAME);
-			check(lex.block_open_close_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NAME);
+			check(lex.block_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 7);
 			check(lex.line_num() == 5);
 			
@@ -222,10 +222,10 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_num() == 6);
 			
 			// bar {
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
-			check(lex.block_open_close_or_comment() == lexer::tok::OPEN);
-			check(lex.block_open_close_or_comment() == lexer::tok::OPEN);
-			check(lex.block_name_or_comment() == lexer::tok::NONE);
+			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.block_open_close() == lexer::tok::OPEN);
+			check(lex.block_open_close() == lexer::tok::OPEN);
+			check(lex.block_name() == lexer::tok::NONE);
 		}
 	}
 	

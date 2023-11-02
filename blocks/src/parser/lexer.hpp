@@ -10,36 +10,37 @@ class lexer
 {
 public:
 	enum tok : uint32_t {
-		NONE    = 0x00,
-		NAME    = 0x01,
-		OPEN    = 0x02,
-		CLOSE   = 0x04,
-		COMMENT = 0x08,
-		// COMMENT_OPEN  = 0x10,
-		// COMMENT_CLOSE = 0x20,
-		EOI     = 0x40
+		NONE          = 0x00,
+		NAME          = 0x01,
+		OPEN          = 0x02,
+		CLOSE         = 0x04,
+		EOI           = 0x40
 	};
 	
 	struct matchers
 	{
 		matchers(
-			const matcher * block_name = nullptr,
-			const matcher * block_open = nullptr,
+			const matcher * block_name  = nullptr,
+			const matcher * block_open  = nullptr,
 			const matcher * block_close = nullptr,
-			const matcher * comment = nullptr
+			const matcher * comment       = nullptr,
+			const matcher * comment_start = nullptr,
+			const matcher * comment_end   = nullptr
 		) :
 			name(block_name),
 			open(block_open),
 			close(block_close),
-			comment(comment)
+			comment(comment),
+			comment_start(comment_start),
+			comment_end(comment_end)
 		{}
 		
 		const matcher * name;
 		const matcher * open;
 		const matcher * close;
 		const matcher * comment;
-		const matcher * pat_match;
-		const matcher * pat_no_match;
+		const matcher * comment_start;
+		const matcher * comment_end;
 	};
 	
 public:
@@ -48,18 +49,31 @@ public:
 		_pats(pats),
 		_line_pos(0),
 		_line_no(0),
-		_has_input(false)
+		_has_input(false),
+		_block_comment(false)
 	{
-		_name_or_comment[0] = {_pats.name, NAME};
-		_name_or_comment[1] = {_pats.comment, COMMENT};
-		_open_close_or_comment[0] = {_pats.open, OPEN};
-		_open_close_or_comment[1] = {_pats.close, CLOSE};
-		_open_close_or_comment[2] = {_pats.comment, COMMENT};
+		_name[0] = {_pats.name,          _NAME};
+		_name[1] = {_pats.comment,       _NONE};
+		_name[2] = {_pats.comment_start, _COMMENT_START};
+		
+		_open_close[0] = {_pats.open,          _OPEN};
+		_open_close[1] = {_pats.close,         _CLOSE};
+		_open_close[2] = {_pats.comment,       _COMMENT};
+		_open_close[3] = {_pats.comment_start, _COMMENT_START};
+		
+		_comment_end[0] = {_pats.comment_end, _COMMENT_END};
 	}
 		
-	tok block_name_or_comment();
-	tok block_open_close_or_comment();
-	
+	inline tok block_name()
+	{
+		return _any_or_comment(_name.data(), _name.size());
+	}
+
+	inline tok block_open_close()
+	{
+		return _any_or_comment(_open_close.data(), _open_close.size());
+	}
+
 	bool next_line();
 	
 	void reset()
@@ -88,24 +102,52 @@ public:
 	{return _line_pos;}
 
 private:
-	struct tok_match
+	enum _internal_tok : uint32_t {
+		_NAME,
+		_OPEN,
+		_CLOSE,
+		_EOI,
+		_COMMENT,
+		_COMMENT_START,
+		_COMMENT_END,
+		_NONE
+	};
+	
+	struct _tok_match
 	{
 		const matcher * m;
-		tok t;
+		_internal_tok t;
 	};
 	
 private:
 	bool _read_line();
-	tok _match_leftmost_of(const tok_match * tm, size_t len);
-
+	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
+	_internal_tok _internal_any_or_comment(const _tok_match * tm, size_t len);
+	
+	inline tok _any_or_comment(const _tok_match * tm, size_t len)
+	{
+		tok ret = tok::NONE;
+		switch(_internal_any_or_comment(tm, len))
+		{
+			case _internal_tok::_NAME:  ret = tok::NAME;  break;
+			case _internal_tok::_OPEN:  ret = tok::OPEN;  break;
+			case _internal_tok::_CLOSE: ret = tok::CLOSE; break;
+			case _internal_tok::_EOI:   ret = tok::EOI;   break;
+			default:                    ret = tok::NONE;  break;
+		}
+		return ret;
+	}
+	
 private:
 	std::string _line;
-	std::array<tok_match, 3> _open_close_or_comment;
-	std::array<tok_match, 2> _name_or_comment;
+	std::array<_tok_match, 4> _open_close;
+	std::array<_tok_match, 3> _name;
+	std::array<_tok_match, 1> _comment_end;
 	std::istream& _in;
 	matchers _pats;
 	size_t _line_pos;
 	size_t _line_no;
 	bool _has_input;
+	bool _block_comment;
 };
 #endif

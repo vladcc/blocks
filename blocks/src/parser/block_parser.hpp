@@ -23,7 +23,7 @@ public:
 	};
 	
 public:
-	inline block_parser(lexer& lex) :
+	block_parser(lexer& lex) :
 		_lexer(lex),
 		_last_line_saved(0),
 		_fname(nullptr),
