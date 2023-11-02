@@ -49,6 +49,7 @@ public:
 		_pats(pats),
 		_line_pos(0),
 		_line_no(0),
+		_last_match_len(0),
 		_has_input(false),
 		_block_comment(false)
 	{
@@ -82,12 +83,16 @@ public:
 		_line.clear();
 		_line_no = 0;
 		_line_pos = 0;
+		_last_match_len = 0;
 		_has_input = false;
 		next_line();
 	}
 	
 	inline void advance_past_match()
-	{++_line_pos;}
+	{
+		_line_pos += _last_match_len;
+		_last_match_len = 0;
+	}
 	
 	inline const std::string& get_line()
 	{return _line;}
@@ -147,6 +152,7 @@ private:
 	matchers _pats;
 	size_t _line_pos;
 	size_t _line_no;
+	size_t _last_match_len;
 	bool _has_input;
 	bool _block_comment;
 };

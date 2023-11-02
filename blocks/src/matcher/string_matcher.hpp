@@ -11,6 +11,10 @@ class str_matcher : public matcher
 public:
 	str_matcher(const char * text, uint32_t opts);
 	ptrdiff_t match(const char * text, size_t len, size_t start) override;
+	size_t length() override
+	{
+		return _pattern.length();
+	}
 	
 private:
 	void _tolower(std::string& text);

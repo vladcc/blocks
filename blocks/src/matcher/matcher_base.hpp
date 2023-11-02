@@ -22,5 +22,6 @@ public:
 public:
 	virtual ~matcher() {}
 	virtual ptrdiff_t match(const char * text, size_t len, size_t start) = 0;
+	virtual size_t length() = 0;
 };
 #endif

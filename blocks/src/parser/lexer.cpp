@@ -27,6 +27,7 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 				{
 					pos = mpos;
 					next_tok = ptm->t;
+					_last_match_len = m->length();
 				}
 			}
 		}
@@ -74,6 +75,7 @@ bool lexer::next_line()
 	{
 		++_line_no;
 		_line_pos = 0;
+		_last_match_len = 0;
 	}
 	return _has_input;
 }

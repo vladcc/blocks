@@ -67,7 +67,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			
 			// advance
 			lex.advance_past_match();
-			check(lex.line_pos() == 1);
+			check(lex.line_pos() == 4);
 			check(lex.line_num() == 1);
 			
 			// no more name
@@ -147,17 +147,18 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			
 			// advance
 			lex.advance_past_match();
-			check(lex.line_pos() == 1);
+			check(lex.line_pos() == 4);
 			check(lex.line_num() == 1);
 			
-			// 'main // {' show NONE because of comment, but marks the comment
+			// 'main // {' show NONE because of comment, but comment matched
+			// internally
 			check(lex.block_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 5);
 			check(lex.line_num() == 1);
 			
 			// advance
 			lex.advance_past_match();
-			check(lex.line_pos() == 6);
+			check(lex.line_pos() == 7);
 			check(lex.line_num() == 1);
 			
 			// match main // {
@@ -200,17 +201,22 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 5);
 			
-			// // foo main
-			//check(lex.block_name() == lexer::tok::COMMENT);
-			//check(lex.block_open_close() == lexer::tok::COMMENT);
+			// nothing to advance
+			lex.advance_past_match();
+			check(lex.line_pos() == 0);
+			check(lex.line_num() == 5);
+			
+			// comments is matched internally, but NONE is reported
+			check(lex.block_name() == lexer::tok::NONE);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 5);
 			
 			// advance
 			lex.advance_past_match();
-			check(lex.line_pos() == 1);
+			check(lex.line_pos() == 2);
 			check(lex.line_num() == 5);
 			
+			// match name
 			check(lex.block_name() == lexer::tok::NAME);
 			check(lex.block_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 7);
