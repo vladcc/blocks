@@ -9,7 +9,7 @@ class regex_matcher : public matcher
 {
 public:
 	regex_matcher(const char * rx, uint32_t opts);
-	ptrdiff_t match(const char * text) override;
+	ptrdiff_t match(const char * text, size_t len, size_t start) override;
 
 private:
 	std::cmatch _match;

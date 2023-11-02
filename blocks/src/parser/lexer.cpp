@@ -14,7 +14,6 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 		next_tok = lexer::_internal_tok::_NONE;
 		ptrdiff_t mpos = 0;
 		ptrdiff_t pos = std::numeric_limits<ptrdiff_t>::max();
-		const char * pstr = _line.c_str();
 		
 		const _tok_match * ptm = nullptr;
 		matcher * m = nullptr;
@@ -23,7 +22,7 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 			ptm = tms+i;
 			if ((m = const_cast<matcher *>(ptm->m)))
 			{
-				mpos = m->match(pstr + _line_pos);
+				mpos = m->match(_line.c_str(), _line.length(), _line_pos);
 				if (mpos != matcher::NO_MATCH && mpos < pos)
 				{
 					pos = mpos;

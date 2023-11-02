@@ -9,22 +9,23 @@ str_matcher::str_matcher(const char * pattern, uint32_t opts) :
 		_tolower(_pattern);
 }
 
-ptrdiff_t str_matcher::match(const char * text)
+ptrdiff_t str_matcher::match(const char * text, size_t len, size_t start)
 {
+	const char * pstart = text + start;
 	ptrdiff_t ret = matcher::NO_MATCH;
 	
 	if (!_pattern.empty())
 	{
 		if (_opts & matcher::flags::ICASE)
 		{
-			_icase_buff.assign(text);
+			_icase_buff.assign(pstart);
 			_tolower(_icase_buff);
-			text = _icase_buff.c_str();
+			pstart = _icase_buff.c_str();
 		}
 		
-		const char * found = strstr(text, _pattern.c_str());
+		const char * found = strstr(pstart, _pattern.c_str());
 		if (found)
-			ret = found - text;
+			ret = found - pstart;
 	}
 	
 	return ret;

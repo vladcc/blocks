@@ -1,6 +1,7 @@
 #ifndef MATCHER_BASE_HPP
 #define MATCHER_BASE_HPP
 
+#include <string>
 #include <cstddef>
 
 class matcher
@@ -20,6 +21,6 @@ public:
 
 public:
 	virtual ~matcher() {}
-	virtual ptrdiff_t match(const char * text) = 0;
+	virtual ptrdiff_t match(const char * text, size_t len, size_t start) = 0;
 };
 #endif

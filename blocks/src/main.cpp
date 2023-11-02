@@ -796,13 +796,15 @@ static bool match_in_block(
 )
 {
 	bool ret = false;
-	matcher * ccm = const_cast<matcher *>(pat);
+	matcher * pm = const_cast<matcher *>(pat);
 	
-	if (ccm)
+	if (pm)
 	{
+		const std::string * ps = nullptr;
 		for (const auto& line : block)
 		{
-			if (ccm->match(line.line.c_str()) != matcher::NO_MATCH)
+			ps = &(line.line);
+			if (pm->match(ps->c_str(), ps->length(), 0) != matcher::NO_MATCH)
 			{
 				ret = true;
 				break;
