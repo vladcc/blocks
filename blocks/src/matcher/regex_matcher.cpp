@@ -1,7 +1,7 @@
 #include "regex_matcher.hpp"
 
 #define DEFAULT_FALGS \
-(std::regex_constants::extended | std::regex_constants::optimize)
+(std::regex_constants::ECMAScript | std::regex_constants::optimize)
 
 regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
 	_prx(nullptr)
