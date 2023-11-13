@@ -54,7 +54,7 @@ public:
 		_block_comment(false)
 	{
 		_name[0] = {_pats.name,          _NAME};
-		_name[1] = {_pats.comment,       _NONE};
+		_name[1] = {_pats.comment,       _COMMENT};
 		_name[2] = {_pats.comment_start, _COMMENT_START};
 		
 		_open_close[0] = {_pats.open,          _OPEN};
@@ -67,12 +67,12 @@ public:
 		
 	inline tok block_name()
 	{
-		return _any_or_comment(_name.data(), _name.size());
+		return _leftmost_match(_name.data(), _name.size());
 	}
 
 	inline tok block_open_close()
 	{
-		return _any_or_comment(_open_close.data(), _open_close.size());
+		return _leftmost_match(_open_close.data(), _open_close.size());
 	}
 
 	bool next_line();
@@ -127,12 +127,12 @@ private:
 private:
 	bool _read_line();
 	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
-	_internal_tok _internal_any_or_comment(const _tok_match * tm, size_t len);
+	_internal_tok _leftmost_match_internal(const _tok_match * tm, size_t len);
 	
-	inline tok _any_or_comment(const _tok_match * tm, size_t len)
+	inline tok _leftmost_match(const _tok_match * tm, size_t len)
 	{
 		tok ret = tok::NONE;
-		switch(_internal_any_or_comment(tm, len))
+		switch(_leftmost_match_internal(tm, len))
 		{
 			case _internal_tok::_NAME:  ret = tok::NAME;  break;
 			case _internal_tok::_OPEN:  ret = tok::OPEN;  break;

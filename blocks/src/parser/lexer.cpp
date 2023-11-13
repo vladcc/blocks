@@ -39,7 +39,7 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 	return next_tok;
 }
 
-lexer::_internal_tok lexer::_internal_any_or_comment(
+lexer::_internal_tok lexer::_leftmost_match_internal(
 	const _tok_match * tm,
 	size_t len
 )
@@ -53,7 +53,7 @@ lexer::_internal_tok lexer::_internal_any_or_comment(
 		{
 			_block_comment = false;
 			advance_past_match();
-			ret = _internal_any_or_comment(tm, len);
+			ret = _leftmost_match_internal(tm, len);
 		}
 	}
 	else
@@ -63,7 +63,7 @@ lexer::_internal_tok lexer::_internal_any_or_comment(
 		{
 			_block_comment = true;
 			advance_past_match();
-			ret = _internal_any_or_comment(tm, len);
+			ret = _leftmost_match_internal(tm, len);
 		}
 	}
 	
