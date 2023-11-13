@@ -48,8 +48,8 @@ lexer::_internal_tok lexer::_internal_any_or_comment(
 	
 	if (_block_comment)
 	{
-		ret = _match_leftmost_of(_comment_end.data(), _comment_end.size());
-		if (lexer::_internal_tok::_COMMENT_END == ret)
+		if (lexer::_internal_tok::_COMMENT_END ==
+			_match_leftmost_of(_comment_end.data(), _comment_end.size()))
 		{
 			_block_comment = false;
 			advance_past_match();
@@ -62,7 +62,8 @@ lexer::_internal_tok lexer::_internal_any_or_comment(
 		if (lexer::_internal_tok::_COMMENT_START == ret)
 		{
 			_block_comment = true;
-			ret = lexer::_internal_tok::_NONE;
+			advance_past_match();
+			ret = _internal_any_or_comment(tm, len);
 		}
 	}
 	
