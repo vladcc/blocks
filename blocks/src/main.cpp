@@ -804,7 +804,7 @@ static bool match_in_block(
 		for (const auto& line : block)
 		{
 			ps = &(line.line);
-			if (pm->match(ps->c_str(), ps->length(), 0) != matcher::NO_MATCH)
+			if (pm->match(ps->c_str(), ps->length(), 0))
 			{
 				ret = true;
 				break;

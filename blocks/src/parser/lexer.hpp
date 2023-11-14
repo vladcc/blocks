@@ -57,6 +57,12 @@ public:
 		_name[1] = {_pats.comment,       _COMMENT};
 		_name[2] = {_pats.comment_start, _COMMENT_START};
 		
+		_name_open_close[0] = {_pats.name,          _NAME};
+		_name_open_close[1] = {_pats.open,          _OPEN};
+		_name_open_close[2] = {_pats.close,         _CLOSE};
+		_name_open_close[3] = {_pats.comment,       _COMMENT};
+		_name_open_close[4] = {_pats.comment_start, _COMMENT_START};
+		
 		_open_close[0] = {_pats.open,          _OPEN};
 		_open_close[1] = {_pats.close,         _CLOSE};
 		_open_close[2] = {_pats.comment,       _COMMENT};
@@ -67,12 +73,20 @@ public:
 		
 	inline tok block_name()
 	{
-		return _leftmost_match(_name.data(), _name.size());
+		return _leftmost_non_comment(_name.data(), _name.size());
+	}
+
+	inline tok block_name_open_close()
+	{
+		return _leftmost_non_comment(
+			_name_open_close.data(),
+			_name_open_close.size()
+		);
 	}
 
 	inline tok block_open_close()
 	{
-		return _leftmost_match(_open_close.data(), _open_close.size());
+		return _leftmost_non_comment(_open_close.data(), _open_close.size());
 	}
 
 	bool next_line();
@@ -127,12 +141,12 @@ private:
 private:
 	bool _read_line();
 	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
-	_internal_tok _leftmost_match_internal(const _tok_match * tm, size_t len);
+	_internal_tok _leftmost_non_comment_intl(const _tok_match * tm, size_t len);
 	
-	inline tok _leftmost_match(const _tok_match * tm, size_t len)
+	inline tok _leftmost_non_comment(const _tok_match * tm, size_t len)
 	{
 		tok ret = tok::NONE;
-		switch(_leftmost_match_internal(tm, len))
+		switch(_leftmost_non_comment_intl(tm, len))
 		{
 			case _internal_tok::_NAME:  ret = tok::NAME;  break;
 			case _internal_tok::_OPEN:  ret = tok::OPEN;  break;
@@ -145,6 +159,7 @@ private:
 	
 private:
 	std::string _line;
+	std::array<_tok_match, 5> _name_open_close;
 	std::array<_tok_match, 4> _open_close;
 	std::array<_tok_match, 3> _name;
 	std::array<_tok_match, 1> _comment_end;

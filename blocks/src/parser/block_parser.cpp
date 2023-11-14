@@ -49,23 +49,25 @@ out:
 
 bool block_parser::_find_block_name()
 {
+	bool found_name = false;
 	lexer::tok which = lexer::tok::NONE;
 	
 	while ((which = _lexer.block_name()) != lexer::tok::EOI)
 	{
-		if (lexer::tok::NONE == which)
+		found_name = (lexer::tok::NAME == which);
+		if (!found_name)
 		{
 			_lexer.next_line();
 			continue;
 		}
-		else if (lexer::tok::NAME == which)
+		else
 		{
 			_save_line_unique(which);
 			break;
 		}
 	}
 	
-	return (lexer::tok::NAME == which);
+	return found_name;
 }
 
 bool block_parser::_find_open_or_close(lexer::tok * out_which)

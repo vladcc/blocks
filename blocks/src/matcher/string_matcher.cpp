@@ -3,19 +3,23 @@
 #include "string_matcher.hpp"
 
 str_matcher::str_matcher(const char * pattern, uint32_t opts) :
-	_pattern(pattern ? pattern : ""), _icase_buff(""), _opts(opts)
+	_pattern(pattern ? pattern : ""),
+	_icase_buff(""),
+	_pos(0),
+	_opts(opts)
 {
 	if ((_opts & matcher::flags::ICASE) && !_pattern.empty())
 		_tolower(_pattern);
 }
 
-ptrdiff_t str_matcher::match(const char * text, size_t len, size_t start)
+bool str_matcher::match(const char * text, size_t len, size_t start)
 {
-	const char * pstart = text + start;
-	ptrdiff_t ret = matcher::NO_MATCH;
+	bool ret = false;
 	
 	if (!_pattern.empty())
 	{
+		const char * pstart = text + start;
+		
 		if (_opts & matcher::flags::ICASE)
 		{
 			_icase_buff.assign(pstart);
@@ -25,7 +29,10 @@ ptrdiff_t str_matcher::match(const char * text, size_t len, size_t start)
 		
 		const char * found = strstr(pstart, _pattern.c_str());
 		if (found)
-			ret = found - pstart;
+		{
+			ret = true;
+			_pos = found - pstart;
+		}
 	}
 	
 	return ret;

@@ -7,11 +7,6 @@
 class matcher
 {
 public:
-	// returned by match()
-	enum {
-		NO_MATCH = -1
-	}; 
-	
 	enum class type {STRING, REGEX};
 	
 	enum flags : uint32_t {
@@ -21,7 +16,8 @@ public:
 
 public:
 	virtual ~matcher() {}
-	virtual ptrdiff_t match(const char * text, size_t len, size_t start) = 0;
+	virtual bool match(const char * text, size_t len, size_t start) = 0;
+	virtual ptrdiff_t position() = 0;
 	virtual size_t length() = 0;
 };
 #endif

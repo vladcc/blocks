@@ -10,7 +10,11 @@ class str_matcher : public matcher
 {
 public:
 	str_matcher(const char * text, uint32_t opts);
-	ptrdiff_t match(const char * text, size_t len, size_t start) override;
+	bool match(const char * text, size_t len, size_t start) override;
+	ptrdiff_t position() override
+	{
+		return _pos;
+	}
 	size_t length() override
 	{
 		return _pattern.length();
@@ -22,6 +26,7 @@ private:
 private:
 	std::string _pattern;
 	std::string _icase_buff;
+	ptrdiff_t _pos;
 	uint32_t _opts;
 };
 #endif
