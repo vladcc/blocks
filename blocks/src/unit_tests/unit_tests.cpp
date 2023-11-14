@@ -18,11 +18,13 @@ typedef bool(*ftest)(void);
 static bool test_lexer();
 static bool test_block_parser();
 static bool test_block_comment();
+static bool test_closes_name_to_block_open();
 
 static ftest tests[] = {
 	test_lexer,
 	test_block_parser,
-	test_block_comment
+	test_block_comment,
+	test_closes_name_to_block_open
 };
 
 
@@ -57,6 +59,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			check(lex.block_name() == lexer::tok::NAME);
+			check(lex.block_name_open_close() == lexer::tok::NAME);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			
@@ -64,6 +67,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			check(lex.block_name() == lexer::tok::NAME);
+			check(lex.block_name_open_close() == lexer::tok::NAME);
 			check(lex.line_pos() == 0);
 			check(lex.line_num() == 1);
 			
@@ -77,6 +81,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			
 			// match main{
 			check(lex.block_open_close() == lexer::tok::OPEN);
+			check(lex.block_name_open_close() == lexer::tok::OPEN);
 			check(lex.line_pos() == 4);
 			check(lex.line_num() == 1);
 			
@@ -87,6 +92,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			
 			// match main{}
 			check(lex.block_open_close() == lexer::tok::CLOSE);
+			check(lex.block_name_open_close() == lexer::tok::CLOSE);
 			check(lex.line_pos() == 5);
 			
 			// advance
@@ -97,6 +103,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			// no more matches
 			check(lex.block_name() == lexer::tok::NONE);
 			check(lex.block_open_close() == lexer::tok::NONE);
+			check(lex.block_name_open_close() == lexer::tok::NONE);
 			check(lex.line_pos() == 6);
 			check(lex.line_num() == 1);
 			
@@ -112,6 +119,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 			// no more matches
 			check(lex.block_name() == lexer::tok::EOI);
 			check(lex.block_open_close() == lexer::tok::EOI);
+			check(lex.block_name_open_close() == lexer::tok::EOI);
 			check(lex.line_pos() == 6);
 			check(lex.line_num() == 1);
 		}
@@ -493,7 +501,7 @@ static bool test_block_parser_test_blocks(
 			check(pars.had_error());
 			
 			const std::string err[] = {
-				"file n/a, line 7, col 0: improper nesting from line 1",
+				"file n/a, line 7, col 1: improper nesting from line 1",
 				"something",
 				"^"
 			};
@@ -781,9 +789,9 @@ static bool test_block_comment_impl(const lexer::matchers * pats)
 		};
 		
 		std::string err[] = {
-			"file n/a, line 23, col 4: improper nesting from line 22",
+			"file n/a, line 23, col 5: improper nesting from line 22",
 			"} */",
-			"   ^",
+			"    ^",
 		};
 		
 		std::string input(cat(lines, ARR_SIZE(lines)));
@@ -934,6 +942,70 @@ static bool test_block_comment()
 		);
 		
 		check(test_block_comment_impl(&patterns));
+	}
+	
+	return true;
+}
+
+static bool test_closes_name_to_block_open_impl(const lexer::matchers * pats)
+{
+	
+	
+	return false;
+}
+
+static bool test_closes_name_to_block_open()
+{
+/*** regex matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
+			rm_comment, rm_comment_start, rm_comment_end;
+			
+		rm_name = mfact.create(matcher::type::REGEX, "\\{");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher::type::REGEX, "//");
+		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
+		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		
+		lexer::matchers patterns(
+			rm_name.get(),
+			rm_open.get(),
+			rm_close.get(),
+			rm_comment.get(),
+			rm_comment_start.get(),
+			rm_comment_end.get()
+		);
+		
+		check(test_closes_name_to_block_open_impl(&patterns));
+	}
+	
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
+			sm_comment, sm_comment_start, sm_comment_end;
+		
+		sm_name = mfact.create(matcher::type::STRING, "{");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_comment = mfact.create(matcher::type::STRING, "//");
+		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
+		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+
+		lexer::matchers patterns(
+			sm_name.get(),
+			sm_open.get(),
+			sm_close.get(),
+			sm_comment.get(),
+			sm_comment_start.get(),
+			sm_comment_end.get()
+		);
+		
+		check(test_closes_name_to_block_open_impl(&patterns));
 	}
 	
 	return true;

@@ -90,6 +90,7 @@ public:
 	}
 
 	bool next_line();
+	bool also_matches_open();
 	
 	void reset()
 	{

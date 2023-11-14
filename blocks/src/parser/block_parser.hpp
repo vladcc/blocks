@@ -27,7 +27,7 @@ public:
 		_lexer(lex),
 		_last_line_saved(0),
 		_fname(nullptr),
-		_is_error_report_cleared(false)
+		_did_error_happen(false)
 	{
 		_error_report.emplace_back("");
 		_error_report.emplace_back("");
@@ -38,7 +38,7 @@ public:
 	bool parse_block();
 	
 	bool had_error()
-	{return !_error_report[0].empty();}
+	{return _did_error_happen;}
 	
 	const std::vector<block_line>& get_block()
 	{return _current_block;}
@@ -48,10 +48,10 @@ public:
 	
 private:
 	bool _find_block_name();
+	bool _find_block_open();
 	bool _find_open_or_close(lexer::tok * out_which);
 	bool _get_block_body();
 	void _error_report_generate();
-	void _error_report_clear();
 	void _save_line_unique(lexer::tok token);
 	
 protected:	
@@ -70,6 +70,6 @@ private:
 	lexer& _lexer;
 	size_t _last_line_saved;
 	const char * _fname;
-	bool _is_error_report_cleared;
+	bool _did_error_happen;
 };
 #endif

@@ -30,7 +30,7 @@ main {
 main {
 
 eof
-blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: file ./tests_file_errors.txt, line 14, col 1: improper nesting from line 8
 blocks: error: eof
 blocks: error: ^
 blocks: error: file ./tests_file_errors.txt, line 3, col 6: improper nesting from line 3
@@ -39,7 +39,7 @@ blocks: error:      ^
 blocks: error: file ./tests_file_errors.txt, line 4, col 6: improper nesting from line 4
 blocks: error: main }
 blocks: error:      ^
-blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: file ./tests_file_errors.txt, line 14, col 1: improper nesting from line 8
 blocks: error: eof
 blocks: error: ^
        1 main {}
@@ -62,7 +62,7 @@ blocks: error:      ^
       12 main {
       13 
       14 eof
-blocks: error: file ./tests_file_errors.txt, line 14, col 0: improper nesting from line 8
+blocks: error: file ./tests_file_errors.txt, line 14, col 1: improper nesting from line 8
 blocks: error: eof
 blocks: error: ^
 ./tests_file_errors.txt:

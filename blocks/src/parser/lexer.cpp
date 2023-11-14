@@ -75,6 +75,15 @@ lexer::_internal_tok lexer::_leftmost_non_comment_intl(
 	return ret;
 }
 
+bool lexer::also_matches_open()
+{
+	matcher * open = const_cast<matcher *>(_pats.open);
+	
+	return (open
+		&& open->match(_line.c_str(), _line.length(), _line_pos)
+		&& (static_cast<size_t>(open->position()) == 0));
+}
+
 bool lexer::next_line()
 {
 	if ((_has_input = static_cast<bool>(std::getline(_in, _line))))
