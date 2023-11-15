@@ -803,7 +803,7 @@ static bool match_in_block(
 		const std::string * ps = nullptr;
 		for (const auto& line : block)
 		{
-			ps = &(line.line);
+			ps = &(line.get_line());
 			if (pm->match(ps->c_str(), ps->length(), 0))
 			{
 				ret = true;
@@ -862,7 +862,7 @@ static void print_block(
 			size_t j = 0;
 			while (j < end)
 			{
-				if (lexer::tok::OPEN & block[j].tok_mask)
+				if (block[j].has_token(lexer::tok::OPEN))
 					break;
 				++j;
 			}
@@ -880,11 +880,11 @@ static void print_block(
 			const int num_max_len = 16;
 			char num[num_max_len] = {0};
 			
-			snprintf(num, num_max_len, "%8zu ", block[i].line_no);
+			snprintf(num, num_max_len, "%8zu ", block[i].get_line_no());
 			print_str(num);
 		}
 			
-		print_line(block[i].line.c_str());
+		print_line(block[i].get_line().c_str());
 	}
 
 	if (opts.mark_end)

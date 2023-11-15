@@ -45,8 +45,8 @@ public:
 	
 public:
 	lexer(std::istream& in, const matchers& pats) :
-		_in(in),
 		_pats(pats),
+		_in(in),
 		_line_pos(0),
 		_line_no(0),
 		_last_match_len(0),
@@ -159,13 +159,13 @@ private:
 	}
 	
 private:
-	std::string _line;
+	matchers _pats;
 	std::array<_tok_match, 5> _name_open_close;
 	std::array<_tok_match, 4> _open_close;
 	std::array<_tok_match, 3> _name;
 	std::array<_tok_match, 1> _comment_end;
+	std::string _line;
 	std::istream& _in;
-	matchers _pats;
 	size_t _line_pos;
 	size_t _line_no;
 	size_t _last_match_len;

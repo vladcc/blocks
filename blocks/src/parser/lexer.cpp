@@ -81,7 +81,7 @@ bool lexer::also_matches_open()
 	
 	return (open
 		&& open->match(_line.c_str(), _line.length(), _line_pos)
-		&& (static_cast<size_t>(open->position()) == 0));
+		&& (open->position() == 0));
 }
 
 bool lexer::next_line()

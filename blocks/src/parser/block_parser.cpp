@@ -5,15 +5,13 @@
 void block_parser::init(const char * fname)
 {
 	_lexer.reset();
-	_last_line_saved = 0;
 	_fname = fname;
 }
 
 bool block_parser::parse_block()
 {	
-	_current_block.clear();
-	_did_error_happen = false;
-	
+	_clear_block();
+	_clear_error();
 	bool has_block_start = _find_block_name();
 	
 	if (has_block_start && !(_find_block_open() && _get_block_body()))
@@ -76,6 +74,7 @@ bool block_parser::_find_block_open()
 	{
 		switch (which)
 		{
+			default:
 			case lexer::tok::NONE:
 			{
 				_save_line_unique(which);
@@ -85,7 +84,7 @@ bool block_parser::_find_block_open()
 			
 			case lexer::tok::NAME:
 			{
-				_current_block.clear();
+				_clear_block();
 				_save_line_unique(which);
 				
 				if (_lexer.also_matches_open())
@@ -111,9 +110,6 @@ bool block_parser::_find_block_open()
 				found_block_open = false;
 				goto done;
 			}
-			
-			default:
-				break;
 		}
 	}
 	
@@ -144,42 +140,80 @@ bool block_parser::_find_open_or_close(lexer::tok * out_which)
 	return ret;
 }
 
-void block_parser::_save_line_unique(lexer::tok token)
-{
-	size_t line_num = _lexer.line_num();
-	
-	if (_last_line_saved != line_num)
-	{
-		_current_block.emplace_back(_lexer.get_line(), line_num, token);
-		_last_line_saved = line_num;
-	}
-	else if (_current_block.size())
-		_current_block.back().tok_mask |= token;
+void block_parser::_error_report_generate()
+{		
+	const std::vector<block_line>& block = _block.get_content();
+	size_t first_line_no = block.front().get_line_no();
+	const std::string& bad_line = block.back().get_line();
+
+	_error.create(
+		first_line_no,
+		bad_line,
+		_fname,
+		_lexer.line_num(),
+		_lexer.line_pos()
+	);
 }
 
-void block_parser::_error_report_generate()
+void block_parser::parsed_block::save_line(
+	const char * txt,
+	size_t line_num,
+	lexer::tok token
+)
 {
+	if (_last_saved_line_no != line_num)
+	{
+		_content.emplace_back(txt, line_num);
+		_last_saved_line_no = line_num;
+	}
+	_content.back().mark_token(token);
+}
+
+void block_parser::parsed_block::reset()
+{
+	_content.clear();
+	_last_saved_line_no = 0;
+}
+
+block_parser::error::error() :
+	_did_error_happen(false)
+{
+	_text.emplace_back("");
+	_text.emplace_back("");
+	_text.emplace_back("");
+}
+
+void block_parser::error::create(
+	size_t first_line_no,
+	const std::string& bad_line_text,
+	const char * fname,
+	size_t lex_line_num,
+	size_t lex_line_pos
+)
+{
+	reset();
+	
 	_did_error_happen = true;
 	
-	for (auto& str : _error_report)
-		str.clear();
+	std::string * err = &_text[0];
+	if (fname)
+		err->append("file ").append(fname).append(",");
 	
-	const block_line& first_line = _current_block.front();
-	const block_line& bad_line = _current_block.back();
-	
-	std::string * err = &_error_report[0];
-	if (_fname)
-		err->append("file ").append(_fname).append(",");
-	
-	size_t pos = _lexer.line_pos();
-	err->append(" line ").append(std::to_string(_lexer.line_num()));
-	err->append(", col ").append(std::to_string(pos+1));
+	err->append(" line ").append(std::to_string(lex_line_num));
+	err->append(", col ").append(std::to_string(lex_line_pos+1));
 	err->append(": improper nesting from line ");
-	err->append(std::to_string(first_line.line_no));
+	err->append(std::to_string(first_line_no));
 	
-	err = &_error_report[1];
-	err->append(bad_line.line);
+	err = &_text[1];
+	err->append(bad_line_text);
 	
-	err = &_error_report[2];
-	err->append(pos, ' ').append("^");
+	err = &_text[2];
+	err->append(lex_line_pos, ' ').append("^");
+}
+
+void block_parser::error::reset()
+{
+	_did_error_happen = false;
+	for (auto& str : _text)
+		str.clear();
 }

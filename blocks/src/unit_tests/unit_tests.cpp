@@ -481,12 +481,12 @@ static bool test_block_parser_test_blocks(
 			
 			auto block = pars.get_block();
 			check(block.size() == 3);		
-			check(4 == block[0].line_no);
-			check(lines[3] == block[0].line);
-			check(5 == block[1].line_no);
-			check(lines[4] == block[1].line);
-			check(6 == block[2].line_no);
-			check(lines[5] == block[2].line);
+			check(4 == block[0].get_line_no());
+			check(lines[3] == block[0].get_line());
+			check(5 == block[1].get_line_no());
+			check(lines[4] == block[1].get_line());
+			check(6 == block[2].get_line_no());
+			check(lines[5] == block[2].get_line());
 		}
 		
 		/*** error case open no close ***/
@@ -548,12 +548,12 @@ static bool test_block_parser_test_blocks(
 				
 				auto block = pars.get_block();
 				check(block.size() == 3);	
-				check(1 == block[0].line_no);
-				check(lines[0] == block[0].line);
-				check(2 == block[1].line_no);
-				check(lines[1] == block[1].line);
-				check(3 == block[2].line_no);
-				check(lines[2] == block[2].line);
+				check(1 == block[0].get_line_no());
+				check(lines[0] == block[0].get_line());
+				check(2 == block[1].get_line_no());
+				check(lines[1] == block[1].get_line());
+				check(3 == block[2].get_line_no());
+				check(lines[2] == block[2].get_line());
 				
 				check(pars.parse_block());
 				check(pars.had_error());
@@ -599,12 +599,12 @@ static bool test_block_parser_test_blocks(
 			
 			auto block = pars.get_block();	
 			check(block.size() == 3);	
-			check(4 == block[0].line_no);
-			check(lines[3] == block[0].line);
-			check(5 == block[1].line_no);
-			check(lines[4] == block[1].line);
-			check(6 == block[2].line_no);
-			check(lines[5] == block[2].line);
+			check(4 == block[0].get_line_no());
+			check(lines[3] == block[0].get_line());
+			check(5 == block[1].get_line_no());
+			check(lines[4] == block[1].get_line());
+			check(6 == block[2].get_line_no());
+			check(lines[5] == block[2].get_line());
 			
 			check(!pars.parse_block());
 			check(!pars.had_error());
@@ -694,14 +694,14 @@ static bool test_block_parser_test_icase(const lexer::matchers * pats)
 			
 			auto block = pars.get_block();
 			check(block.size() == 4);
-			check(2 == block[0].line_no);
-			check(lines[1] == block[0].line);
-			check(3 == block[1].line_no);
-			check(lines[2] == block[1].line);
-			check(4 == block[2].line_no);
-			check(lines[3] == block[2].line);
-			check(5 == block[3].line_no);
-			check(lines[4] == block[3].line);
+			check(2 == block[0].get_line_no());
+			check(lines[1] == block[0].get_line());
+			check(3 == block[1].get_line_no());
+			check(lines[2] == block[1].get_line());
+			check(4 == block[2].get_line_no());
+			check(lines[3] == block[2].get_line());
+			check(5 == block[3].get_line_no());
+			check(lines[4] == block[3].get_line());
 						
 			check(!pars.parse_block());
 			check(!pars.had_error());
@@ -808,74 +808,74 @@ static bool test_block_comment_impl(const lexer::matchers * pats)
 			check(!pars.had_error());
 			auto block = pars.get_block();
 			check(block.size() == 1);
-			check(2 == block[0].line_no);
-			check(lines[1] == block[0].line);
+			check(2 == block[0].get_line_no());
+			check(lines[1] == block[0].get_line());
 			
 			check(pars.parse_block());
 			check(!pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 1);
-			check(6 == block[0].line_no);
-			check(lines[5] == block[0].line);
+			check(6 == block[0].get_line_no());
+			check(lines[5] == block[0].get_line());
 			
 			check(pars.parse_block());
 			check(!pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 1);
-			check(7 == block[0].line_no);
-			check(lines[6] == block[0].line);
+			check(7 == block[0].get_line_no());
+			check(lines[6] == block[0].get_line());
 			
 			check(pars.parse_block());
 			check(!pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 6);
-			check(8 == block[0].line_no);
-			check(9 == block[1].line_no);
-			check(10 == block[2].line_no);
-			check(11 == block[3].line_no);
-			check(12 == block[4].line_no);
-			check(13 == block[5].line_no);
-			check(lines[7] == block[0].line);
-			check(lines[8] == block[1].line);
-			check(lines[9] == block[2].line);
-			check(lines[10] == block[3].line);
-			check(lines[11] == block[4].line);
-			check(lines[12] == block[5].line);
+			check(8 == block[0].get_line_no());
+			check(9 == block[1].get_line_no());
+			check(10 == block[2].get_line_no());
+			check(11 == block[3].get_line_no());
+			check(12 == block[4].get_line_no());
+			check(13 == block[5].get_line_no());
+			check(lines[7] == block[0].get_line());
+			check(lines[8] == block[1].get_line());
+			check(lines[9] == block[2].get_line());
+			check(lines[10] == block[3].get_line());
+			check(lines[11] == block[4].get_line());
+			check(lines[12] == block[5].get_line());
 			
 			check(pars.parse_block());
 			check(!pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 7);
-			check(14 == block[0].line_no);
-			check(15 == block[1].line_no);
-			check(16 == block[2].line_no);
-			check(17 == block[3].line_no);
-			check(18 == block[4].line_no);
-			check(19 == block[5].line_no);
-			check(20 == block[6].line_no);
-			check(lines[13] == block[0].line);
-			check(lines[14] == block[1].line);
-			check(lines[15] == block[2].line);
-			check(lines[16] == block[3].line);
-			check(lines[17] == block[4].line);
-			check(lines[18] == block[5].line);
-			check(lines[19] == block[6].line);
+			check(14 == block[0].get_line_no());
+			check(15 == block[1].get_line_no());
+			check(16 == block[2].get_line_no());
+			check(17 == block[3].get_line_no());
+			check(18 == block[4].get_line_no());
+			check(19 == block[5].get_line_no());
+			check(20 == block[6].get_line_no());
+			check(lines[13] == block[0].get_line());
+			check(lines[14] == block[1].get_line());
+			check(lines[15] == block[2].get_line());
+			check(lines[16] == block[3].get_line());
+			check(lines[17] == block[4].get_line());
+			check(lines[18] == block[5].get_line());
+			check(lines[19] == block[6].get_line());
 			
 			check(pars.parse_block());
 			check(!pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 1);
-			check(21 == block[0].line_no);
-			check(lines[20] == block[0].line);
+			check(21 == block[0].get_line_no());
+			check(lines[20] == block[0].get_line());
 			
 			check(pars.parse_block());
 			check(pars.had_error());
 			block = pars.get_block();
 			check(block.size() == 2);
-			check(22 == block[0].line_no);
-			check(23 == block[1].line_no);
-			check(lines[21] == block[0].line);
-			check(lines[22] == block[1].line);
+			check(22 == block[0].get_line_no());
+			check(23 == block[1].get_line_no());
+			check(lines[21] == block[0].get_line());
+			check(lines[22] == block[1].get_line());
 			
 			auto err_report = pars.get_error_report();
 			check(err[0] == err_report[0]);
