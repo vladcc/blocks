@@ -120,7 +120,7 @@ protected:
 	bool find_open_or_close_(lexer::tok * out_which)
 	{return _find_open_or_close(out_which);}
 	
-	inline lexer& get_lexer_()
+	lexer& get_lexer_()
 	{return _lexer;}
 	
 private:

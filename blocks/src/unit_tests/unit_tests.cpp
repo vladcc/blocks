@@ -18,13 +18,13 @@ typedef bool(*ftest)(void);
 static bool test_lexer();
 static bool test_block_parser();
 static bool test_block_comment();
-static bool test_closes_name_to_block_open();
+static bool test_closest_name_to_block_open();
 
 static ftest tests[] = {
 	test_lexer,
 	test_block_parser,
 	test_block_comment,
-	test_closes_name_to_block_open
+	test_closest_name_to_block_open
 };
 
 
@@ -947,16 +947,202 @@ static bool test_block_comment()
 	return true;
 }
 
-static bool test_closes_name_to_block_open_impl(const lexer::matchers * pats)
+static bool test_closes_name_to_block_open_impl_1(const lexer::matchers * pats)
 {
 	
+	{
+		std::stringstream isstrm;
+		
+		std::string lines[] = {
+		/* 0 */  "main",
+		/* 1 */  "foo",
+		/* 2 */  "main",
+		/* 3 */  " ",
+		/* 4 */  "bar", 
+		/* 5 */  "main {",
+		/* 6 */  "baz",
+		/* 7 */  "}",
+		/* 8 */  "...",
+		/* 9 */  "// main", 
+		/* 10 */ "...",
+		/* 11 */ "/* main",
+		/* 12 */ "*/",
+		/* 13 */ "main {",
+		/* 14 */ "/* main",
+		/* 15 */ "*/",
+		/* 16 */ "main",
+		/* 17 */ "baz",
+		/* 18 */ "}",
+		};
+		
+		std::string input(cat(lines, ARR_SIZE(lines)));
+		
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+		
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+			
+			pars.init("n/a");
+			
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 3);
+			check(6 == block[0].get_line_no());
+			check(7 == block[1].get_line_no());
+			check(8 == block[2].get_line_no());
+			check(lines[5] == block[0].get_line());
+			check(lines[6] == block[1].get_line());
+			check(lines[7] == block[2].get_line());
+			
+			check(pars.parse_block());
+			check(!pars.had_error());
+			block = pars.get_block();
+			check(block.size() == 6);
+			check(14 == block[0].get_line_no());
+			check(15 == block[1].get_line_no());
+			check(16 == block[2].get_line_no());
+			check(17 == block[3].get_line_no());
+			check(18 == block[4].get_line_no());
+			check(19 == block[5].get_line_no());
+			check(lines[13] == block[0].get_line());
+			check(lines[14] == block[1].get_line());
+			check(lines[15] == block[2].get_line());
+			check(lines[16] == block[3].get_line());
+			check(lines[17] == block[4].get_line());
+			check(lines[18] == block[5].get_line());
+		}
+	}
 	
-	return false;
+	return true;
 }
 
-static bool test_closes_name_to_block_open()
+static bool test_closes_name_to_block_open_impl_2(const lexer::matchers * pats)
 {
-/*** regex matchers ***/
+	
+	{
+		std::stringstream isstrm;
+		
+		std::string lines[] = {
+		/* 0 */  "main",
+		/* 1 */  "foo",
+		/* 2 */  "main",
+		/* 3 */  " ",
+		/* 4 */  "bar", 
+		/* 5 */  "main {",
+		/* 6 */  "baz",
+		/* 7 */  "}",
+		/* 8 */  "...",
+		/* 9 */  "// main", 
+		/* 10 */ "...",
+		/* 11 */ "/* main",
+		/* 12 */ "*/",
+		/* 13 */ "{main {",
+		/* 14 */ "/* main",
+		/* 15 */ "*/",
+		/* 16 */ "main",
+		/* 17 */ "baz",
+		/* 18 */ "}",
+		/* 19 */ "...",
+		};
+		
+		std::string input(cat(lines, ARR_SIZE(lines)));
+		
+		std::string err[] = {
+			"file n/a, line 20, col 1: improper nesting from line 14",
+			"...",
+			"^",
+		};
+		
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+		
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+			
+			pars.init("n/a");
+			
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 3);
+			check(6 == block[0].get_line_no());
+			check(7 == block[1].get_line_no());
+			check(8 == block[2].get_line_no());
+			check(lines[5] == block[0].get_line());
+			check(lines[6] == block[1].get_line());
+			check(lines[7] == block[2].get_line());
+			
+			check(pars.parse_block());
+			check(pars.had_error());
+			auto err_report = pars.get_error_report();
+			check(err[0] == err_report[0]);
+			check(err[1] == err_report[1]);
+			check(err[2] == err_report[2]);
+		}
+	}
+	
+	return true;
+}
+
+static bool test_closest_name_to_block_open()
+{
+	/*** regex matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
+			rm_comment, rm_comment_start, rm_comment_end;
+			
+		rm_name = mfact.create(matcher::type::REGEX, "main");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher::type::REGEX, "//");
+		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
+		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		
+		lexer::matchers patterns(
+			rm_name.get(),
+			rm_open.get(),
+			rm_close.get(),
+			rm_comment.get(),
+			rm_comment_start.get(),
+			rm_comment_end.get()
+		);
+		
+		check(test_closes_name_to_block_open_impl_1(&patterns));
+	}
+	
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+		
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
+			sm_comment, sm_comment_start, sm_comment_end;
+		
+		sm_name = mfact.create(matcher::type::STRING, "main");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_comment = mfact.create(matcher::type::STRING, "//");
+		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
+		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+
+		lexer::matchers patterns(
+			sm_name.get(),
+			sm_open.get(),
+			sm_close.get(),
+			sm_comment.get(),
+			sm_comment_start.get(),
+			sm_comment_end.get()
+		);
+		
+		check(test_closes_name_to_block_open_impl_1(&patterns));
+	}
+	
+	/*** regex matchers ***/
 	{
 		matcher_factory mfact;
 		
@@ -979,7 +1165,7 @@ static bool test_closes_name_to_block_open()
 			rm_comment_end.get()
 		);
 		
-		check(test_closes_name_to_block_open_impl(&patterns));
+		check(test_closes_name_to_block_open_impl_2(&patterns));
 	}
 	
 	/*** string matchers ***/
@@ -1005,7 +1191,7 @@ static bool test_closes_name_to_block_open()
 			sm_comment_end.get()
 		);
 		
-		check(test_closes_name_to_block_open_impl(&patterns));
+		check(test_closes_name_to_block_open_impl_2(&patterns));
 	}
 	
 	return true;
