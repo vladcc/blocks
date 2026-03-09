@@ -3,12 +3,16 @@
 
 #include <string>
 #include <cstddef>
+#include <cstdint>
 
 class matcher
 {
 public:
-	enum class type {STRING, REGEX};
-	
+	enum class type {
+		STRING,
+		REGEX
+	};
+
 	enum flags : uint32_t {
 		NONE  = 0x00,
 		ICASE = 0x01,

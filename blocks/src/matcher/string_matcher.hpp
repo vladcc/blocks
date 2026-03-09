@@ -1,10 +1,10 @@
 #ifndef STRING_MATCHER_HPP
 #define STRING_MATCHER_HPP
 
+#include "matcher_base.hpp"
+
 #include <cstddef>
 #include <string>
-
-#include "matcher_base.hpp"
 
 class str_matcher : public matcher
 {
@@ -19,10 +19,10 @@ public:
 	{
 		return _pattern.length();
 	}
-	
+
 private:
 	void _tolower(std::string& text);
-	
+
 private:
 	std::string _pattern;
 	std::string _icase_buff;

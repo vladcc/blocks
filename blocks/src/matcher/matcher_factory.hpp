@@ -1,9 +1,9 @@
 #ifndef MATCHER_FACTORY_HPP
 #define MATCHER_FACTORY_HPP
 
+#include "matcher_base.hpp"
 
 #include <memory>
-#include "matcher_base.hpp"
 
 class matcher_factory
 {
@@ -14,5 +14,4 @@ public:
 		uint32_t f = matcher::flags::NONE
 	);
 };
-
 #endif

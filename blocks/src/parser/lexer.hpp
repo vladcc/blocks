@@ -1,22 +1,22 @@
 #ifndef PARSER_IO_HPP
 #define PARSER_IO_HPP
 
+#include "matcher.hpp"
+
 #include <iostream>
 #include <array>
-
-#include "matcher.hpp"
 
 class lexer
 {
 public:
 	enum tok : uint32_t {
-		NONE          = 0x00,
-		NAME          = 0x01,
-		OPEN          = 0x02,
-		CLOSE         = 0x04,
-		EOI           = 0x40
+		NONE  = 0x00,
+		NAME  = 0x01,
+		OPEN  = 0x02,
+		CLOSE = 0x04,
+		EOI   = 0x40
 	};
-	
+
 	struct matchers
 	{
 		matchers(
@@ -34,7 +34,7 @@ public:
 			comment_start(comment_start),
 			comment_end(comment_end)
 		{}
-		
+
 		const matcher * name;
 		const matcher * open;
 		const matcher * close;
@@ -42,7 +42,7 @@ public:
 		const matcher * comment_start;
 		const matcher * comment_end;
 	};
-	
+
 public:
 	lexer(std::istream& in, const matchers& pats) :
 		_pats(pats),
@@ -56,21 +56,21 @@ public:
 		_name[0] = {_pats.name,          _NAME};
 		_name[1] = {_pats.comment,       _COMMENT};
 		_name[2] = {_pats.comment_start, _COMMENT_START};
-		
+
 		_name_open_close[0] = {_pats.name,          _NAME};
 		_name_open_close[1] = {_pats.open,          _OPEN};
 		_name_open_close[2] = {_pats.close,         _CLOSE};
 		_name_open_close[3] = {_pats.comment,       _COMMENT};
 		_name_open_close[4] = {_pats.comment_start, _COMMENT_START};
-		
+
 		_open_close[0] = {_pats.open,          _OPEN};
 		_open_close[1] = {_pats.close,         _CLOSE};
 		_open_close[2] = {_pats.comment,       _COMMENT};
 		_open_close[3] = {_pats.comment_start, _COMMENT_START};
-		
+
 		_comment_end[0] = {_pats.comment_end, _COMMENT_END};
 	}
-		
+
 	inline tok block_name()
 	{
 		return _leftmost_non_comment(_name.data(), _name.size());
@@ -91,7 +91,7 @@ public:
 
 	bool next_line();
 	bool also_matches_open();
-	
+
 	void reset()
 	{
 		_in.clear();
@@ -102,22 +102,22 @@ public:
 		_has_input = false;
 		next_line();
 	}
-	
+
 	inline void advance_past_match()
 	{
 		_line_pos += _last_match_len;
 		_last_match_len = 0;
 	}
-	
+
 	inline const std::string& get_line()
 	{return _line;}
-	
+
 	inline bool has_input()
 	{return _has_input;}
-	
+
 	inline size_t line_num()
 	{return _line_no;}
-	
+
 	inline size_t line_pos()
 	{return _line_pos;}
 
@@ -132,18 +132,18 @@ private:
 		_COMMENT_END,
 		_NONE
 	};
-	
+
 	struct _tok_match
 	{
 		const matcher * m;
 		_internal_tok t;
 	};
-	
+
 private:
 	bool _read_line();
 	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
 	_internal_tok _leftmost_non_comment_intl(const _tok_match * tm, size_t len);
-	
+
 	inline tok _leftmost_non_comment(const _tok_match * tm, size_t len)
 	{
 		tok ret = tok::NONE;
@@ -157,7 +157,7 @@ private:
 		}
 		return ret;
 	}
-	
+
 private:
 	matchers _pats;
 	std::array<_tok_match, 5> _name_open_close;

@@ -1,6 +1,6 @@
-#include <limits>
-
 #include "lexer.hpp"
+
+#include <limits>
 
 #define left_of(a, b) (a < b)
 
@@ -10,13 +10,13 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 )
 {
 	lexer::_internal_tok match_tok = lexer::_internal_tok::_EOI;
-	
+
 	if (_has_input)
 	{
 		match_tok = lexer::_internal_tok::_NONE;
 		ptrdiff_t match_pos = 0;
 		ptrdiff_t last_pos = std::numeric_limits<ptrdiff_t>::max();
-		
+
 		const _tok_match * ptm = nullptr;
 		matcher * m = nullptr;
 		for (size_t i = 0; i < len; ++i)
@@ -36,11 +36,11 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 				}
 			}
 		}
-		
+
 		if (match_tok != lexer::_internal_tok::_NONE)
 			_line_pos += last_pos;
 	}
-	
+
 	return match_tok;
 }
 
@@ -50,10 +50,10 @@ lexer::_internal_tok lexer::_leftmost_non_comment_intl(
 )
 {
 	lexer::_internal_tok ret = lexer::_internal_tok::_NONE;
-	
+
 	if (!_block_comment)
 	{
-		ret = _match_leftmost_of(tm, len);	
+		ret = _match_leftmost_of(tm, len);
 		if (lexer::_internal_tok::_COMMENT_START == ret)
 		{
 			_block_comment = true;
@@ -71,14 +71,14 @@ lexer::_internal_tok lexer::_leftmost_non_comment_intl(
 			ret = _leftmost_non_comment_intl(tm, len);
 		}
 	}
-	
+
 	return ret;
 }
 
 bool lexer::also_matches_open()
 {
 	matcher * open = const_cast<matcher *>(_pats.open);
-	
+
 	return (open
 		&& open->match(_line.c_str(), _line.length(), _line_pos)
 		&& (open->position() == 0));

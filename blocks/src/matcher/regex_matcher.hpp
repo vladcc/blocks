@@ -1,9 +1,9 @@
 #ifndef REGEX_MATCHER_HPP
 #define REGEX_MATCHER_HPP
 
-#include <regex>
-
 #include "matcher_base.hpp"
+
+#include <regex>
 
 class regex_matcher : public matcher
 {

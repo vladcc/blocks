@@ -1,6 +1,6 @@
-#include <cstring>
-
 #include "string_matcher.hpp"
+
+#include <cstring>
 
 str_matcher::str_matcher(const char * pattern, uint32_t opts) :
 	_pattern(pattern ? pattern : ""),
@@ -15,18 +15,18 @@ str_matcher::str_matcher(const char * pattern, uint32_t opts) :
 bool str_matcher::match(const char * text, size_t len, size_t start)
 {
 	bool ret = false;
-	
+
 	if (!_pattern.empty())
 	{
 		const char * pstart = text + start;
-		
+
 		if (_opts & matcher::flags::ICASE)
 		{
 			_icase_buff.assign(pstart);
 			_tolower(_icase_buff);
 			pstart = _icase_buff.c_str();
 		}
-		
+
 		const char * found = strstr(pstart, _pattern.c_str());
 		if (found)
 		{
@@ -34,7 +34,7 @@ bool str_matcher::match(const char * text, size_t len, size_t start)
 			_pos = found - pstart;
 		}
 	}
-	
+
 	return ret;
 }
 
