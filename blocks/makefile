@@ -2,7 +2,7 @@
 help: _help
 
 CMPL := g++
-EXTRA_FLAGS := 
+EXTRA_FLAGS :=
 INLC_PATHS := -I ./src/matcher -I ./src/parser
 WARN_FLAGS := -Wall -Wfatal-errors
 FLAGS := $(INLC_PATHS) $(WARN_FLAGS) $(EXTRA_FLAGS)
@@ -33,7 +33,7 @@ PARSE_OPTS_SRC := $(MAIN_SRC_DIR)/$(PARSE_OPTS_BASE).c
 PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
 $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
 	$(CMPL) -c $< -o $@ $(FLAGS)
-	
+
 MAIN_BLOCKS_O := $(MAIN_O) $(PARSE_OPTS_O)
 # </main>
 
@@ -80,7 +80,7 @@ LEXER_HDR := $(PARSER_SRC_DIR)/$(LEXER_BASE).hpp
 LEXER_O := $(OBJ_DIR)/$(LEXER_BASE).o
 $(LEXER_O): $(LEXER_SRC) $(LEXER_HDR)
 	$(CMPL) -c $< -o $@ $(FLAGS)
-	
+
 PARSER_O := $(BLOCK_PARSER_O) $(LEXER_O)
 # </parser>
 
@@ -101,7 +101,7 @@ BLOCKS_BIN := $(BLOCKS_BASE)
 BLOCKS_DEP := $(MAIN_BLOCKS_O) $(MATCHERS_O) $(PARSER_O)
 $(BLOCKS_BIN): $(BLOCKS_DEP)
 	$(CMPL) $^ -o ./$@ $(FLAGS)
-	
+
 UNIT_TESTS_BIN := unit-tests
 UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(MATCHERS_O) $(PARSER_O)
 $(UNIT_TESTS_BIN): $(UNIT_TESTS_DEP)
@@ -115,14 +115,14 @@ compile: $(BLOCKS_BIN) $(UNIT_TESTS_BIN)
 TEST_DIR := ./tests
 
 .PHONY: test
-test: utest btest
+test: blocks utest btest
 
 .PHONY: btest
 btest:
 	cd $(TEST_DIR) && bash run_tests.sh ../$(BLOCKS_BIN)
-	
+
 .PHONY: utest
-utest:
+utest: unit-tests
 	./$(UNIT_TESTS_BIN)
 # </testing>
 

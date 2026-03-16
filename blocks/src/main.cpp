@@ -941,6 +941,7 @@ static bool get_block(
 	parser.init(fname);
 	while (parser.parse_block())
 	{
+		///* tests not pass this way
 		ret = process_block(
 			opts,
 			fname,
@@ -948,9 +949,12 @@ static bool get_block(
 			pat_no_match,
 			parser.get_block()
 		);
+		//*/
 
 		if (parser.had_error())
 		{
+			// print the block to stderr if there was a error
+			// and the verbose error option is on
 			print_error_report(parser.get_error_report());
 			if (opts.fatal_error)
 				exit(EXIT_FAILURE);
@@ -967,7 +971,6 @@ static bool get_block(
 			);
 		}
 		*/
-
 		if (0 == opts.block_count)
 			break;
 	}
