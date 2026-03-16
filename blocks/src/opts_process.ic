@@ -1,0 +1,262 @@
+// <opts_process>
+opts_table the_tbl;
+opts_entry all_entries[] = {
+	{
+		.names = {
+			.long_name = block_name_opt_long,
+			.short_name = block_name_opt_short
+		},
+		.handler = {
+			.handler = handle_block_name,
+			.context = (void *)context,
+		},
+		.print_help = help_block_name,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = block_start_opt_long,
+			.short_name = block_start_opt_short
+		},
+		.handler = {
+			.handler = handle_block_start,
+			.context = (void *)context,
+		},
+		.print_help = help_block_start,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = block_end_opt_long,
+			.short_name = block_end_opt_short
+		},
+		.handler = {
+			.handler = handle_block_end,
+			.context = (void *)context,
+		},
+		.print_help = help_block_end,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = comment_opt_long,
+			.short_name = comment_opt_short
+		},
+		.handler = {
+			.handler = handle_comment,
+			.context = (void *)context,
+		},
+		.print_help = help_comment,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = mark_start_opt_long,
+			.short_name = mark_start_opt_short
+		},
+		.handler = {
+			.handler = handle_mark_start,
+			.context = (void *)context,
+		},
+		.print_help = help_mark_start,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = mark_end_opt_long,
+			.short_name = mark_end_opt_short
+		},
+		.handler = {
+			.handler = handle_mark_end,
+			.context = (void *)context,
+		},
+		.print_help = help_mark_end,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = block_count_opt_long,
+			.short_name = block_count_opt_short
+		},
+		.handler = {
+			.handler = handle_block_count,
+			.context = (void *)context,
+		},
+		.print_help = help_block_count,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = skip_opt_long,
+			.short_name = skip_opt_short
+		},
+		.handler = {
+			.handler = handle_skip,
+			.context = (void *)context,
+		},
+		.print_help = help_skip,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = regex_match_opt_long,
+			.short_name = regex_match_opt_short
+		},
+		.handler = {
+			.handler = handle_regex_match,
+			.context = (void *)context,
+		},
+		.print_help = help_regex_match,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = regex_no_match_opt_long,
+			.short_name = regex_no_match_opt_short
+		},
+		.handler = {
+			.handler = handle_regex_no_match,
+			.context = (void *)context,
+		},
+		.print_help = help_regex_no_match,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = fatal_error_opt_long,
+			.short_name = fatal_error_opt_short
+		},
+		.handler = {
+			.handler = handle_fatal_error,
+			.context = (void *)context,
+		},
+		.print_help = help_fatal_error,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = line_numbers_opt_long,
+			.short_name = line_numbers_opt_short
+		},
+		.handler = {
+			.handler = handle_line_numbers,
+			.context = (void *)context,
+		},
+		.print_help = help_line_numbers,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = print_file_names_opt_long,
+			.short_name = print_file_names_opt_short
+		},
+		.handler = {
+			.handler = handle_print_file_names,
+			.context = (void *)context,
+		},
+		.print_help = help_print_file_names,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = print_file_names_match_opt_long,
+			.short_name = print_file_names_match_opt_short
+		},
+		.handler = {
+			.handler = handle_print_file_names_match,
+			.context = (void *)context,
+		},
+		.print_help = help_print_file_names_match,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = case_insensitive_opt_long,
+			.short_name = case_insensitive_opt_short
+		},
+		.handler = {
+			.handler = handle_case_insensitive,
+			.context = (void *)context,
+		},
+		.print_help = help_case_insensitive,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = ignore_top_opt_long,
+			.short_name = ignore_top_opt_short
+		},
+		.handler = {
+			.handler = handle_ignore_top,
+			.context = (void *)context,
+		},
+		.print_help = help_ignore_top,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = quiet_opt_long,
+			.short_name = quiet_opt_short
+		},
+		.handler = {
+			.handler = handle_quiet,
+			.context = (void *)context,
+		},
+		.print_help = help_quiet,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = debug_trace_opt_long,
+			.short_name = debug_trace_opt_short
+		},
+		.handler = {
+			.handler = handle_debug_trace,
+			.context = (void *)context,
+		},
+		.print_help = help_debug_trace,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = help_opt_long,
+			.short_name = help_opt_short
+		},
+		.handler = {
+			.handler = handle_help,
+			.context = (void *)(&the_tbl),
+		},
+		.print_help = help_help,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = version_opt_long,
+			.short_name = version_opt_short
+		},
+		.handler = {
+			.handler = handle_version,
+			.context = (void *)context,
+		},
+		.print_help = help_version,
+		.takes_arg = false,
+	},
+};
+
+the_tbl.tbl = all_entries;
+the_tbl.length = sizeof(all_entries)/sizeof(*all_entries);
+
+opts_parse_data parse_data = {
+	.the_tbl = &the_tbl,
+	.on_unbound = {
+		.handler = on_unbound_arg,
+		.context = (void *)context,
+	},
+	.on_error = {
+		.handler = on_error,
+		.context = (void *)context,
+	}
+};
+
+opts_parse(argc-1, argv+1, &parse_data);
+// </opts_process>

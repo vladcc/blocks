@@ -1,6 +1,7 @@
 .PHONY: help
 help: _help
 
+AWK := awk
 CMPL := g++
 EXTRA_FLAGS :=
 INLC_PATHS := -I ./src/matcher -I ./src/parser
@@ -18,14 +19,33 @@ release: clean compile
 debug: FLAGS += -g
 debug: clean compile
 
+# <command_line_options>
+CLI_DIR := options
+CLI_GEN := $(CLI_DIR)/parse-opts-gen.awk
+CLI_DEFN_SRC := $(CLI_DIR)/opt_defn.txt
+CLI_DEFN_IC := $(SRC_DIR)/opts_definitions.ic
+CLI_PROC_IC := $(SRC_DIR)/opts_process.ic
+CLI_GEN := $(AWK) -f $(CLI_GEN) -vOutDir="$(SRC_DIR)" $(CLI_DEFN_SRC)
+
+.PHONY: cli-opt
+cli-opt: $(CLI_DEFN_IC) $(CLI_PROC_IC)
+
+$(CLI_DEFN_IC): $(CLI_DEFN_SRC)
+	$(CLI_GEN)
+
+$(CLI_PROC_IC): $(CLI_DEFN_SRC)
+	$(CLI_GEN)
+# </command_line_options>
+
 # <obj_files_compilation>
 # <main>
 MAIN_SRC_DIR := $(SRC_DIR)
 
 MAIN_BASE := main
 MAIN_SRC := $(MAIN_SRC_DIR)/$(MAIN_BASE).cpp
+MAIN_CLI := $(CLI_DEFN_IC) $(CLI_PROC_IC)
 MAIN_O := $(OBJ_DIR)/$(MAIN_BASE).o
-$(MAIN_O): $(MAIN_SRC)
+$(MAIN_O): $(MAIN_SRC) $(MAIN_CLI)
 	$(CMPL) -c $< -o $@ $(FLAGS)
 
 PARSE_OPTS_BASE := parse_opts
@@ -139,6 +159,7 @@ _help:
 	@echo 'make debug      - debug build'
 	@echo 'make $(BLOCKS_BIN)     - compile blocks'
 	@echo 'make $(UNIT_TESTS_BIN) - compile unit tests'
+	@echo 'make cli-opt - generate the command line options'
 	@echo 'make test    - run all tests'
 	@echo 'make btest   - run binary tests'
 	@echo 'make utest   - run unit tests'
