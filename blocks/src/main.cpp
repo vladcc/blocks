@@ -11,31 +11,41 @@
 #include <cstdarg>
 #include <cerrno>
 
-struct prog_options
-{
+struct prog_options {
 	std::vector<const char *> * file_names;
 	const char * block_name;
 	const char * block_start;
 	const char * block_end;
-	const char * regex_match;
-	const char * regex_no_match;
 	const char * comment;
+	const char * block_comment_begin;
+	const char * block_comment_terminate;
+	const char * match;
+	const char * dont_match;
 	const char * mark_start;
 	const char * mark_end;
 	int block_count;
 	int skip_count;
-	bool fatal_error;
 	bool line_numbers;
-	bool print_fnames;
-	bool print_fnames_match_only;
+	bool with_filename;
+	bool files_with_match;
+	bool files_without_match;
 	bool case_insensitive;
 	bool ignore_top;
+	bool fatal_error;
 	bool quiet;
-	bool debug_trace;
+	bool is_next_matcher_regex;
+	bool is_block_name_regex;
+	bool is_block_start_regex;
+	bool is_block_end_regex;
+	bool is_comment_regex;
+	bool is_block_comment_begin_regex;
+	bool is_block_comment_terminate_regex;
+	bool is_match_regex;
+	bool is_dont_match_regex;
 };
 
 const char program_name[] = "blocks";
-const char program_version[] = "1.41";
+const char program_version[] = "2.0";
 
 static void equit_(const char * msg, ...);
 #define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
@@ -57,6 +67,7 @@ puts("Prints proper nested blocks like so:");
 puts("1. Match the name of the block, e.g. 'main'");
 puts("2. Match the opening symbol, e.g. '{'");
 puts("3. Match the corresponding closing symbol, e.g. '}'");
+#error "Edit the message and clarify what a <matcher> means"
 puts("Matching is done with the ECMAScript std regex library.");
 printf("%s prints everything in-between the block name and the closing symbol."
 	"\n",
@@ -111,27 +122,41 @@ static void equit_(const char * msg, ...)
 
 static int handle_options(int argc,
 	char * argv[],
-	prog_options& out_gather_opts,
+	prog_options& opts,
 	std::vector<const char *>& file_names
 )
 {
-	static const char curly_open[] = "\\{";
-	static const char curly_close[] = "\\}";
+	static const char curly_open[]	  = "\\{";
+	static const char curly_close[]   = "\\}";
+	static const char line_comment[]  = "//";
+	static const char open_comment[]  = "/\\*";
+	static const char close_comment[] = "\\*/";
 
-	prog_options * context = &out_gather_opts;
+	prog_options * context = &opts;
 	memset((void *)context, 0, sizeof(*context));
 
 	// defaults
-	out_gather_opts.file_names = &file_names;
-	out_gather_opts.block_name = curly_open;
-	out_gather_opts.block_start = curly_open;
-	out_gather_opts.block_end = curly_close;
-	out_gather_opts.block_count = -1;
-	out_gather_opts.skip_count = 0;
+	opts.file_names = &file_names;
+	opts.block_name = curly_open;
+	opts.block_start = curly_open;
+	opts.block_end = curly_close;
+	opts.comment = line_comment;
+	opts.block_comment_begin = open_comment;
+	opts.block_comment_terminate = close_comment;
+
+	opts.block_count = -1;
+	opts.skip_count = 0;
+	opts.is_next_matcher_regex = true;
+	opts.is_block_name_regex = true;
+	opts.is_block_start_regex = true;
+	opts.is_block_end_regex = true;
+	opts.is_comment_regex = true;
+	opts.is_block_comment_begin_regex = true;
+	opts.is_block_comment_terminate_regex = true;
 
 #include "opts_process.ic"
 
-    return 0;
+	return 0;
 }
 
 static bool match_in_block(
@@ -187,14 +212,13 @@ static void print_block(
 )
 {
 	static std::string fname_on_match("");
-	static const char * fprev = nullptr;
-										// ugly workaround for now
-	if (opts.print_fnames_match_only && fname && (fprev != fname))
-	{
-		fprev = fname;
+
+	 bool with_filename = opts.with_filename;
+	// bool mark_start = opts.mark_start;
+	// etc.
+
+	if (with_filename && fname)
 		fname_on_match.assign(fname).append(":");
-		print_line(fname_on_match.c_str());
-	}
 
 	if (opts.mark_start)
 		print_line(opts.mark_start);
@@ -218,13 +242,15 @@ static void print_block(
 		if (opts.ignore_top && (i == (end-1)))
 			break;
 
+		if (with_filename)
+			print_str(fname_on_match.c_str());
 
 		if (opts.line_numbers)
 		{
-			const int num_max_len = 16;
-			char num[num_max_len] = {0};
+			const int num_max_len = 32;
+			static char num[num_max_len] = {0};
 
-			snprintf(num, num_max_len, "%8zu ", block[i].get_line_no());
+			snprintf(num, num_max_len, "%zu:", block[i].get_line_no());
 			print_str(num);
 		}
 
@@ -246,10 +272,10 @@ static bool process_block(
 	if (!opts.quiet)
 	{
 		// change regex_ to pat_
-		if (opts.regex_match && !match_in_block(pat_match, block))
+		if (opts.match && !match_in_block(pat_match, block))
 			return false;
 
-		if (opts.regex_no_match && match_in_block(pat_no_match, block))
+		if (opts.dont_match && match_in_block(pat_no_match, block))
 			return false;
 
 		if (0 == opts.skip_count)
@@ -345,55 +371,69 @@ int main(int argc, char * argv[])
 
 	std::vector<const char *> file_names;
 
-	prog_options gather_opts;
-	handle_options(argc, argv, gather_opts, file_names);
+	prog_options opts;
+	handle_options(argc, argv, opts, file_names);
 
-	if (std::string(gather_opts.block_start) ==
-		std::string(gather_opts.block_end))
+	if (std::string(opts.block_start) ==
+		std::string(opts.block_end))
 		equit("%s", "ambiguous: block start and block end cannot be the same.");
 
 	uint32_t matcher_flags = matcher::flags::NONE;
-	if (gather_opts.case_insensitive)
+	if (opts.case_insensitive)
 		matcher_flags |= matcher::flags::ICASE;
 
 	int ret = 1;
 
-	std::unique_ptr<matcher> b_name, b_start, b_end, b_comment,
-        r_match, r_no_match;
+	std::unique_ptr<matcher> b_name, b_start, b_end,
+		b_comment,
+		b_block_comment_begin, b_block_comment_terminate,
+		r_match, r_dont_match;
 
 	try
 	{
 		matcher_factory mfact;
 
 		b_name = mfact.create(
-            matcher::type::REGEX,
-			gather_opts.block_name, matcher_flags
-        );
+			opts.is_block_name_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.block_name, matcher_flags
+		);
 		b_start = mfact.create(
-            matcher::type::REGEX,
-			gather_opts.block_start, matcher_flags
-        );
+			opts.is_block_start_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.block_start, matcher_flags
+		);
 		b_end = mfact.create(
-            matcher::type::REGEX,
-			gather_opts.block_end, matcher_flags
-        );
+			opts.is_block_end_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.block_end, matcher_flags
+		);
 		b_comment = mfact.create(
-            matcher::type::REGEX,
-			gather_opts.comment, matcher_flags
-        );
+			opts.is_comment_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.comment, matcher_flags
+		);
+		b_block_comment_begin = mfact.create(
+			opts.is_block_comment_begin_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.block_comment_begin, matcher_flags
+		);
+		b_block_comment_terminate = mfact.create(
+			opts.is_block_comment_terminate_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.block_comment_terminate, matcher_flags
+		);
 
-		r_match = std::move(
-            mfact.create(
-                matcher::type::REGEX,
-                gather_opts.regex_match, matcher_flags
-            )
-        );
-		r_no_match = std::move(
-            mfact.create(
-                matcher::type::REGEX,
-                gather_opts.regex_no_match, matcher_flags
-            )
-        );
+		r_match = mfact.create(
+			opts.is_match_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.match, matcher_flags
+		);
+		r_dont_match = mfact.create(
+			opts.is_dont_match_regex ?
+				matcher::type::REGEX : matcher::type::STRING,
+			opts.dont_match, matcher_flags
+		);
 	}
 	catch(const std::runtime_error& e)
 	{
@@ -405,7 +445,9 @@ int main(int argc, char * argv[])
 		b_name.get(),
 		b_start.get(),
 		b_end.get(),
-		b_comment.get()
+		b_comment.get(),
+		b_block_comment_begin.get(),
+		b_block_comment_terminate.get()
 	);
 
 	lexer lex(std::cin, patterns);
@@ -422,15 +464,12 @@ int main(int argc, char * argv[])
 			current_file = fname;
 			if (freopen(fname, "r", stdin))
 			{
-				if (gather_opts.print_fnames && !gather_opts.quiet)
-					std::cout << current_file << ":" << std::endl;
-
 				ret = get_blocks(
 					b_parser,
-					gather_opts,
+					opts,
 					current_file,
 					r_match.get(),
-					r_no_match.get()
+					r_dont_match.get()
 				);
 			}
 			else
@@ -444,15 +483,12 @@ int main(int argc, char * argv[])
 	}
 	else
 	{
-		if (gather_opts.print_fnames && !gather_opts.quiet)
-			std::cout << current_file << ":" << std::endl;
-
 		ret = get_blocks(
 			b_parser,
-			gather_opts,
+			opts,
 			current_file,
 			r_match.get(),
-			r_no_match.get()
+			r_dont_match.get()
 		);
 	}
 

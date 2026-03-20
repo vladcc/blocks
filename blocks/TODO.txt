@@ -1,5 +1,5 @@
-- print filename in front every line grep stile
+- print filename and line number in front every line grep stile - done
+- main - do different matchers - done
+
 - have grep print file names that matched/didn't match
-- main - ignore top last line - look for tok close backwards
-- main - do different matchers
 - main - process block only if no error?

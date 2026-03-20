@@ -51,6 +51,54 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = block_comment_begin_opt_long,
+			.short_name = block_comment_begin_opt_short
+		},
+		.handler = {
+			.handler = handle_block_comment_begin,
+			.context = (void *)context,
+		},
+		.print_help = help_block_comment_begin,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = block_comment_terminate_opt_long,
+			.short_name = block_comment_terminate_opt_short
+		},
+		.handler = {
+			.handler = handle_block_comment_terminate,
+			.context = (void *)context,
+		},
+		.print_help = help_block_comment_terminate,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = match_opt_long,
+			.short_name = match_opt_short
+		},
+		.handler = {
+			.handler = handle_match,
+			.context = (void *)context,
+		},
+		.print_help = help_match,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = dont_match_opt_long,
+			.short_name = dont_match_opt_short
+		},
+		.handler = {
+			.handler = handle_dont_match,
+			.context = (void *)context,
+		},
+		.print_help = help_dont_match,
+		.takes_arg = true,
+	},
+	{
+		.names = {
 			.long_name = mark_start_opt_long,
 			.short_name = mark_start_opt_short
 		},
@@ -99,42 +147,6 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
-			.long_name = regex_match_opt_long,
-			.short_name = regex_match_opt_short
-		},
-		.handler = {
-			.handler = handle_regex_match,
-			.context = (void *)context,
-		},
-		.print_help = help_regex_match,
-		.takes_arg = true,
-	},
-	{
-		.names = {
-			.long_name = regex_no_match_opt_long,
-			.short_name = regex_no_match_opt_short
-		},
-		.handler = {
-			.handler = handle_regex_no_match,
-			.context = (void *)context,
-		},
-		.print_help = help_regex_no_match,
-		.takes_arg = true,
-	},
-	{
-		.names = {
-			.long_name = fatal_error_opt_long,
-			.short_name = fatal_error_opt_short
-		},
-		.handler = {
-			.handler = handle_fatal_error,
-			.context = (void *)context,
-		},
-		.print_help = help_fatal_error,
-		.takes_arg = false,
-	},
-	{
-		.names = {
 			.long_name = line_numbers_opt_long,
 			.short_name = line_numbers_opt_short
 		},
@@ -147,26 +159,38 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
-			.long_name = print_file_names_opt_long,
-			.short_name = print_file_names_opt_short
+			.long_name = with_filename_opt_long,
+			.short_name = with_filename_opt_short
 		},
 		.handler = {
-			.handler = handle_print_file_names,
+			.handler = handle_with_filename,
 			.context = (void *)context,
 		},
-		.print_help = help_print_file_names,
+		.print_help = help_with_filename,
 		.takes_arg = false,
 	},
 	{
 		.names = {
-			.long_name = print_file_names_match_opt_long,
-			.short_name = print_file_names_match_opt_short
+			.long_name = files_with_match_opt_long,
+			.short_name = files_with_match_opt_short
 		},
 		.handler = {
-			.handler = handle_print_file_names_match,
+			.handler = handle_files_with_match,
 			.context = (void *)context,
 		},
-		.print_help = help_print_file_names_match,
+		.print_help = help_files_with_match,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = files_without_match_opt_long,
+			.short_name = files_without_match_opt_short
+		},
+		.handler = {
+			.handler = handle_files_without_match,
+			.context = (void *)context,
+		},
+		.print_help = help_files_without_match,
 		.takes_arg = false,
 	},
 	{
@@ -195,6 +219,18 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = fatal_error_opt_long,
+			.short_name = fatal_error_opt_short
+		},
+		.handler = {
+			.handler = handle_fatal_error,
+			.context = (void *)context,
+		},
+		.print_help = help_fatal_error,
+		.takes_arg = false,
+	},
+	{
+		.names = {
 			.long_name = quiet_opt_long,
 			.short_name = quiet_opt_short
 		},
@@ -207,14 +243,26 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
-			.long_name = debug_trace_opt_long,
-			.short_name = debug_trace_opt_short
+			.long_name = regex_match_opt_long,
+			.short_name = regex_match_opt_short
 		},
 		.handler = {
-			.handler = handle_debug_trace,
+			.handler = handle_regex_match,
 			.context = (void *)context,
 		},
-		.print_help = help_debug_trace,
+		.print_help = help_regex_match,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = fixed_match_opt_long,
+			.short_name = fixed_match_opt_short
+		},
+		.handler = {
+			.handler = handle_fixed_match,
+			.context = (void *)context,
+		},
+		.print_help = help_fixed_match,
 		.takes_arg = false,
 	},
 	{
