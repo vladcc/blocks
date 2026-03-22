@@ -1,5 +1,2 @@
-- print filename and line number in front every line grep stile - done
-- main - do different matchers - done
-
 - have grep print file names that matched/didn't match
 - main - process block only if no error?

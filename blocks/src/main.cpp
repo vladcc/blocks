@@ -60,49 +60,55 @@ program_name)
 
 static void help_message(void)
 {
-printf("-- %s v%s --\n", program_name, program_version);
+printf("-- %s %s --\n", program_name, program_version);
 puts("grep for nested data");
 puts("");
-puts("Prints proper nested blocks like so:");
-puts("1. Match the name of the block, e.g. 'main'");
-puts("2. Match the opening symbol, e.g. '{'");
-puts("3. Match the corresponding closing symbol, e.g. '}'");
-#error "Edit the message and clarify what a <matcher> means"
-puts("Matching is done with the ECMAScript std regex library.");
-printf("%s prints everything in-between the block name and the closing symbol."
-	"\n",
+puts(
+"Prints proper nested blocks like so:\n"
+"1. Match the name of the block, e.g. 'main'\n"
+"2. Match the opening symbol, e.g. '{'\n"
+"3. Match the corresponding closing symbol, e.g. '}'"
+);
+puts("");
+puts(
+"Matching is done either as fixed strings or with the ECMAScript C++ std\n"
+"regex library depending on the option provided before a <matcher> is\n"
+"defined. The default for all <matcher>s is fixed strings."
+);
+puts("");
+printf(
+"%s prints everything in-between the block name and the closing symbol.\n",
 	program_name
 );
 puts("");
-puts("For example if you have a file which looks like:");
-puts("foo {");
-puts("}");
-puts("bar {");
-puts("\tbaz {");
-puts("\t\tsomething");
-puts("\t}");
-puts("}");
-puts("zab {");
-puts("}");
-puts("");
-printf("and you run '%s --block-name bar <my-file>', you'll get:\n",
-	program_name
+puts(
+"For example if you have a file which looks like:\n"
+"foo {\n"
+"\tbar {\n"
+"\t\tbaz\n"
+"\t}\n"
+"}"
 );
-puts("bar {");
-puts("\tbaz {");
-puts("\t\tsomething");
+puts("");
+printf(
+"and you run '%s --block-name bar <my-file>', you'll get:\n",
+program_name
+);
+puts("\tbar {");
+puts("\t\tbaz");
 puts("\t}");
-puts("}");
 puts("");
 printf("When the name is matched, the input isn't advanced and the search for\n"
-"block start begins at the start of the name. This allows to match all blocks\n"
+"the block begins at the start of the name. This allows to match all blocks\n"
 "in a file when the name is the same as the opening symbol. It also allows\n"
 "to match LISP-like syntax where the block start comes before the name, e.g.:\n"
-"%s -n '\\(define' -s'\\(' -e'\\)'\n",
+"%s -n '(define' -s '(' -e ')'\n",
 	program_name
 );
-puts("Input is advanced when either block start or block end are matched and\n"
-"subsequent searching begins one character after the start match.");
+puts(
+"Input is advanced when either block start or block end are matched and\n"
+"subsequent searching begins one character after the start match."
+);
 puts("");
 puts("The available options are:");
 }
@@ -126,11 +132,11 @@ static int handle_options(int argc,
 	std::vector<const char *>& file_names
 )
 {
-	static const char curly_open[]	  = "\\{";
-	static const char curly_close[]   = "\\}";
+	static const char curly_open[]	  = "{";
+	static const char curly_close[]   = "}";
 	static const char line_comment[]  = "//";
-	static const char open_comment[]  = "/\\*";
-	static const char close_comment[] = "\\*/";
+	static const char open_comment[]  = "/*";
+	static const char close_comment[] = "*/";
 
 	prog_options * context = &opts;
 	memset((void *)context, 0, sizeof(*context));
@@ -146,13 +152,6 @@ static int handle_options(int argc,
 
 	opts.block_count = -1;
 	opts.skip_count = 0;
-	opts.is_next_matcher_regex = true;
-	opts.is_block_name_regex = true;
-	opts.is_block_start_regex = true;
-	opts.is_block_end_regex = true;
-	opts.is_comment_regex = true;
-	opts.is_block_comment_begin_regex = true;
-	opts.is_block_comment_terminate_regex = true;
 
 #include "opts_process.ic"
 
@@ -389,50 +388,54 @@ int main(int argc, char * argv[])
 		b_block_comment_begin, b_block_comment_terminate,
 		r_match, r_dont_match;
 
+	const matcher::type mtypes[2] = {
+		matcher::type::STRING,
+		matcher::type::REGEX
+	};
+
 	try
 	{
 		matcher_factory mfact;
 
 		b_name = mfact.create(
-			opts.is_block_name_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.block_name, matcher_flags
+			mtypes[opts.is_block_name_regex],
+			opts.block_name,
+			matcher_flags
 		);
 		b_start = mfact.create(
-			opts.is_block_start_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.block_start, matcher_flags
+			mtypes[opts.is_block_start_regex],
+			opts.block_start,
+			matcher_flags
 		);
 		b_end = mfact.create(
-			opts.is_block_end_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.block_end, matcher_flags
+			mtypes[opts.is_block_end_regex],
+			opts.block_end,
+			matcher_flags
 		);
 		b_comment = mfact.create(
-			opts.is_comment_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.comment, matcher_flags
+			mtypes[opts.is_comment_regex],
+			opts.comment,
+			matcher_flags
 		);
 		b_block_comment_begin = mfact.create(
-			opts.is_block_comment_begin_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.block_comment_begin, matcher_flags
+			mtypes[opts.is_block_comment_begin_regex],
+			opts.block_comment_begin,
+			matcher_flags
 		);
 		b_block_comment_terminate = mfact.create(
-			opts.is_block_comment_terminate_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.block_comment_terminate, matcher_flags
+			mtypes[opts.is_block_comment_terminate_regex],
+			opts.block_comment_terminate,
+			matcher_flags
 		);
 
 		r_match = mfact.create(
-			opts.is_match_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
+			mtypes[opts.is_match_regex],
 			opts.match, matcher_flags
 		);
 		r_dont_match = mfact.create(
-			opts.is_dont_match_regex ?
-				matcher::type::REGEX : matcher::type::STRING,
-			opts.dont_match, matcher_flags
+			mtypes[opts.is_dont_match_regex],
+			opts.dont_match,
+			matcher_flags
 		);
 	}
 	catch(const std::runtime_error& e)
