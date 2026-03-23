@@ -28,12 +28,10 @@ CLI_PROC_IC := $(SRC_DIR)/opts_process.ic
 CLI_GEN := $(AWK) -f $(CLI_GEN) -vOutDir="$(SRC_DIR)" $(CLI_DEFN_SRC)
 
 .PHONY: cli-opt
-cli-opt: $(CLI_DEFN_IC) $(CLI_PROC_IC)
+cli-opt: $(CLI_DEFN_IC)
 
+# regenerates both CLI_DEFN_IC and CLI_PROC_IC
 $(CLI_DEFN_IC): $(CLI_DEFN_SRC)
-	$(CLI_GEN)
-
-$(CLI_PROC_IC): $(CLI_DEFN_SRC)
 	$(CLI_GEN)
 # </command_line_options>
 

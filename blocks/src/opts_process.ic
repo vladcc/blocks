@@ -231,18 +231,6 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
-			.long_name = quiet_opt_long,
-			.short_name = quiet_opt_short
-		},
-		.handler = {
-			.handler = handle_quiet,
-			.context = (void *)context,
-		},
-		.print_help = help_quiet,
-		.takes_arg = false,
-	},
-	{
-		.names = {
 			.long_name = regex_match_opt_long,
 			.short_name = regex_match_opt_short
 		},

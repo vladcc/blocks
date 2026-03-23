@@ -18,7 +18,6 @@
 #-i|--case-insensitive
 #-I|--ignore-top
 #-F|--fatal-error
-#-q|--quiet
 
 #-r|--regex-match
 #-f|--fixed-match
@@ -233,7 +232,7 @@ end_code
 
 help_code
 printf("%s|%s <num>\n", short_name, long_name);
-puts("Print the first <num> number of blocks.");
+puts("Print the first <num> number of blocks from the current file.");
 puts("");
 end_code
 end
@@ -251,7 +250,7 @@ end_code
 
 help_code
 printf("%s|%s <num>\n", short_name, long_name);
-puts("Don't print the first <num> number of blocks.");
+puts("Don't print the first <num> number of blocks from the current file.");
 puts("");
 end_code
 end
@@ -359,22 +358,7 @@ end_code
 
 help_code
 printf("%s|%s\n", short_name, long_name);
-puts("Quit after the first error.");
-puts("");
-end_code
-end
-
-long_name  quiet
-short_name q
-takes_args false
-handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->quiet = true;
-end_code
-
-help_code
-printf("%s|%s\n", short_name, long_name);
-puts("Suppress output to stdout.");
+puts("Quit processing the current file after the first error.");
 puts("");
 end_code
 end

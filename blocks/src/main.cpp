@@ -32,7 +32,6 @@ struct prog_options {
 	bool case_insensitive;
 	bool ignore_top;
 	bool fatal_error;
-	bool quiet;
 	bool is_next_matcher_regex;
 	bool is_block_name_regex;
 	bool is_block_start_regex;
@@ -47,16 +46,15 @@ struct prog_options {
 const char program_name[] = "blocks";
 const char program_version[] = "2.0";
 
-static void equit_(const char * msg, ...);
-#define equit(str, ...) equit_("%s: error: " str, program_name, __VA_ARGS__)
+static void opts_errq(const char * msg, ...);
+#define equit(str, ...) opts_errq("%s: error: " str, program_name, __VA_ARGS__)
 
 #define print_try()\
 fprintf(stderr, "Try '%s --%s' for more information\n",\
-program_name,help_opt_long)
+program_name, help_opt_long)
 
 #define print_use()\
-fprintf(stderr, "Use: %s [options] [files]\n",\
-program_name)
+fprintf(stderr, "Use: %s [options] [files]\n", program_name)
 
 static void help_message(void)
 {
@@ -115,7 +113,7 @@ puts("The available options are:");
 
 #include "opts_definitions.ic"
 
-static void equit_(const char * msg, ...)
+static void opts_errq(const char * msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -126,7 +124,8 @@ static void equit_(const char * msg, ...)
 	exit(EXIT_FAILURE);
 }
 
-static int handle_options(int argc,
+static void handle_options(
+	int argc,
 	char * argv[],
 	prog_options& opts,
 	std::vector<const char *>& file_names
@@ -139,7 +138,6 @@ static int handle_options(int argc,
 	static const char close_comment[] = "*/";
 
 	prog_options * context = &opts;
-	memset((void *)context, 0, sizeof(*context));
 
 	// defaults
 	opts.file_names = &file_names;
@@ -155,7 +153,8 @@ static int handle_options(int argc,
 
 #include "opts_process.ic"
 
-	return 0;
+	if (std::string(opts.block_start) == std::string(opts.block_end))
+		equit("%s", "ambiguous: block start and block end cannot be the same.");
 }
 
 static bool match_in_block(
@@ -198,6 +197,12 @@ static void print_err(const char * str)
 	std::cerr << program_name << ": error: " << str << std::endl;
 }
 
+static void errq(const char * str)
+{
+	print_err(str);
+	exit(EXIT_FAILURE);
+}
+
 static void print_error_report(const std::vector<std::string>& report)
 {
 	for (const auto& str : report)
@@ -212,19 +217,21 @@ static void print_block(
 {
 	static std::string fname_on_match("");
 
-	 bool with_filename = opts.with_filename;
-	// bool mark_start = opts.mark_start;
-	// etc.
+	bool with_filename = opts.with_filename;
+	bool ignore_top = opts.ignore_top;
+	bool line_numbers = opts.line_numbers;
+	const char * mark_start = opts.mark_start;
+	const char * mark_end = opts.mark_end;
 
 	if (with_filename && fname)
 		fname_on_match.assign(fname).append(":");
 
-	if (opts.mark_start)
-		print_line(opts.mark_start);
+	if (mark_start)
+		print_line(mark_start);
 
 	for (size_t i = 0, end = block.size(); i < end; ++i)
 	{
-		if (opts.ignore_top && (0 == i))
+		if (ignore_top && (0 == i))
 		{
 			size_t j = 0;
 			while (j < end)
@@ -238,16 +245,16 @@ static void print_block(
 			continue;
 		}
 
-		if (opts.ignore_top && (i == (end-1)))
+		if (ignore_top && (i == (end-1)))
 			break;
 
 		if (with_filename)
 			print_str(fname_on_match.c_str());
 
-		if (opts.line_numbers)
+		if (line_numbers)
 		{
 			const int num_max_len = 32;
-			static char num[num_max_len] = {0};
+			static char num[num_max_len];
 
 			snprintf(num, num_max_len, "%zu:", block[i].get_line_no());
 			print_str(num);
@@ -256,11 +263,11 @@ static void print_block(
 		print_line(block[i].get_line().c_str());
 	}
 
-	if (opts.mark_end)
-		print_line(opts.mark_end);
+	if (mark_end)
+		print_line(mark_end);
 }
 
-static bool process_block(
+static bool process_single_block(
 	prog_options& opts,
 	const char * fname,
 	const matcher * pat_match,
@@ -268,33 +275,36 @@ static bool process_block(
 	const std::vector<block_parser::block_line>& block
 )
 {
-	if (!opts.quiet)
+	if (opts.match && !match_in_block(pat_match, block))
+		return false;
+
+	if (opts.dont_match && match_in_block(pat_no_match, block))
+		return false;
+
+	if (0 == opts.skip_count)
 	{
-		// change regex_ to pat_
-		if (opts.match && !match_in_block(pat_match, block))
-			return false;
-
-		if (opts.dont_match && match_in_block(pat_no_match, block))
-			return false;
-
-		if (0 == opts.skip_count)
+		if (-1 == opts.block_count)
 		{
-			if (-1 == opts.block_count)
-				print_block(opts, fname, block);
-			else if (opts.block_count > 0)
-			{
-				print_block(opts, fname, block);
-				--opts.block_count;
-			}
+			print_block(opts, fname, block);
 		}
-		else
-			--opts.skip_count;
+		else if (opts.block_count > 0)
+		{
+			print_block(opts, fname, block);
+			--opts.block_count;
+		}
 	}
+	else
+		--opts.skip_count;
 
 	return true;
 }
 
-static bool get_block(
+struct process_result {
+	bool was_match;
+	bool was_err;
+};
+
+static process_result process_blocks_from_file(
 	block_parser& parser,
 	prog_options& opts,
 	const char * fname,
@@ -302,99 +312,67 @@ static bool get_block(
 	const matcher * pat_no_match
 )
 {
-	if (0 == opts.block_count)
-		exit(EXIT_SUCCESS);
-
-	bool ret = false;
+	process_result res;
+	res.was_match = false;
+	res.was_err = false;
 
 	parser.init(fname);
 	while (parser.parse_block())
 	{
-		///* tests not pass this way
-		ret = process_block(
-			opts,
-			fname,
-			pat_match,
-			pat_no_match,
-			parser.get_block()
-		);
-		//*/
+		if (0 == opts.block_count)
+			return res;
 
 		if (parser.had_error())
 		{
-			// print the block to stderr if there was a error
-			// and the verbose error option is on
+			res.was_err = true;
 			print_error_report(parser.get_error_report());
 			if (opts.fatal_error)
-				exit(EXIT_FAILURE);
+				return res;
 		}
-		/*
-		else // probably should be here
+		else
 		{
-			ret = process_block(
-				opts,
-				fname,
-				pat_match,
-				pat_no_match,
-				parser.get_block()
-			);
+			if (process_single_block(
+					opts,
+					fname,
+					pat_match,
+					pat_no_match,
+					parser.get_block()
+				))
+			{
+				res.was_match = true;
+			}
 		}
-		*/
-		if (0 == opts.block_count)
-			break;
 	}
 
-	return ret;
-}
-
-static bool get_blocks(
-	block_parser& parser,
-	prog_options& opts,
-	const char * fname,
-	const matcher * pat_match,
-	const matcher * pat_no_match
-)
-{
-	bool ret = false;
-
-	while(get_block(parser, opts, fname, pat_match, pat_no_match))
-		ret = true;
-
-	return ret;
+	return res;
 }
 
 int main(int argc, char * argv[])
 {
+	static prog_options opts;
+
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
-
 	std::vector<const char *> file_names;
 
-	prog_options opts;
 	handle_options(argc, argv, opts, file_names);
-
-	if (std::string(opts.block_start) ==
-		std::string(opts.block_end))
-		equit("%s", "ambiguous: block start and block end cannot be the same.");
-
-	uint32_t matcher_flags = matcher::flags::NONE;
-	if (opts.case_insensitive)
-		matcher_flags |= matcher::flags::ICASE;
-
-	int ret = 1;
 
 	std::unique_ptr<matcher> b_name, b_start, b_end,
 		b_comment,
 		b_block_comment_begin, b_block_comment_terminate,
 		r_match, r_dont_match;
 
-	const matcher::type mtypes[2] = {
-		matcher::type::STRING,
-		matcher::type::REGEX
-	};
-
 	try
 	{
+		const matcher::type mtypes[2] = {
+			matcher::type::STRING,
+			matcher::type::REGEX
+		};
+
+		uint32_t matcher_flags = matcher::flags::NONE;
+		if (opts.case_insensitive)
+			matcher_flags |= matcher::flags::ICASE;
+
 		matcher_factory mfact;
 
 		b_name = mfact.create(
@@ -430,7 +408,8 @@ int main(int argc, char * argv[])
 
 		r_match = mfact.create(
 			mtypes[opts.is_match_regex],
-			opts.match, matcher_flags
+			opts.match,
+			matcher_flags
 		);
 		r_dont_match = mfact.create(
 			mtypes[opts.is_dont_match_regex],
@@ -440,8 +419,7 @@ int main(int argc, char * argv[])
 	}
 	catch(const std::runtime_error& e)
 	{
-		std::cerr << program_name << " error: " << e.what() << std::endl;
-		exit(EXIT_FAILURE);
+		errq(e.what());
 	}
 
 	lexer::matchers patterns(
@@ -458,8 +436,13 @@ int main(int argc, char * argv[])
 	const char str_stdin[] = "-";
 	const char * current_file = str_stdin;
 
-	block_parser b_parser(lex);
+	bool was_file_open_err = false;
+	process_result curr, total;
+	curr.was_match = false;
+	curr.was_err = false;
+	total = curr;
 
+	block_parser b_parser(lex);
 	if (file_names.size())
 	{
 		for (auto fname : file_names)
@@ -467,33 +450,54 @@ int main(int argc, char * argv[])
 			current_file = fname;
 			if (freopen(fname, "r", stdin))
 			{
-				ret = get_blocks(
+				// counts per file
+				int block_count = opts.block_count;
+				int skip_count = opts.skip_count;
+
+				curr = process_blocks_from_file(
 					b_parser,
 					opts,
 					current_file,
 					r_match.get(),
 					r_dont_match.get()
 				);
+				if (!total.was_match)
+					total.was_match = curr.was_match;
+				if (!total.was_err)
+					total.was_err = curr.was_err;
+
+				opts.block_count = block_count;
+				opts.skip_count = skip_count;
 			}
 			else
 			{
-				static std::string err("");
+				static std::string err;
 				err.assign("file ").append(current_file).append(": ");
 				err.append(std::strerror(errno));
 				print_err(err.c_str());
+				was_file_open_err = true;
 			}
 		}
 	}
 	else
 	{
-		ret = get_blocks(
+		curr = process_blocks_from_file(
 			b_parser,
 			opts,
 			current_file,
 			r_match.get(),
 			r_dont_match.get()
 		);
+		if (!total.was_match)
+			total.was_match = curr.was_match;
+		if (!total.was_err)
+			total.was_err = curr.was_err;
 	}
 
+	int ret = 0;
+	if (!total.was_match)
+		ret = 1;
+	if (total.was_err || was_file_open_err)
+		ret = 2;
 	return ret;
 }

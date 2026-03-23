@@ -322,22 +322,6 @@ puts("Quit after the first error.");
 puts("");
 }
 
-// --quiet|-q
-static const char quiet_opt_short = 'q';
-static const char quiet_opt_long[] = "quiet";
-static void handle_quiet(const char * opt, char * opt_arg, void * ctx)
-{
-	prog_options * context = (prog_options *)ctx;
-	context->quiet = true;
-}
-
-static void help_quiet(const char * short_name, const char * long_name)
-{
-printf("%s|%s\n", short_name, long_name);
-puts("Suppress output to stdout.");
-puts("");
-}
-
 // --regex-match|-r
 static const char regex_match_opt_short = 'r';
 static const char regex_match_opt_long[] = "regex-match";
