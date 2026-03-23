@@ -72,7 +72,7 @@ end_code
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks starting with a name which matches <matcher>.");
-puts("Default is '{'");
+printf("Default is '%s'\n", defaults.block_open);
 puts("");
 end_code
 end
@@ -88,7 +88,10 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the open block symbol. Default is '{'");
+printf(
+"Set <matcher> as the open block symbol. Default is '%s'\n",
+defaults.block_open
+);
 puts("");
 end_code
 end
@@ -104,7 +107,10 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the close block symbol. Default is '}'");
+printf(
+"Set <matcher> as the close block symbol. Default is '%s'\n",
+defaults.block_close
+);
 puts("");
 end_code
 end
@@ -120,7 +126,10 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the single line comment symbol. Default is '//'");
+printf(
+"Set <matcher> as the single line comment symbol. Default is '%s'\n",
+defaults.line_comment
+);
 puts("");
 end_code
 end
@@ -136,7 +145,10 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the start of block comment symbol. Default is '/*'");
+printf(
+"Set <matcher> as the start of block comment symbol. Default is '%s'\n",
+defaults.block_comment_begin
+);
 puts("");
 end_code
 end
@@ -152,7 +164,10 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the end of block comment symbol. Default is '*/'");
+printf(
+"Set <matcher> as the end of block comment symbol. Default is '%s'\n",
+defaults.block_comment_terminate
+);
 puts("");
 end_code
 end
@@ -162,8 +177,10 @@ short_name m
 takes_args true
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->match = opt_arg;
-	context->is_match_regex = context->is_next_matcher_regex;
+	context->match = true;
+	context->dont_match = false;
+	context->match_dont_match = opt_arg;
+	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 end_code
 
 help_code
@@ -178,8 +195,10 @@ short_name M
 takes_args true
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->dont_match = opt_arg;
-	context->is_dont_match_regex = context->is_next_matcher_regex;
+	context->match = false;
+	context->dont_match = true;
+	context->match_dont_match = opt_arg;
+	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 end_code
 
 help_code

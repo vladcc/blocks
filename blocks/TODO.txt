@@ -1,4 +1,2 @@
 - ignore top : delete including until the first block open and after the close
-- have grep print file names that matched/didn't match
 - bashtest all options
-- main - process block only if no error?

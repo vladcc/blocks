@@ -25,6 +25,7 @@ CLI_GEN := $(CLI_DIR)/parse-opts-gen.awk
 CLI_DEFN_SRC := $(CLI_DIR)/opt_defn.txt
 CLI_DEFN_IC := $(SRC_DIR)/opts_definitions.ic
 CLI_PROC_IC := $(SRC_DIR)/opts_process.ic
+CLI_IMPL_IC := $(SRC_DIR)/opts_impl.ic
 CLI_GEN := $(AWK) -f $(CLI_GEN) -vOutDir="$(SRC_DIR)" $(CLI_DEFN_SRC)
 
 .PHONY: cli-opt
@@ -41,7 +42,7 @@ MAIN_SRC_DIR := $(SRC_DIR)
 
 MAIN_BASE := main
 MAIN_SRC := $(MAIN_SRC_DIR)/$(MAIN_BASE).cpp
-MAIN_CLI := $(CLI_DEFN_IC) $(CLI_PROC_IC)
+MAIN_CLI := $(CLI_IMPL_IC) $(CLI_DEFN_IC) $(CLI_PROC_IC)
 MAIN_O := $(OBJ_DIR)/$(MAIN_BASE).o
 $(MAIN_O): $(MAIN_SRC) $(MAIN_CLI)
 	$(CMPL) -c $< -o $@ $(FLAGS)

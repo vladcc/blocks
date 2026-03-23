@@ -1,0 +1,118 @@
+#include "parse_opts.h"
+
+#include <cstdarg>
+
+static void opts_errq(const char * msg, ...);
+#define equit(str, ...) opts_errq("%s: error: " str, program_name, __VA_ARGS__)
+
+#define print_try()\
+fprintf(stderr, "Try '%s --%s' for more information\n",\
+program_name, help_opt_long)
+
+#define print_use()\
+fprintf(stderr, "Use: %s [options] [files]\n", program_name)
+
+static void help_message(void)
+{
+printf("-- %s %s --\n", program_name, program_version);
+puts("grep for nested data");
+puts("");
+printf(
+"Prints proper nested blocks like so:\n"
+"1. Match the name of the block, e.g. 'main'\n"
+"2. Match the opening symbol, e.g. '%s'\n"
+"3. Match the corresponding closing symbol, e.g. '%s'\n",
+defaults.block_open,
+defaults.block_close
+);
+puts("");
+puts(
+"Matching is done either as fixed strings or with the ECMAScript C++ std\n"
+"regex library depending on the option provided before a <matcher> is\n"
+"defined. The default for all <matcher>s is fixed strings."
+);
+puts("");
+printf(
+"%s prints everything in-between the block name and the closing symbol.\n",
+program_name
+);
+puts("");
+printf(
+"For example if you have a file which looks like:\n"
+"foo %s\n"
+"\tbar %s\n"
+"\t\tbaz\n"
+"\t%s\n"
+"%s\n",
+defaults.block_open,
+defaults.block_open,
+defaults.block_close,
+defaults.block_close
+);
+puts("");
+printf(
+	"and you run '%s --block-name bar <my-file>', you'll get:\n",
+	program_name
+);
+printf(
+"\tbar %s\n"
+"\t\tbaz\n"
+"\t%s\n",
+defaults.block_open,
+defaults.block_close
+);
+printf("When the name is matched, the input isn't advanced and the search for\n"
+"the block begins at the start of the name. This allows to match all blocks\n"
+"in a file when the name is the same as the opening symbol. It also allows\n"
+"to match LISP-like syntax where the block start comes before the name, e.g.:\n"
+"%s -n '(define' -s '(' -e ')'\n",
+	program_name
+);
+puts(
+"Input is advanced when either block start or block end are matched and\n"
+"subsequent searching begins one character after the start match."
+);
+puts("");
+puts("The available options are:");
+}
+
+#include "opts_definitions.ic"
+
+static void opts_errq(const char * msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end (args);
+	fprintf(stderr, "%s", "\n");
+	print_try();
+	exit(EXIT_FAILURE);
+}
+
+static void handle_options(
+	int argc,
+	char * argv[],
+	prog_options& opts,
+	std::vector<const char *>& file_names
+)
+{
+
+	prog_options * context = &opts;
+
+	// defaults
+	opts.file_names = &file_names;
+	opts.block_name = defaults.block_open;
+	opts.block_start = defaults.block_open;
+	opts.block_end = defaults.block_close;
+	opts.comment = defaults.line_comment;
+	opts.block_comment_begin = defaults.block_comment_begin;
+	opts.block_comment_terminate = defaults.block_comment_terminate;
+
+	opts.block_count = -1;
+	opts.skip_count = 0;
+
+#include "opts_process.ic"
+
+	if (std::string(opts.block_start) == std::string(opts.block_end))
+		equit("%s", "ambiguous: block start and block end cannot be the same.");
+}

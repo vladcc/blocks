@@ -14,7 +14,7 @@ static void help_block_name(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks starting with a name which matches <matcher>.");
-puts("Default is '{'");
+printf("Default is '%s'\n", defaults.block_open);
 puts("");
 }
 
@@ -31,7 +31,10 @@ static void handle_block_start(const char * opt, char * opt_arg, void * ctx)
 static void help_block_start(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the open block symbol. Default is '{'");
+printf(
+"Set <matcher> as the open block symbol. Default is '%s'\n",
+defaults.block_open
+);
 puts("");
 }
 
@@ -48,7 +51,10 @@ static void handle_block_end(const char * opt, char * opt_arg, void * ctx)
 static void help_block_end(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the close block symbol. Default is '}'");
+printf(
+"Set <matcher> as the close block symbol. Default is '%s'\n",
+defaults.block_close
+);
 puts("");
 }
 
@@ -65,7 +71,10 @@ static void handle_comment(const char * opt, char * opt_arg, void * ctx)
 static void help_comment(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the single line comment symbol. Default is '//'");
+printf(
+"Set <matcher> as the single line comment symbol. Default is '%s'\n",
+defaults.line_comment
+);
 puts("");
 }
 
@@ -82,7 +91,10 @@ static void handle_block_comment_begin(const char * opt, char * opt_arg, void * 
 static void help_block_comment_begin(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the start of block comment symbol. Default is '/*'");
+printf(
+"Set <matcher> as the start of block comment symbol. Default is '%s'\n",
+defaults.block_comment_begin
+);
 puts("");
 }
 
@@ -99,7 +111,10 @@ static void handle_block_comment_terminate(const char * opt, char * opt_arg, voi
 static void help_block_comment_terminate(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Set <matcher> as the end of block comment symbol. Default is '*/'");
+printf(
+"Set <matcher> as the end of block comment symbol. Default is '%s'\n",
+defaults.block_comment_terminate
+);
 puts("");
 }
 
@@ -109,8 +124,10 @@ static const char match_opt_long[] = "match";
 static void handle_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->match = opt_arg;
-	context->is_match_regex = context->is_next_matcher_regex;
+	context->match = true;
+	context->dont_match = false;
+	context->match_dont_match = opt_arg;
+	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 }
 
 static void help_match(const char * short_name, const char * long_name)
@@ -126,8 +143,10 @@ static const char dont_match_opt_long[] = "dont-match";
 static void handle_dont_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->dont_match = opt_arg;
-	context->is_dont_match_regex = context->is_next_matcher_regex;
+	context->match = false;
+	context->dont_match = true;
+	context->match_dont_match = opt_arg;
+	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 }
 
 static void help_dont_match(const char * short_name, const char * long_name)
@@ -184,7 +203,7 @@ static void handle_block_count(const char * opt, char * opt_arg, void * ctx)
 static void help_block_count(const char * short_name, const char * long_name)
 {
 printf("%s|%s <num>\n", short_name, long_name);
-puts("Print the first <num> number of blocks.");
+puts("Print the first <num> number of blocks from the current file.");
 puts("");
 }
 
@@ -203,7 +222,7 @@ static void handle_skip(const char * opt, char * opt_arg, void * ctx)
 static void help_skip(const char * short_name, const char * long_name)
 {
 printf("%s|%s <num>\n", short_name, long_name);
-puts("Don't print the first <num> number of blocks.");
+puts("Don't print the first <num> number of blocks from the current file.");
 puts("");
 }
 
@@ -318,7 +337,7 @@ static void handle_fatal_error(const char * opt, char * opt_arg, void * ctx)
 static void help_fatal_error(const char * short_name, const char * long_name)
 {
 printf("%s|%s\n", short_name, long_name);
-puts("Quit after the first error.");
+puts("Quit processing the current file after the first error.");
 puts("");
 }
 
