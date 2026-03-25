@@ -18,6 +18,7 @@
 #-i|--case-insensitive
 #-I|--ignore-top
 #-F|--fatal-error
+#-V|--verbose-error
 
 #-r|--regex-match
 #-f|--fixed-match
@@ -382,6 +383,21 @@ puts("");
 end_code
 end
 
+long_name  verbose-error
+short_name V
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->verbose_error = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print what was parsed along with the error message to stderr.");
+puts("");
+end_code
+end
+
 long_name  regex-match
 short_name r
 takes_args false
@@ -432,10 +448,7 @@ long_name  version
 short_name v
 takes_args false
 handler_code
-	printf("%s v%s\n", program_name, program_version);
-	puts("Author      : Vladimir Dinev");
-	puts("Bug reports : vld.dinev@gmail.com");
-	puts("Compile date: 2020-08-30");
+	printf("%s %s\n", program_name, program_version);
 	exit(EXIT_SUCCESS);
 end_code
 

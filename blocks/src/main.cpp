@@ -35,6 +35,7 @@ struct prog_options {
 	bool case_insensitive;
 	bool ignore_top;
 	bool fatal_error;
+	bool verbose_error;
 	bool is_next_matcher_regex;
 	bool is_block_name_regex;
 	bool is_block_start_regex;
@@ -65,6 +66,16 @@ static void print_str(const char * str)
 	std::cout << str;
 }
 
+static void print_line_stderr(const char * str)
+{
+	std::cerr << str << std::endl;
+}
+
+static void print_str_stderr(const char * str)
+{
+	std::cerr << str;
+}
+
 static void print_err(const char * str)
 {
 	std::cerr << program_name << ": error: " << str << std::endl;
@@ -74,6 +85,25 @@ static void errq(const char * str)
 {
 	print_err(str);
 	exit(EXIT_FAILURE);
+}
+
+static const char * line_num_str(size_t num)
+{
+	const int num_max_len = 32;
+	static char num_str[num_max_len];
+	snprintf(num_str, num_max_len, "%zu:", num);
+	return num_str;
+}
+
+static void print_block_stderr(
+	const std::vector<block_parser::block_line>& block
+)
+{
+	for (const auto& b_line : block)
+	{
+		print_str_stderr(line_num_str(b_line.get_line_no()));
+		print_line_stderr(b_line.get_line().c_str());
+	}
 }
 
 static void print_error_report(const std::vector<std::string>& report)
@@ -125,13 +155,7 @@ static void print_block(
 			print_str(fname_on_match.c_str());
 
 		if (line_numbers)
-		{
-			const int num_max_len = 32;
-			static char num[num_max_len];
-
-			snprintf(num, num_max_len, "%zu:", block[i].get_line_no());
-			print_str(num);
-		}
+			print_str(line_num_str(block[i].get_line_no()));
 
 		print_line(block[i].get_line().c_str());
 	}
@@ -310,7 +334,11 @@ static process_result process_blocks_from_file(
 		if (parser.had_error())
 		{
 			res.was_err = true;
+			if (opts.verbose_error)
+				print_block_stderr(parser.get_block());
+
 			print_error_report(parser.get_error_report());
+
 			if (opts.fatal_error)
 				return res;
 		}
@@ -454,8 +482,7 @@ int main(int argc, char * argv[])
 {
 	static prog_options opts;
 	static patterns pats;
-
-	std::vector<const char *> file_names;
+	static std::vector<const char *> file_names;
 
 	handle_options(argc, argv, opts, file_names);
 	make_patterns(pats, opts);

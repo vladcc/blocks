@@ -341,6 +341,22 @@ puts("Quit processing the current file after the first error.");
 puts("");
 }
 
+// --verbose-error|-V
+static const char verbose_error_opt_short = 'V';
+static const char verbose_error_opt_long[] = "verbose-error";
+static void handle_verbose_error(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->verbose_error = true;
+}
+
+static void help_verbose_error(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts("Print what was parsed along with the error message to stderr.");
+puts("");
+}
+
 // --regex-match|-r
 static const char regex_match_opt_short = 'r';
 static const char regex_match_opt_long[] = "regex-match";
@@ -395,10 +411,7 @@ static const char version_opt_short = 'v';
 static const char version_opt_long[] = "version";
 static void handle_version(const char * opt, char * opt_arg, void * ctx)
 {
-	printf("%s v%s\n", program_name, program_version);
-	puts("Author      : Vladimir Dinev");
-	puts("Bug reports : vld.dinev@gmail.com");
-	puts("Compile date: 2020-08-30");
+	printf("%s %s\n", program_name, program_version);
 	exit(EXIT_SUCCESS);
 }
 

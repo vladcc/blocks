@@ -231,6 +231,18 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = verbose_error_opt_long,
+			.short_name = verbose_error_opt_short
+		},
+		.handler = {
+			.handler = handle_verbose_error,
+			.context = (void *)context,
+		},
+		.print_help = help_verbose_error,
+		.takes_arg = false,
+	},
+	{
+		.names = {
 			.long_name = regex_match_opt_long,
 			.short_name = regex_match_opt_short
 		},

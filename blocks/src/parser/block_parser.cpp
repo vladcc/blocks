@@ -197,10 +197,10 @@ void block_parser::error::create(
 
 	std::string * err = &_text[0];
 	if (fname)
-		err->append("file ").append(fname).append(",");
+		err->append(fname).append(":");
 
-	err->append(" line ").append(std::to_string(lex_line_num));
-	err->append(", col ").append(std::to_string(lex_line_pos+1));
+	err->append(std::to_string(lex_line_num)).append(":");
+	err->append(std::to_string(lex_line_pos+1));
 	err->append(": improper nesting from line ");
 	err->append(std::to_string(first_line_no));
 
