@@ -207,6 +207,18 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = no_defaults_opt_long,
+			.short_name = no_defaults_opt_short
+		},
+		.handler = {
+			.handler = handle_no_defaults,
+			.context = (void *)context,
+		},
+		.print_help = help_no_defaults,
+		.takes_arg = false,
+	},
+	{
+		.names = {
 			.long_name = ignore_top_opt_long,
 			.short_name = ignore_top_opt_short
 		},

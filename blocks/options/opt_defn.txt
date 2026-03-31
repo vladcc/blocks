@@ -17,6 +17,7 @@
 
 #-i|--case-insensitive
 #-I|--ignore-top
+#-x|--no-defaults
 #-F|--fatal-error
 #-V|--verbose-error
 #-D|--debug
@@ -162,8 +163,8 @@ short_name T
 takes_args true
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_COMMENT_TARMINATE] = opt_arg;
-	context->is_b_matcher_regex[B_COMMENT_TARMINATE] =
+	context->b_matchers[B_COMMENT_TERM] = opt_arg;
+	context->is_b_matcher_regex[B_COMMENT_TERM] =
 		context->is_next_matcher_regex;
 end_code
 
@@ -348,6 +349,21 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("Match all matchers case insensitive.");
+puts("");
+end_code
+end
+
+long_name  no-defaults
+short_name x
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->no_defaults = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Do not use defaults for matchers.");
 puts("");
 end_code
 end

@@ -19,7 +19,7 @@ enum {
 	B_END,
 	B_LINE_COMMENT,
 	B_COMMENT_BEGIN,
-	B_COMMENT_TARMINATE,
+	B_COMMENT_TERM,
 	B_TOTAL
 };
 
@@ -38,6 +38,7 @@ struct prog_options {
 	bool files_without_match;
 	bool case_insensitive;
 	bool ignore_top;
+	bool no_defaults;
 	bool fatal_error;
 	bool verbose_error;
 	bool debug;
@@ -456,7 +457,7 @@ static int process(
 		pats.b_matchers[B_END],
 		pats.b_matchers[B_LINE_COMMENT],
 		pats.b_matchers[B_COMMENT_BEGIN],
-		pats.b_matchers[B_COMMENT_TARMINATE]
+		pats.b_matchers[B_COMMENT_TERM]
 	);
 
 	lexer lex(std::cin, lex_matchers);

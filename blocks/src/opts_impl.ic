@@ -103,19 +103,34 @@ static void handle_options(
 {
 	prog_options * context = &opts;
 
-	// defaults
 	opts.file_names = &file_names;
-	opts.b_matchers[B_NAME] = defaults.block_open;
-	opts.b_matchers[B_START] = defaults.block_open;
-	opts.b_matchers[B_END] = defaults.block_close;
-	opts.b_matchers[B_LINE_COMMENT] = defaults.line_comment;
-	opts.b_matchers[B_COMMENT_BEGIN] = defaults.block_comment_begin;
-	opts.b_matchers[B_COMMENT_TARMINATE] = defaults.block_comment_terminate;
-
 	opts.block_count = -1;
 	opts.skip_count = 0;
 
 #include "opts_process.ic"
+
+	if (false == opts.no_defaults)
+	{
+		// matcher patterns that won't be used will be set to the empty string
+		// matcher patterns which are null have never been set
+		if (!opts.b_matchers[B_NAME])
+			opts.b_matchers[B_NAME] = defaults.block_open;
+
+		if (!opts.b_matchers[B_START])
+			opts.b_matchers[B_START] = defaults.block_open;
+
+		if (!opts.b_matchers[B_END])
+			opts.b_matchers[B_END] = defaults.block_close;
+
+		if (!opts.b_matchers[B_LINE_COMMENT])
+			opts.b_matchers[B_LINE_COMMENT] = defaults.line_comment;
+
+		if (!opts.b_matchers[B_COMMENT_BEGIN])
+			opts.b_matchers[B_COMMENT_BEGIN] = defaults.block_comment_begin;
+
+		if (!opts.b_matchers[B_COMMENT_TERM])
+			opts.b_matchers[B_COMMENT_TERM] = defaults.block_comment_terminate;
+	}
 
 	// disable empty string matchers
 	const char * matcher = nullptr;
@@ -134,6 +149,24 @@ static void handle_options(
 
 	if (!opts.b_matchers[B_END])
 		errq("block end cannot be empty");
+
+	if (!opts.b_matchers[B_COMMENT_BEGIN] &&
+		opts.b_matchers[B_COMMENT_TERM])
+	{
+		errq(
+			"if block comment terminate exists, "
+			"block comment begin has to exist"
+		);
+	}
+
+	if (opts.b_matchers[B_COMMENT_BEGIN] &&
+		!opts.b_matchers[B_COMMENT_TERM])
+	{
+		errq(
+			"if block comment begin exists, "
+			"block comment terminate has to exist"
+		);
+	}
 
 	if (std::string(opts.b_matchers[B_START]) ==
 		std::string(opts.b_matchers[B_END]))

@@ -106,8 +106,8 @@ static const char block_comment_terminate_opt_long[] = "block-comment-terminate"
 static void handle_block_comment_terminate(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_COMMENT_TARMINATE] = opt_arg;
-	context->is_b_matcher_regex[B_COMMENT_TARMINATE] =
+	context->b_matchers[B_COMMENT_TERM] = opt_arg;
+	context->is_b_matcher_regex[B_COMMENT_TERM] =
 		context->is_next_matcher_regex;
 }
 
@@ -304,6 +304,22 @@ static void help_case_insensitive(const char * short_name, const char * long_nam
 {
 printf("%s|%s\n", short_name, long_name);
 puts("Match all matchers case insensitive.");
+puts("");
+}
+
+// --no-defaults|-x
+static const char no_defaults_opt_short = 'x';
+static const char no_defaults_opt_long[] = "no-defaults";
+static void handle_no_defaults(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->no_defaults = true;
+}
+
+static void help_no_defaults(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts("Do not use defaults for matchers.");
 puts("");
 }
 
