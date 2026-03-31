@@ -6,8 +6,8 @@ static const char block_name_opt_long[] = "block-name";
 static void handle_block_name(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->block_name = opt_arg;
-	context->is_block_name_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_NAME] = opt_arg;
+	context->is_b_matcher_regex[B_NAME] = context->is_next_matcher_regex;
 }
 
 static void help_block_name(const char * short_name, const char * long_name)
@@ -24,8 +24,8 @@ static const char block_start_opt_long[] = "block-start";
 static void handle_block_start(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->block_start = opt_arg;
-	context->is_block_start_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_START] = opt_arg;
+	context->is_b_matcher_regex[B_START] = context->is_next_matcher_regex;
 }
 
 static void help_block_start(const char * short_name, const char * long_name)
@@ -44,8 +44,8 @@ static const char block_end_opt_long[] = "block-end";
 static void handle_block_end(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->block_end = opt_arg;
-	context->is_block_end_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_END] = opt_arg;
+	context->is_b_matcher_regex[B_END] = context->is_next_matcher_regex;
 }
 
 static void help_block_end(const char * short_name, const char * long_name)
@@ -64,8 +64,9 @@ static const char comment_opt_long[] = "comment";
 static void handle_comment(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->comment = opt_arg;
-	context->is_comment_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_LINE_COMMENT] = opt_arg;
+	context->is_b_matcher_regex[B_LINE_COMMENT] =
+		context->is_next_matcher_regex;
 }
 
 static void help_comment(const char * short_name, const char * long_name)
@@ -84,8 +85,9 @@ static const char block_comment_begin_opt_long[] = "block-comment-begin";
 static void handle_block_comment_begin(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->block_comment_begin = opt_arg;
-	context->is_block_comment_begin_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_COMMENT_BEGIN] = opt_arg;
+	context->is_b_matcher_regex[B_COMMENT_BEGIN] =
+		context->is_next_matcher_regex;
 }
 
 static void help_block_comment_begin(const char * short_name, const char * long_name)
@@ -104,8 +106,9 @@ static const char block_comment_terminate_opt_long[] = "block-comment-terminate"
 static void handle_block_comment_terminate(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->block_comment_terminate = opt_arg;
-	context->is_block_comment_terminate_regex = context->is_next_matcher_regex;
+	context->b_matchers[B_COMMENT_TARMINATE] = opt_arg;
+	context->is_b_matcher_regex[B_COMMENT_TARMINATE] =
+		context->is_next_matcher_regex;
 }
 
 static void help_block_comment_terminate(const char * short_name, const char * long_name)
@@ -124,8 +127,7 @@ static const char match_opt_long[] = "match";
 static void handle_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->match = true;
-	context->dont_match = false;
+	context->should_match_in_block = true;
 	context->match_dont_match = opt_arg;
 	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 }
@@ -143,8 +145,7 @@ static const char dont_match_opt_long[] = "dont-match";
 static void handle_dont_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->match = false;
-	context->dont_match = true;
+	context->should_match_in_block = false;
 	context->match_dont_match = opt_arg;
 	context->is_match_dont_match_regex = context->is_next_matcher_regex;
 }

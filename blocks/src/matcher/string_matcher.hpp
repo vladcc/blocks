@@ -11,19 +11,19 @@ class str_matcher : public matcher
 public:
 	str_matcher(const char * text, uint32_t opts);
 	bool match(const char * text, size_t len, size_t start) override;
-	ptrdiff_t position() override
+	ptrdiff_t position() const override
 	{
 		return _pos;
 	}
-	size_t length() override
+	size_t length() const override
 	{
 		return _pattern.length();
 	}
-	const char * type_of() override
+	const char * type_of() const override
 	{
 		return "string";
 	}
-	const char * pattern() override
+	const char * pattern() const override
 	{
 		return _pattern.c_str();
 	}

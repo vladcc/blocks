@@ -20,9 +20,9 @@ public:
 public:
 	virtual ~matcher() {}
 	virtual bool match(const char * text, size_t len, size_t start) = 0;
-	virtual ptrdiff_t position() = 0;
-	virtual size_t length() = 0;
-	virtual const char * type_of() = 0;
-	virtual const char * pattern() = 0;
+	virtual ptrdiff_t position() const = 0;
+	virtual size_t length() const = 0;
+	virtual const char * type_of() const = 0;
+	virtual const char * pattern() const = 0;
 };
 #endif

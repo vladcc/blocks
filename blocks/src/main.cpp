@@ -13,21 +13,25 @@
 const char program_name[] = "blocks";
 const char program_version[] = "2.0";
 
+enum {
+	B_NAME,
+	B_START,
+	B_END,
+	B_LINE_COMMENT,
+	B_COMMENT_BEGIN,
+	B_COMMENT_TARMINATE,
+	B_TOTAL
+};
+
 struct prog_options {
 	std::vector<const char *> * file_names;
-	const char * block_name;
-	const char * block_start;
-	const char * block_end;
-	const char * comment;
-	const char * block_comment_begin;
-	const char * block_comment_terminate;
+	const char * b_matchers[B_TOTAL];
 	const char * match_dont_match;
 	const char * mark_start;
 	const char * mark_end;
 	int block_count;
 	int skip_count;
-	bool match;
-	bool dont_match;
+	bool should_match_in_block;
 	bool line_numbers;
 	bool with_filename;
 	bool files_with_match;
@@ -38,12 +42,7 @@ struct prog_options {
 	bool verbose_error;
 	bool debug;
 	bool is_next_matcher_regex;
-	bool is_block_name_regex;
-	bool is_block_start_regex;
-	bool is_block_end_regex;
-	bool is_comment_regex;
-	bool is_block_comment_begin_regex;
-	bool is_block_comment_terminate_regex;
+	bool is_b_matcher_regex[B_TOTAL];
 	bool is_match_dont_match_regex;
 };
 
@@ -166,23 +165,57 @@ static void print_block(
 }
 
 struct patterns {
-	const matcher * b_name;
-	const matcher * b_start;
-	const matcher * b_end;
-	const matcher * b_comment;
-	const matcher * b_block_comment_begin;
-	const matcher * b_block_comment_terminate;
+	const matcher * b_matchers[B_TOTAL];
 	const matcher * match_dont_match;
 };
 
-static void make_patterns(patterns& pats, const prog_options& opts)
+static void print_debug_and_quit(
+	const prog_options& opts,
+	const patterns& pats
+)
 {
+	static const char * dbg_str[] = {
+		"block name: ",
+		"block start: ",
+		"block end: ",
+		"line comment: ",
+		"block comment begin: ",
+		"block comment terminate: ",
+	};
 
+	std::string buff;
+
+	for (int i = 0; i < B_TOTAL; ++i)
+	{
+		buff.assign(dbg_str[i]).append(" pattern: '").
+			append(pats.b_matchers[i]->pattern()).
+			append("' type: ").
+			append(pats.b_matchers[i]->type_of());
+		print_line(buff.c_str());
+	}
+
+	if (pats.match_dont_match)
+	{
+		buff.assign("match/don't match: ").
+			append(opts.should_match_in_block ? "match" : "don't match").
+			append(", pattern: '").append(pats.match_dont_match->pattern()).
+			append("', type: ").append(pats.match_dont_match->type_of());
+		print_line(buff.c_str());
+	}
+	else
+	{
+		buff.assign("match/don't match: none");
+		print_line(buff.c_str());
+	}
+
+	exit(EXIT_SUCCESS);
+}
+
+static void make_patterns(const prog_options& opts, patterns& pats)
+{
 	// so valgrind can track
-	static std::unique_ptr<matcher> b_name, b_start, b_end,
-		b_comment,
-		b_block_comment_begin, b_block_comment_terminate,
-		match_dont_match;
+	static std::unique_ptr<matcher> b_matchers[B_TOTAL];
+	static std::unique_ptr<matcher> match_dont_match;
 
 	try
 	{
@@ -197,36 +230,14 @@ static void make_patterns(patterns& pats, const prog_options& opts)
 
 		matcher_factory mfact;
 
-		b_name = mfact.create(
-			mtypes[opts.is_block_name_regex],
-			opts.block_name,
-			matcher_flags
-		);
-		b_start = mfact.create(
-			mtypes[opts.is_block_start_regex],
-			opts.block_start,
-			matcher_flags
-		);
-		b_end = mfact.create(
-			mtypes[opts.is_block_end_regex],
-			opts.block_end,
-			matcher_flags
-		);
-		b_comment = mfact.create(
-			mtypes[opts.is_comment_regex],
-			opts.comment,
-			matcher_flags
-		);
-		b_block_comment_begin = mfact.create(
-			mtypes[opts.is_block_comment_begin_regex],
-			opts.block_comment_begin,
-			matcher_flags
-		);
-		b_block_comment_terminate = mfact.create(
-			mtypes[opts.is_block_comment_terminate_regex],
-			opts.block_comment_terminate,
-			matcher_flags
-		);
+		for (int i = 0; i < B_TOTAL; ++i)
+		{
+			b_matchers[i] = mfact.create(
+				mtypes[opts.is_b_matcher_regex[i]],
+				opts.b_matchers[i],
+				matcher_flags
+			);
+		}
 
 		match_dont_match = (opts.match_dont_match) ? mfact.create(
 			mtypes[opts.is_match_dont_match_regex],
@@ -239,12 +250,9 @@ static void make_patterns(patterns& pats, const prog_options& opts)
 		errq(e.what());
 	}
 
-	pats.b_name = b_name.get();
-	pats.b_start = b_start.get();
-	pats.b_end = b_end.get();
-	pats.b_comment = b_comment.get();
-	pats.b_block_comment_begin = b_block_comment_begin.get();
-	pats.b_block_comment_terminate = b_block_comment_terminate.get();
+	for (int i = 0; i < B_TOTAL; ++i)
+		pats.b_matchers[i] = b_matchers[i].get();
+
 	pats.match_dont_match = match_dont_match.get();
 }
 
@@ -281,11 +289,17 @@ static bool process_single_block(
 {
 	if (pat_match_dont_match)
 	{
-		if (opts.match && !match_in_block(pat_match_dont_match, block))
+		if (opts.should_match_in_block &&
+			!match_in_block(pat_match_dont_match, block))
+		{
 			return false;
+		}
 
-		if (opts.dont_match && match_in_block(pat_match_dont_match, block))
+		if (!opts.should_match_in_block &&
+			match_in_block(pat_match_dont_match, block))
+		{
 			return false;
+		}
 	}
 
 	bool should_print = false;
@@ -398,13 +412,16 @@ static int process(
 	const std::vector<const char *>& file_names
 )
 {
+	if (opts.debug)
+		print_debug_and_quit(opts, pats);
+
 	lexer::matchers lex_matchers(
-		pats.b_name,
-		pats.b_start,
-		pats.b_end,
-		pats.b_comment,
-		pats.b_block_comment_begin,
-		pats.b_block_comment_terminate
+		pats.b_matchers[B_NAME],
+		pats.b_matchers[B_START],
+		pats.b_matchers[B_END],
+		pats.b_matchers[B_LINE_COMMENT],
+		pats.b_matchers[B_COMMENT_BEGIN],
+		pats.b_matchers[B_COMMENT_TARMINATE]
 	);
 
 	lexer lex(std::cin, lex_matchers);
@@ -486,6 +503,6 @@ int main(int argc, char * argv[])
 	static std::vector<const char *> file_names;
 
 	handle_options(argc, argv, opts, file_names);
-	make_patterns(pats, opts);
+	make_patterns(opts, pats);
 	return process(opts, pats, file_names);
 }

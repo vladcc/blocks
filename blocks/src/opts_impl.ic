@@ -101,18 +101,21 @@ static void handle_options(
 
 	// defaults
 	opts.file_names = &file_names;
-	opts.block_name = defaults.block_open;
-	opts.block_start = defaults.block_open;
-	opts.block_end = defaults.block_close;
-	opts.comment = defaults.line_comment;
-	opts.block_comment_begin = defaults.block_comment_begin;
-	opts.block_comment_terminate = defaults.block_comment_terminate;
+	opts.b_matchers[B_NAME] = defaults.block_open;
+	opts.b_matchers[B_START] = defaults.block_open;
+	opts.b_matchers[B_END] = defaults.block_close;
+	opts.b_matchers[B_LINE_COMMENT] = defaults.line_comment;
+	opts.b_matchers[B_COMMENT_BEGIN] = defaults.block_comment_begin;
+	opts.b_matchers[B_COMMENT_TARMINATE] = defaults.block_comment_terminate;
 
 	opts.block_count = -1;
 	opts.skip_count = 0;
 
 #include "opts_process.ic"
 
-	if (std::string(opts.block_start) == std::string(opts.block_end))
+	if (std::string(opts.b_matchers[B_START]) ==
+		std::string(opts.b_matchers[B_END]))
+	{
 		equit("%s", "ambiguous: block start and block end cannot be the same.");
+	}
 }

@@ -15,19 +15,19 @@ public:
 		return (_prx &&
 			std::regex_search(text + start, text + len, _match, *_prx));
 	}
-	ptrdiff_t position() override
+	ptrdiff_t position() const override
 	{
 		return _match.position();
 	}
-	size_t length() override
+	size_t length() const override
 	{
 		return _match.length();
 	}
-	const char * type_of() override
+	const char * type_of() const override
 	{
 		return "regex";
 	}
-	const char * pattern() override
+	const char * pattern() const override
 	{
 		return _str_rx.c_str();
 	}
