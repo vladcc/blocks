@@ -26,10 +26,15 @@ defaults.block_open,
 defaults.block_close
 );
 puts("");
-puts(
+printf(
 "Matching is done either as fixed strings or with the ECMAScript C++ std\n"
 "regex library depending on the option provided before a <matcher> is\n"
-"defined. The default for all <matcher>s is fixed strings."
+"defined. The default for all <matcher>s is fixed string. Setting a <matcher>\n"
+"to the empty string disables the <matcher>. I.e. setting the line comment to\n"
+"\"\", or '', means %s will consider line comments ordinary input. Block\n"
+"start and block end are mandatory. If block name is not given, it is set to\n"
+"block start.\n",
+program_name
 );
 puts("");
 printf(
@@ -96,7 +101,6 @@ static void handle_options(
 	std::vector<const char *>& file_names
 )
 {
-
 	prog_options * context = &opts;
 
 	// defaults
@@ -113,9 +117,27 @@ static void handle_options(
 
 #include "opts_process.ic"
 
+	// disable empty string matchers
+	const char * matcher = nullptr;
+	for (int i = 0; i < B_TOTAL; ++i)
+	{
+		matcher = opts.b_matchers[i];
+		if (matcher && !(*matcher))
+			opts.b_matchers[i] = nullptr;
+	}
+
+	if (!opts.b_matchers[B_NAME])
+		opts.b_matchers[B_NAME] = opts.b_matchers[B_START];
+
+	if (!opts.b_matchers[B_START])
+		errq("block start cannot be empty");
+
+	if (!opts.b_matchers[B_END])
+		errq("block end cannot be empty");
+
 	if (std::string(opts.b_matchers[B_START]) ==
 		std::string(opts.b_matchers[B_END]))
 	{
-		equit("%s", "ambiguous: block start and block end cannot be the same.");
+		errq("ambiguous: block start and block end cannot be the same.");
 	}
 }

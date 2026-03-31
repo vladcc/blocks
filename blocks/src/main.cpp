@@ -54,6 +54,17 @@ struct {
 	const char * block_comment_terminate = "*/";
 } defaults;
 
+static void print_err(const char * str)
+{
+	std::cerr << program_name << ": error: " << str << std::endl;
+}
+
+static void errq(const char * str)
+{
+	print_err(str);
+	exit(EXIT_FAILURE);
+}
+
 #include "opts_impl.ic"
 
 static void print_line(const char * str)
@@ -74,17 +85,6 @@ static void print_line_stderr(const char * str)
 static void print_str_stderr(const char * str)
 {
 	std::cerr << str;
-}
-
-static void print_err(const char * str)
-{
-	std::cerr << program_name << ": error: " << str << std::endl;
-}
-
-static void errq(const char * str)
-{
-	print_err(str);
-	exit(EXIT_FAILURE);
 }
 
 static const char * line_num_str(size_t num)
@@ -184,27 +184,55 @@ static void print_debug_and_quit(
 	};
 
 	std::string buff;
+	const matcher * mtchr = nullptr;
 
-	for (int i = 0; i < B_TOTAL; ++i)
 	{
-		buff.assign(dbg_str[i]).append(" pattern: '").
-			append(pats.b_matchers[i]->pattern()).
-			append("' type: ").
-			append(pats.b_matchers[i]->type_of());
+		// defaults
+		buff.assign("default block name: default block start");
+		print_line(buff.c_str());
+
+		buff.assign("default block start: '").append(defaults.block_open).
+			append("'");
+		print_line(buff.c_str());
+
+		buff.assign("default block end: '").append(defaults.block_close).
+			append("'");
+		print_line(buff.c_str());
+
+		buff.assign("default line comment: '").append(defaults.line_comment).
+			append("'");
+		print_line(buff.c_str());
+
+		buff.assign("default block comment begin: '").
+			append(defaults.block_comment_begin).append("'");
+		print_line(buff.c_str());
+
+		buff.assign("default block comment terminate: '").
+			append(defaults.block_comment_terminate).append("'");
 		print_line(buff.c_str());
 	}
 
+	for (int i = 0; i < B_TOTAL; ++i)
+	{
+		mtchr = pats.b_matchers[i];
+		buff.assign(dbg_str[i]).append("'").
+			append(mtchr ? mtchr->pattern() : "").
+			append("' type: ").
+			append(mtchr ? mtchr->type_of() : "none");
+		print_line(buff.c_str());
+	}
+
+	buff.assign("match/don't match: ");
 	if (pats.match_dont_match)
 	{
-		buff.assign("match/don't match: ").
-			append(opts.should_match_in_block ? "match" : "don't match").
-			append(", pattern: '").append(pats.match_dont_match->pattern()).
+		buff.append(opts.should_match_in_block ? "match" : "don't match").
+			append(", '").append(pats.match_dont_match->pattern()).
 			append("', type: ").append(pats.match_dont_match->type_of());
 		print_line(buff.c_str());
 	}
 	else
 	{
-		buff.assign("match/don't match: none");
+		buff.append("none");
 		print_line(buff.c_str());
 	}
 
@@ -229,21 +257,28 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 			matcher_flags |= matcher::flags::ICASE;
 
 		matcher_factory mfact;
-
+		const char * mtchr = nullptr;
 		for (int i = 0; i < B_TOTAL; ++i)
 		{
-			b_matchers[i] = mfact.create(
-				mtypes[opts.is_b_matcher_regex[i]],
-				opts.b_matchers[i],
+			if ((mtchr = opts.b_matchers[i]))
+			{
+				b_matchers[i] = mfact.create(
+					mtypes[opts.is_b_matcher_regex[i]],
+					mtchr,
+					matcher_flags
+				);
+			}
+		}
+
+		// create only if not empty string
+		if (opts.match_dont_match && *opts.match_dont_match)
+		{
+			match_dont_match =  mfact.create(
+				mtypes[opts.is_match_dont_match_regex],
+				opts.match_dont_match,
 				matcher_flags
 			);
 		}
-
-		match_dont_match = (opts.match_dont_match) ? mfact.create(
-			mtypes[opts.is_match_dont_match_regex],
-			opts.match_dont_match,
-			matcher_flags
-		) : nullptr;
 	}
 	catch(const std::runtime_error& e)
 	{
