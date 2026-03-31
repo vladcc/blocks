@@ -36,6 +36,7 @@ struct prog_options {
 	bool ignore_top;
 	bool fatal_error;
 	bool verbose_error;
+	bool debug;
 	bool is_next_matcher_regex;
 	bool is_block_name_regex;
 	bool is_block_start_regex;

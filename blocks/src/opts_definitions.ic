@@ -357,6 +357,22 @@ puts("Print what was parsed along with the error message to stderr.");
 puts("");
 }
 
+// --debug|-D
+static const char debug_opt_short = 'D';
+static const char debug_opt_long[] = "debug";
+static void handle_debug(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->debug = true;
+}
+
+static void help_debug(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts("Print debug info about matchers and quit.");
+puts("");
+}
+
 // --regex-match|-r
 static const char regex_match_opt_short = 'r';
 static const char regex_match_opt_long[] = "regex-match";

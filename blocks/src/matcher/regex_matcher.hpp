@@ -3,6 +3,7 @@
 
 #include "matcher_base.hpp"
 
+#include <string>
 #include <regex>
 
 class regex_matcher : public matcher
@@ -22,8 +23,17 @@ public:
 	{
 		return _match.length();
 	}
+	const char * type_of() override
+	{
+		return "regex";
+	}
+	const char * pattern() override
+	{
+		return _str_rx.c_str();
+	}
 
 private:
+	std::string _str_rx;
 	std::cmatch _match;
 	std::unique_ptr<std::regex> _prx;
 };

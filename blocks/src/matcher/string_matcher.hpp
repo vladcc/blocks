@@ -19,6 +19,14 @@ public:
 	{
 		return _pattern.length();
 	}
+	const char * type_of() override
+	{
+		return "string";
+	}
+	const char * pattern() override
+	{
+		return _pattern.c_str();
+	}
 
 private:
 	void _tolower(std::string& text);

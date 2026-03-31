@@ -19,6 +19,7 @@
 #-I|--ignore-top
 #-F|--fatal-error
 #-V|--verbose-error
+#-D|--debug
 
 #-r|--regex-match
 #-f|--fixed-match
@@ -394,6 +395,21 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("Print what was parsed along with the error message to stderr.");
+puts("");
+end_code
+end
+
+long_name  debug
+short_name D
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->debug = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Print debug info about matchers and quit.");
 puts("");
 end_code
 end
