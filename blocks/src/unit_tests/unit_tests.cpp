@@ -501,7 +501,7 @@ static bool test_block_parser_test_blocks(
 			check(pars.had_error());
 
 			const std::string err[] = {
-				"file n/a, line 7, col 1: improper nesting from line 1",
+				"n/a:7:1: improper nesting from line 1",
 				"something",
 				"^"
 			};
@@ -533,7 +533,7 @@ static bool test_block_parser_test_blocks(
 			block_parser pars(lex);
 
 			const std::string err[] = {
-				"file n/a, line 4, col 6: improper nesting from line 4",
+				"n/a:4:6: improper nesting from line 4",
 				"main }",
 				"     ^"
 			};
@@ -789,7 +789,7 @@ static bool test_block_comment_impl(const lexer::matchers * pats)
 		};
 
 		std::string err[] = {
-			"file n/a, line 23, col 5: improper nesting from line 22",
+			"n/a:23:5: improper nesting from line 22",
 			"} */",
 			"    ^",
 		};
@@ -1051,7 +1051,7 @@ static bool test_closes_name_to_block_open_impl_2(const lexer::matchers * pats)
 		std::string input(cat(lines, ARR_SIZE(lines)));
 
 		std::string err[] = {
-			"file n/a, line 20, col 1: improper nesting from line 14",
+			"n/a:20:1: improper nesting from line 14",
 			"...",
 			"^",
 		};
