@@ -5,7 +5,7 @@ AWK := awk
 CMPL := g++
 EXTRA_FLAGS :=
 INCL_PATHS := -I ./src/matcher -I ./src/lexer -I ./src/parser
-INCL_PATHS += -I ./src/parse_cli_opts -I ./src/blocks_cli_opts
+INCL_PATHS += -I ./src/parse_opts -I ./src/cli_opts
 WARN_FLAGS := -Wall -Wfatal-errors
 FLAGS := $(INCL_PATHS) $(WARN_FLAGS) $(EXTRA_FLAGS)
 
@@ -20,12 +20,21 @@ release: clean compile
 debug: FLAGS += -g
 debug: clean compile
 
-# <cli_opts>
-CLI_SRC_DIR := $(SRC_DIR)/blocks_cli_opts
-CLI_DEFN_DIR := $(CLI_SRC_DIR)/cli_opts_defn
+# <parse_opts>
+PARSE_OPTS_SRC_DIR := $(SRC_DIR)/parse_opts
 
-CLI_GEN := $(CLI_DEFN_DIR)/parse-opts-gen.awk
-CLI_DEFN_SRC := $(CLI_DEFN_DIR)/opt_defn.txt
+PARSE_OPTS_BASE := parse_opts
+PARSE_OPTS_SRC := $(PARSE_OPTS_SRC_DIR)/$(PARSE_OPTS_BASE).c
+PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
+$(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
+	$(CMPL) -c $< -o $@ $(FLAGS)
+# </parse_opts>
+
+# <cli_opts>
+CLI_SRC_DIR := $(SRC_DIR)/cli_opts
+
+CLI_GEN := $(PARSE_OPTS_SRC_DIR)/parse-opts-gen.awk
+CLI_DEFN_SRC := $(PARSE_OPTS_SRC_DIR)/opts_defn.txt
 CLI_DEFN_IC := $(CLI_SRC_DIR)/opts_definitions.ic
 CLI_PROC_IC := $(CLI_SRC_DIR)/opts_process.ic
 CLI_IMPL_IC := $(CLI_SRC_DIR)/opts_impl.ic
@@ -39,7 +48,6 @@ $(CLI_DEFN_IC): $(CLI_DEFN_SRC)
 	$(CLI_GEN)
 # </cli_opts>
 
-# <obj_files_compilation>
 # <main>
 MAIN_SRC_DIR := $(SRC_DIR)
 
@@ -50,16 +58,6 @@ MAIN_O := $(OBJ_DIR)/$(MAIN_BASE).o
 $(MAIN_O): $(MAIN_SRC) $(MAIN_CLI)
 	$(CMPL) -c $< -o $@ $(FLAGS)
 # </main>
-
-# <parse_opts>
-PARSE_OPTS_SRC_DIR := $(SRC_DIR)/parse_cli_opts
-
-PARSE_OPTS_BASE := parse_opts
-PARSE_OPTS_SRC := $(PARSE_OPTS_SRC_DIR)/$(PARSE_OPTS_BASE).c
-PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
-$(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
-	$(CMPL) -c $< -o $@ $(FLAGS)
-# </parse_opts>
 
 # <matchers>
 MATCHERS_SRC_DIR := $(SRC_DIR)/matcher
@@ -119,9 +117,8 @@ UNIT_TESTS_O := $(OBJ_DIR)/$(UNIT_TESTS_BASE).o
 $(UNIT_TESTS_O): $(UNIT_TESTS_SRC)
 	$(CMPL) -c $< -o $@ $(FLAGS)
 # </unte_tests>
-# </obj_files_compilation>
 
-# <binary_files_compilation>
+# <blocks>
 BLOCKS_BASE := blocks
 BLOCKS_BIN := $(BLOCKS_BASE)
 BLOCKS_DEP := $(MAIN_O) $(PARSE_OPTS_O) $(MATCHERS_O) $(LEXER_O) $(PARSER_O)
@@ -132,10 +129,10 @@ UNIT_TESTS_BIN := unit-tests
 UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(MATCHERS_O) $(LEXER_O) $(PARSER_O)
 $(UNIT_TESTS_BIN): $(UNIT_TESTS_DEP)
 	$(CMPL) $^ -o ./$@ $(FLAGS)
+# </blocks>
 
 .PHONY: compile
 compile: $(BLOCKS_BIN) $(UNIT_TESTS_BIN)
-# </binary_files_compilation>
 
 # <testing>
 TEST_DIR := ./tests
