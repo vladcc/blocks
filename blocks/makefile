@@ -23,6 +23,7 @@ debug: clean compile
 # <parse_opts>
 PARSE_OPTS_SRC_DIR := $(SRC_DIR)/parse_opts
 
+PARSE_OPTS_GEN := $(PARSE_OPTS_SRC_DIR)/parse-opts-gen.awk
 PARSE_OPTS_BASE := parse_opts
 PARSE_OPTS_SRC := $(PARSE_OPTS_SRC_DIR)/$(PARSE_OPTS_BASE).c
 PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
@@ -33,12 +34,11 @@ $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
 # <cli_opts>
 CLI_SRC_DIR := $(SRC_DIR)/cli_opts
 
-CLI_GEN := $(PARSE_OPTS_SRC_DIR)/parse-opts-gen.awk
-CLI_DEFN_SRC := $(PARSE_OPTS_SRC_DIR)/opts_defn.txt
+CLI_DEFN_SRC := $(CLI_SRC_DIR)/cli_opts_defn.txt
 CLI_DEFN_IC := $(CLI_SRC_DIR)/opts_definitions.ic
 CLI_PROC_IC := $(CLI_SRC_DIR)/opts_process.ic
 CLI_IMPL_IC := $(CLI_SRC_DIR)/opts_impl.ic
-CLI_GEN := $(AWK) -f $(CLI_GEN) -vOutDir="$(CLI_SRC_DIR)" $(CLI_DEFN_SRC)
+CLI_GEN := $(AWK) -f $(PARSE_OPTS_GEN) -vOutDir="$(CLI_SRC_DIR)" $(CLI_DEFN_SRC)
 
 .PHONY: cli_opts
 cli_opts: $(CLI_DEFN_IC)
