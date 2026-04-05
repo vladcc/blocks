@@ -109,6 +109,14 @@ static void handle_options(
 
 #include "opts_process.ic"
 
+	if (!opts.b_matchers[B_NAME] && opts.b_matchers[B_START])
+	{
+		// when only the block open/close is changed and no name is given
+		// the name should be the same as block open and the types should match
+		opts.b_matchers[B_NAME] = opts.b_matchers[B_START];
+		opts.is_b_matcher_regex[B_NAME] = opts.is_b_matcher_regex[B_START];
+	}
+
 	if (false == opts.no_defaults)
 	{
 		// matcher patterns that won't be used will be set to the empty string
@@ -142,7 +150,12 @@ static void handle_options(
 	}
 
 	if (!opts.b_matchers[B_NAME])
+	{
+		// if the name was disabled by assigning it an empty string, the value
+		// should be same as the start and the types should match
 		opts.b_matchers[B_NAME] = opts.b_matchers[B_START];
+		opts.is_b_matcher_regex[B_NAME] = opts.is_b_matcher_regex[B_START];
+	}
 
 	if (!opts.b_matchers[B_START])
 		errq("block start cannot be empty");

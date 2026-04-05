@@ -1,0 +1,21 @@
+@START
+{
+    the quick Brown Fox
+}
+@END
+@START
+main {
+
+    {
+        // jumps Over The
+    }
+}
+@END
+@START
+foo { lazy dog }
+@END
+@START
+{
+    empty
+}
+@END

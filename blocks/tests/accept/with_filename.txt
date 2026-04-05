@@ -1,0 +1,13 @@
+./input/test_input_1.txt:{
+./input/test_input_1.txt:    the quick Brown Fox
+./input/test_input_1.txt:}
+./input/test_input_1.txt:main {
+./input/test_input_1.txt:
+./input/test_input_1.txt:    {
+./input/test_input_1.txt:        // jumps Over The
+./input/test_input_1.txt:    }
+./input/test_input_1.txt:}
+./input/test_input_1.txt:foo { lazy dog }
+./input/test_input_1.txt:{
+./input/test_input_1.txt:    empty
+./input/test_input_1.txt:}

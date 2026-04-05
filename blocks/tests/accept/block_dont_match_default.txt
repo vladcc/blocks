@@ -1,0 +1,10 @@
+main {
+
+    {
+        // jumps Over The
+    }
+}
+foo { lazy dog }
+{
+    empty
+}

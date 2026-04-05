@@ -1,0 +1,4 @@
+foo { lazy dog }
+{
+    empty
+}

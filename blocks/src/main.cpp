@@ -451,6 +451,9 @@ static int process(
 	if (opts.debug)
 		print_debug_and_quit(opts, pats);
 
+	if (0 == opts.block_count)
+		return 0;
+
 	lexer::matchers lex_matchers(
 		pats.b_matchers[B_NAME],
 		pats.b_matchers[B_START],

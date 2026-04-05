@@ -141,8 +141,12 @@ TEST_DIR := ./tests
 test: blocks utest btest
 
 .PHONY: btest
-btest:
-	cd $(TEST_DIR) && bash run_tests.sh ../$(BLOCKS_BIN)
+btest: blocks
+	cd $(TEST_DIR) && bash run_tests.sh
+
+.PHONY: btestv
+btestv: blocks
+	cd $(TEST_DIR) && bash run_tests.sh x
 
 .PHONY: utest
 utest: unit-tests
@@ -165,6 +169,7 @@ _help:
 	@echo 'make cli_opts   - generate the command line options'
 	@echo 'make test       - run all tests'
 	@echo 'make btest      - run binary tests'
+	@echo 'make btestv     - run binary tests verbose'
 	@echo 'make utest      - run unit tests'
 	@echo 'make clean      - clean up'
 	@echo 'make help       - this screen'

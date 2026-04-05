@@ -1,0 +1,57 @@
+one two
+three
+
+// < >
+
+maxxx
+{
+    the quick Brown Fox
+}
+
+# <
+// <
+
+<
+/* block
+{
+
+this is a comment
+*/
+    // >
+>
+#>
+
+}
+
+bar
+
+zig
+[
+
+    zag
+
+]
+
+"
+main {
+
+    {
+        // jumps Over The
+    }
+}
+"
+
+(define something
+...
+)
+
+
+foo { lazy dog }
+
+{
+    empty
+}
+(apply something
+...
+)
+four five
