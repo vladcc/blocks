@@ -354,7 +354,7 @@ static void handle_fatal_error(const char * opt, char * opt_arg, void * ctx)
 static void help_fatal_error(const char * short_name, const char * long_name)
 {
 printf("%s|%s\n", short_name, long_name);
-puts("Quit processing the current file after the first error.");
+puts("Quit after the first error.");
 puts("");
 }
 

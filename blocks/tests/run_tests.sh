@@ -6,11 +6,26 @@ readonly G_TEST_RESULT_STDERR="./test_result_stderr.txt"
 readonly G_TEST_FILE_1="./input/test_input_1.txt"
 readonly G_TEST_FILE_2="./input/test_input_2.txt"
 readonly G_TEST_FILES_1_2="$G_TEST_FILE_1 $G_TEST_FILE_2"
+readonly G_TEST_FILE_WITH_ERR="./input/test_input_with_err.txt"
+readonly G_TEST_FILES_WITH_DIR="$G_TEST_FILES_1_2 ./input/empty.dir"
+
+G_RUN_PREFIX=""
 
 # <setup>
+function set_run_prefix
+{
+	G_RUN_PREFIX="$@"
+}
+
+function unset_run_prefix
+{
+	G_RUN_PREFIX=""
+}
+
 function run
 {
-	bt_eval "$G_BLOCKS_BIN $@ 1>$G_TEST_RESULT_STDOUT 2>$G_TEST_RESULT_STDERR"
+	bt_eval "$G_RUN_PREFIX $G_BLOCKS_BIN $@" \
+		"1>$G_TEST_RESULT_STDOUT 2>$G_TEST_RESULT_STDERR"
 }
 
 function run_ok
@@ -23,6 +38,12 @@ function run_nok
 {
 	run "$@"
 	bt_assert_failure
+}
+
+function diff_stdout_stderr
+{
+	bt_diff_ok "$G_TEST_RESULT_STDOUT" "accept/$1"
+	bt_diff_ok "$G_TEST_RESULT_STDERR" "accept/$2"
 }
 
 function diff_stdout
@@ -39,6 +60,7 @@ function diff_stderr
 # </setup>
 
 # <tests>
+# <flags>
 function test_block_name
 {
 	# trivial
@@ -297,6 +319,142 @@ function test_files_with_without_match
 	diff_stdout "file_without_match.txt"
 }
 
+function test_case_insensitive
+{
+	run_nok "-n 'mAiN' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-n 'mAiN' -i $G_TEST_FILE_1"
+	diff_stdout "case_insensitive.txt"
+
+	# long option
+	run_ok "-n 'mAiN' --case-insensitive $G_TEST_FILE_1"
+	diff_stdout "case_insensitive.txt"
+
+	run_nok "-r -n 'mAiN' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-i -r -n 'mAiN' $G_TEST_FILE_1"
+	diff_stdout "case_insensitive.txt"
+
+	run_nok "-r -m 'Jumps Over' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-i -r -m 'Jumps Over' $G_TEST_FILE_1"
+	diff_stdout "case_insensitive.txt"
+
+	run_nok "-f -m 'Jumps Over' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-i -f -m 'Jumps Over' $G_TEST_FILE_1"
+	diff_stdout "case_insensitive.txt"
+}
+
+function test_ignore_top
+{
+	run_ok "-r -n 'main|maxx' -lI $G_TEST_FILE_1"
+	diff_stdout "ignore_top_with_line_nums.txt"
+
+	# long option
+	run_ok "-r --ignore-top -n 'main|maxx' -l $G_TEST_FILE_1"
+	diff_stdout "ignore_top_with_line_nums.txt"
+}
+
+function test_no_defaults
+{
+	run_ok "-x -s '{' -e '}' $G_TEST_FILE_1"
+	diff_stdout "no_defaults.txt"
+
+	# long option
+	run_ok "--no-defaults -s '{' -e '}' $G_TEST_FILE_1"
+	diff_stdout "no_defaults.txt"
+}
+
+function test_fatal_error
+{
+	run_nok "$G_TEST_FILE_WITH_ERR $G_TEST_FILE_WITH_ERR"
+	diff_stdout_stderr "fatal_error_off_stdout.txt" "fatal_error_off_stderr.txt"
+
+	run_nok "-F $G_TEST_FILE_WITH_ERR $G_TEST_FILE_WITH_ERR"
+	diff_stdout_stderr "fatal_error_on_stdout.txt" "fatal_error_on_stderr.txt"
+
+	# long option
+	run_nok "$G_TEST_FILE_WITH_ERR $G_TEST_FILE_WITH_ERR --fatal-error"
+	diff_stdout_stderr "fatal_error_on_stdout.txt" "fatal_error_on_stderr.txt"
+}
+
+function test_verbose_error
+{
+	run_nok "$G_TEST_FILE_WITH_ERR"
+	diff_stdout_stderr "verbose_error_off_stdout.txt" \
+		"verbose_error_off_stderr.txt"
+
+	run_nok "-V $G_TEST_FILE_WITH_ERR"
+	diff_stdout_stderr "verbose_error_on_stdout.txt" \
+		"verbose_error_on_stderr.txt"
+
+	# long option
+	run_nok "$G_TEST_FILE_WITH_ERR --verbose-error"
+	diff_stdout_stderr "verbose_error_on_stdout.txt" \
+		"verbose_error_on_stderr.txt"
+}
+
+function test_debug
+{
+	run_ok "-D"
+	diff_stdout "debug_info_1.txt"
+
+	# long option
+	run_ok "-r -n 'A' -s 'B' -e 'C' -f -C 'D' -B 'E' -T 'F' -r -m 'G' --debug"
+	diff_stdout "debug_info_2.txt"
+
+	run_ok "-f -n 'A' -s 'B' -e 'C' -r -C 'D' -B 'E' -T 'F' -f -m 'G' -D"
+	diff_stdout "debug_info_3.txt"
+
+	run_ok "-n 'A' -D -s 'B' -e 'C' -C 'D' -B 'E' -T 'F' -M 'G'"
+	diff_stdout "debug_info_4.txt"
+
+	run_ok "-D -n 'A' -s 'B' -e 'C' -C 'D' -B '' -T ''"
+	diff_stdout "debug_info_5.txt"
+
+	set_run_prefix "cat $G_TEST_FILE_1 |"
+	run_ok "-D -n 'A' -s 'B' -e 'C' -C 'D' -r -B '' -T '' $G_TEST_FILE_2"
+	diff_stdout "debug_info_5.txt"
+	unset_run_prefix
+}
+
+function test_help
+{
+	run_ok "-h"
+	diff_stdout "help_msg.txt"
+
+	# long option
+	run_ok "--help"
+	diff_stdout "help_msg.txt"
+
+	set_run_prefix "cat $G_TEST_FILE_1 |"
+	run_ok "-h"
+	diff_stdout "help_msg.txt"
+	unset_run_prefix
+}
+
+function test_version
+{
+	run_ok "-v"
+	diff_stdout "version_msg.txt"
+
+	# long option
+	run_ok "--version"
+	diff_stdout "version_msg.txt"
+
+	set_run_prefix "cat $G_TEST_FILE_1 |"
+	run_ok "-v"
+	diff_stdout "version_msg.txt"
+	unset_run_prefix
+}
+# </flags>
+
+# <behavior>
 function test_multiple_files
 {
 	# file names + line numbers
@@ -354,17 +512,58 @@ function test_multiple_files
 
 	run_nok "-r -n 'main|zing' -M 'jumps Over|jumps over' -W $G_TEST_FILES_1_2"
 	diff_stdout "mult_files_without_match_no_regex_2.txt"
-
 }
 
-# test from -i on
-# test_stdin_pipe
-# test_stdin_pipe_and_file
-# test_err_cases # bad num args as well
-# test_debug_info
-# test closes name to block open
+function test_stdin_pipe
+{
+	set_run_prefix "cat $G_TEST_FILE_1 |"
+	run_ok
+	diff_stdout "pipe_stdin_default.txt"
 
-function test_all
+	run_ok "-N"
+	diff_stdout "pipe_stdin_with_filename.txt"
+
+	run_ok "-l"
+	diff_stdout "pipe_stdin_with_line_num.txt"
+
+	run_ok "-Nl"
+	diff_stdout "pipe_stdin_line_nums_and_file.txt"
+
+	run_ok "-w"
+	diff_stdout "pipe_stdin_file_with_match.txt"
+
+	run_nok "-n 'none' -W"
+	diff_stdout "pipe_stdin_file_without_match.txt"
+
+	run_ok "-Nl $G_TEST_FILE_2"
+	diff_stdout "pipe_stdin_file_name_num.txt"
+
+	run_ok "-Nl $G_TEST_FILE_2 -"
+	diff_stdout "pipe_stdin_file_name_num_2.txt"
+
+	run_ok "-Nl - $G_TEST_FILE_2"
+	diff_stdout "pipe_stdin_file_name_num_3.txt"
+	unset_run_prefix
+
+	set_run_prefix "cat $G_TEST_FILES_1_2 |"
+	run_ok "-Nl"
+	diff_stdout "pipe_stdin_2_files.txt"
+	unset_run_prefix
+}
+
+function test_dir_process
+{
+	run_nok "$G_TEST_FILES_WITH_DIR"
+	diff_stdout_stderr "with_dir_stdout.txt" "with_dir_stderr.txt"
+}
+# </behavior>
+
+# test exit code values
+# test_err_cases # bad num args as well + file does not exist + dir_process
+# test closes name to block open
+# make sure all tests run
+
+function test_flags
 {
 	bt_eval test_block_name
 	bt_eval test_block_start_end
@@ -378,9 +577,40 @@ function test_all
 	bt_eval test_with_filename
 	bt_eval test_with_filename_and_numbers
 	bt_eval test_files_with_without_match
+	bt_eval test_case_insensitive
+	bt_eval test_ignore_top
+	bt_eval test_no_defaults
+	bt_eval test_fatal_error
+	bt_eval test_verbose_error
+	bt_eval test_debug
+	bt_eval test_help
+	bt_eval test_version
+}
+
+function test_behavior
+{
 	bt_eval test_multiple_files
+	bt_eval test_stdin_pipe
+	bt_eval test_dir_process
+}
+
+function test_all
+{
+	bt_eval test_flags
+	bt_eval test_behavior
 }
 # </tests>
+
+function run_tests
+{
+	bt_eval test_all
+	cleanup
+}
+
+function cleanup
+{
+	bt_eval "rm -f $G_TEST_RESULT_STDOUT $G_TEST_RESULT_STDERR"
+}
 
 function main
 {
@@ -391,7 +621,7 @@ function main
 	fi
 
 	bt_enter
-	bt_eval test_all
+	bt_eval run_tests
 	bt_exit_success
 }
 

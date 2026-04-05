@@ -1,0 +1,22 @@
+{
+    the quick Brown Fox
+}
+{
+
+this is a comment
+*/
+    // >
+>
+#>
+
+}
+main {
+
+    {
+        // jumps Over The
+    }
+}
+foo { lazy dog }
+{
+    empty
+}

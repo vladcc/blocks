@@ -1,0 +1,4 @@
+blocks: error: ./input/test_input_with_err.txt:7:1: improper nesting from line 5
+blocks: error: end
+blocks: error: ^
+quitting due to fatal error

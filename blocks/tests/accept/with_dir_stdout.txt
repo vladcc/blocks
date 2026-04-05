@@ -1,0 +1,16 @@
+{
+    the quick Brown Fox
+}
+main {
+
+    {
+        // jumps Over The
+    }
+}
+foo { lazy dog }
+{
+    empty
+}
+{
+    jumps over
+}

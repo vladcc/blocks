@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
@@ -10,8 +11,8 @@
 #include <cerrno>
 #include <filesystem>
 
-const char program_name[] = "blocks";
-const char program_version[] = "2.0";
+static const char program_name[] = "blocks";
+static const char program_version[] = "2.0";
 
 enum {
 	B_NAME,
@@ -94,6 +95,12 @@ static const char * line_num_str(size_t num)
 	static char num_str[num_max_len];
 	snprintf(num_str, num_max_len, "%zu:", num);
 	return num_str;
+}
+
+static void fatal_error_exit()
+{
+	print_line_stderr("quitting due to fatal error");
+	exit(EXIT_FAILURE);
 }
 
 static void print_block_stderr(
@@ -391,7 +398,7 @@ static process_result process_blocks_from_file(
 			print_error_report(parser.get_error_report());
 
 			if (opts.fatal_error)
-				return res;
+				fatal_error_exit();
 		}
 		else
 		{
@@ -454,6 +461,18 @@ static int process(
 	if (0 == opts.block_count)
 		return 0;
 
+
+	bool was_file_open_err = false;
+	process_result total;
+	total.was_match = false;
+	total.was_err = false;
+
+	const char str_stdin[] = "-";
+	const char * current_file = str_stdin;
+
+	std::ifstream file_in_stream;
+	std::istream generic_in_stream(std::cin.rdbuf());
+
 	lexer::matchers lex_matchers(
 		pats.b_matchers[B_NAME],
 		pats.b_matchers[B_START],
@@ -463,19 +482,20 @@ static int process(
 		pats.b_matchers[B_COMMENT_TERM]
 	);
 
-	lexer lex(std::cin, lex_matchers);
-
-	const char str_stdin[] = "-";
-	const char * current_file = str_stdin;
-
-	bool was_file_open_err = false;
-	process_result total;
-	total.was_match = false;
-	total.was_err = false;
-
+	lexer lex(generic_in_stream, lex_matchers);
 	block_parser b_parser(lex);
 
-	if (file_names.size())
+	if (!file_names.size())
+	{
+		process_file(
+			total,
+			b_parser,
+			opts,
+			current_file,
+			pats.match_dont_match
+		);
+	}
+	else
 	{
 		static std::string err;
 
@@ -485,45 +505,51 @@ static int process(
 			if (std::filesystem::is_directory(current_file))
 			{
 				was_file_open_err = true;
-				err.assign("file ").append(current_file).append(": ");
-				err.append("Is a directory");
+				err.assign(current_file).append(": ").append("Is a directory");
 				print_err(err.c_str());
 				continue;
 			}
 
-			if (freopen(fname, "r", stdin))
+			if (0 == strcmp(current_file, str_stdin))
 			{
-				// counts per file
-				int block_count = opts.block_count;
-				int skip_count = opts.skip_count;
-				process_file(
-					total,
-					b_parser,
-					opts,
-					current_file,
-					pats.match_dont_match
-				);
-				opts.block_count = block_count;
-				opts.skip_count = skip_count;
+				generic_in_stream.rdbuf(std::cin.rdbuf());
 			}
 			else
 			{
-				was_file_open_err = true;
-				err.assign("file ").append(current_file).append(": ");
-				err.append(std::strerror(errno));
-				print_err(err.c_str());
+				file_in_stream.open(current_file);
+				if (file_in_stream.is_open())
+				{
+					generic_in_stream.rdbuf(file_in_stream.rdbuf());
+				}
+				else
+				{
+					was_file_open_err = true;
+					err.assign(current_file).append(": ");
+					err.append(std::strerror(errno));
+					print_err(err.c_str());
+					continue;
+				}
+			}
+
+			// counts per file
+			int block_count = opts.block_count;
+			int skip_count = opts.skip_count;
+			process_file(
+				total,
+				b_parser,
+				opts,
+				current_file,
+				pats.match_dont_match
+			);
+			opts.block_count = block_count;
+			opts.skip_count = skip_count;
+
+			if (file_in_stream.is_open())
+			{
+				file_in_stream.close();
+				file_in_stream.clear();
 			}
 		}
-	}
-	else
-	{
-		process_file(
-			total,
-			b_parser,
-			opts,
-			current_file,
-			pats.match_dont_match
-		);
 	}
 
 	int ret = 0;

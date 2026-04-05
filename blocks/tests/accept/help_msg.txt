@@ -1,0 +1,119 @@
+-- blocks 2.0 --
+grep for nested data
+
+Prints proper nested blocks like so:
+1. Match the name of the block, e.g. 'main'
+2. Match the opening symbol, e.g. '{'
+3. Match the corresponding closing symbol, e.g. '}'
+
+Matching is done either as fixed strings or with the ECMAScript C++ std
+regex library depending on the option provided before a <matcher> is
+defined. The default for all <matcher>s is fixed string. Setting a <matcher>
+to the empty string disables the <matcher>. I.e. setting the line comment to
+"", or '', means blocks will consider line comments ordinary input. Block
+start and block end are mandatory. If block name is not given, it is set to
+block start.
+
+blocks prints everything in-between the block name and the closing symbol.
+
+For example if you have a file which looks like:
+foo {
+	bar {
+		baz
+	}
+}
+
+and you run 'blocks --block-name bar <my-file>', you'll get:
+	bar {
+		baz
+	}
+When the name is matched, the input isn't advanced and the search for
+the block begins at the start of the name. This allows to match all blocks
+in a file when the name is the same as the opening symbol. It also allows
+to match LISP-like syntax where the block start comes before the name, e.g.:
+blocks -n '(define' -s '(' -e ')'
+Input is advanced when either block start or block end are matched and
+subsequent searching begins one character after the start match.
+
+The available options are:
+-n|--block-name <matcher>
+Print only blocks starting with a name which matches <matcher>.
+Default is '{'
+
+-s|--block-start <matcher>
+Set <matcher> as the open block symbol. Default is '{'
+
+-e|--block-end <matcher>
+Set <matcher> as the close block symbol. Default is '}'
+
+-C|--comment <matcher>
+Set <matcher> as the single line comment symbol. Default is '//'
+
+-B|--block-comment-begin <matcher>
+Set <matcher> as the start of block comment symbol. Default is '/*'
+
+-T|--block-comment-terminate <matcher>
+Set <matcher> as the end of block comment symbol. Default is '*/'
+
+-m|--match <matcher>
+Print only blocks in which at least one line matches <matcher>.
+
+-M|--dont-match <matcher>
+Print only blocks in which no line matches <matcher>.
+
+-S|--mark-start <string>
+When given, <string> will be printed before each block.
+
+-E|--mark-end <string>
+When given, <string> will be printed after each block.
+
+-c|--block-count <num>
+Print the first <num> number of blocks from the current file.
+
+-k|--skip <num>
+Don't print the first <num> number of blocks from the current file.
+
+-l|--line-numbers
+Print line numbers with output lines.
+
+-N|--with-filename
+Print file name with output lines.
+
+-w|--files-with-match
+Print only the names of files which contained at least one block.
+
+-W|--files-without-match
+Print only the names of files which did not contain a block.
+
+-i|--case-insensitive
+Match all matchers case insensitive.
+
+-x|--no-defaults
+Do not use defaults for matchers.
+
+-I|--ignore-top
+Print only the body of the block. I.e. don't print the block name,
+block start, and block end. All lines between and including the block
+name and block open, as well as the line containing the block end are
+ignored.
+
+-F|--fatal-error
+Quit after the first error.
+
+-V|--verbose-error
+Print what was parsed along with the error message to stderr.
+
+-D|--debug
+Print debug info about matchers and quit.
+
+-r|--regex-match
+All matchers after this argument are regex. This is the default.
+
+-f|--fixed-match
+All matchers after this argument are fixed strings.
+
+-h|--help
+Print this screen and quit.
+
+-v|--version
+Print version info and quit.

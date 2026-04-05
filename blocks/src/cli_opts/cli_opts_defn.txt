@@ -396,7 +396,7 @@ end_code
 
 help_code
 printf("%s|%s\n", short_name, long_name);
-puts("Quit processing the current file after the first error.");
+puts("Quit after the first error.");
 puts("");
 end_code
 end
