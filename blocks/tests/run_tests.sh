@@ -7,11 +7,17 @@ readonly G_TEST_FILE_1="./input/test_input_1.txt"
 readonly G_TEST_FILE_2="./input/test_input_2.txt"
 readonly G_TEST_FILES_1_2="$G_TEST_FILE_1 $G_TEST_FILE_2"
 readonly G_TEST_FILE_WITH_ERR="./input/test_input_with_err.txt"
-readonly G_TEST_FILES_WITH_DIR="$G_TEST_FILES_1_2 ./input/empty.dir"
+readonly G_TEST_EMPTY_DIR="./input/empty.dir"
+readonly G_TEST_FILES_WITH_DIR="$G_TEST_FILES_1_2 $G_TEST_EMPTY_DIR"
 
 G_RUN_PREFIX=""
 
 # <setup>
+function assert_ec
+{
+	bt_assert "[ $? -eq $@ ]"
+}
+
 function set_run_prefix
 {
 	G_RUN_PREFIX="$@"
@@ -152,7 +158,7 @@ function test_block_comment
 	run_nok "-n 'block' $G_TEST_FILE_1"
 	diff_stdout "empty"
 
-	run_ok "-n 'block' -B'' -T'' $G_TEST_FILE_1"
+	run_ok "-n 'block' -B '' -T '' $G_TEST_FILE_1"
 	diff_stdout "block_comment_default_off.txt"
 
 	# long options
@@ -174,14 +180,23 @@ function test_match_dont_match
 	run_nok "-f -m '[t]he quick' $G_TEST_FILE_1"
 	diff_stdout "empty"
 
-	run_ok "-r -m '[t]he quick' $G_TEST_FILE_1"
-	diff_stdout "block_match_default.txt"
+	run_nok "-f -m '[t]he quick' $G_TEST_FILE_1"
+	diff_stdout "empty"
 
 	# long options
 	run_ok "--regex-match --match '[t]he quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_default.txt"
 
 	run_ok "-m 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_match_default.txt"
+
+	run_ok "-m '[t]he quick' -m 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_match_default.txt"
+
+	run_ok "-M 'the quick' -m 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_match_default.txt"
+
+	run_ok "-m 'the quick' -M 'the quick' -m 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_default.txt"
 
 	run_ok "-n 'max' -m 'the quick' $G_TEST_FILE_1"
@@ -195,6 +210,15 @@ function test_match_dont_match
 	diff_stdout "empty"
 
 	run_ok "-M 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_dont_match_default.txt"
+
+	run_ok "-M 'foo' -M 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_dont_match_default.txt"
+
+	run_ok "-M 'the quick' -m 'the quick' -M 'the quick' $G_TEST_FILE_1"
+	diff_stdout "block_dont_match_default.txt"
+
+	run_ok "-m 'the quick' -M 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_dont_match_default.txt"
 }
 
@@ -551,16 +575,82 @@ function test_stdin_pipe
 	unset_run_prefix
 }
 
-function test_dir_process
+function test_exit_codes
 {
-	run_nok "$G_TEST_FILES_WITH_DIR"
-	diff_stdout_stderr "with_dir_stdout.txt" "with_dir_stderr.txt"
+	run "-n 'main' $G_TEST_FILE_1"
+	assert_ec 0
+	diff_stdout "exit_codes_match.txt"
+
+	run "-n 'no-match' $G_TEST_FILE_1"
+	assert_ec 1
+	diff_stdout "empty"
+
+	run "$G_TEST_FILE_WITH_ERR"
+	assert_ec 2
+	diff_stdout_stderr "exit_codes_err_stdout.txt" "exit_codes_err_stderr.txt"
+
+	run "no-file"
+	assert_ec 2
+	diff_stderr "exit_codes_no_file_err.txt"
+
+	run "$G_TEST_FILES_WITH_DIR"
+	assert_ec 2
+	diff_stdout_stderr "exit_codes_with_dir_stdout.txt" \
+		"exit_codes_with_dir_stderr.txt"
+
+	run "-n 'zing' no-file $G_TEST_FILE_2 $G_TEST_EMPTY_DIR $G_TEST_FILE_2"
+	assert_ec 2
+	diff_stdout_stderr "exit_codes_match_no_file_empty_dir_stdout.txt" \
+		"exit_codes_match_no_file_empty_dir_stderr.txt"
+
+	run "-n 'no-match' no-file $G_TEST_FILE_1"
+	assert_ec 2
+	diff_stderr "exit_codes_no_file_err.txt"
+
+	run "-c -5"
+	assert_ec 2
+	diff_stderr "exit_codes_arg_c_err.txt"
+
+	run "-k foo"
+	assert_ec 2
+	diff_stderr "exit_codes_arg_k_err.txt"
+
+	run "-s ''"
+	assert_ec 2
+	diff_stderr "exit_codes_empty_start.txt"
+
+	run "-e ''"
+	assert_ec 2
+	diff_stderr "exit_codes_empty_end.txt"
+
+	run "-B ''"
+	assert_ec 2
+	diff_stderr "exit_codes_empty_B.txt"
+
+	run "-T ''"
+	assert_ec 2
+	diff_stderr "exit_codes_empty_T.txt"
+
+	run "-s '#' -e '#'"
+	assert_ec 2
+	diff_stderr "exit_codes_ambiguous_start_end.txt"
+}
+
+function test_closest_name_to_block
+{
+	local L_FILE="./input/test_input_closest_name_to_block.txt"
+
+	run_ok "-ln 'main' $L_FILE"
+	diff_stdout "closest_name_to_block_1.txt"
+
+	run_ok "-ln 'main' -C '' $L_FILE"
+	diff_stdout "closest_name_to_block_2.txt"
+
+	run_ok "-ln 'main' -B '' -T '' $L_FILE"
+	diff_stdout "closest_name_to_block_3.txt"
 }
 # </behavior>
 
-# test exit code values
-# test_err_cases # bad num args as well + file does not exist + dir_process
-# test closes name to block open
 # make sure all tests run
 
 function test_flags
@@ -585,13 +675,14 @@ function test_flags
 	bt_eval test_debug
 	bt_eval test_help
 	bt_eval test_version
+	bt_eval test_closest_name_to_block
 }
 
 function test_behavior
 {
 	bt_eval test_multiple_files
 	bt_eval test_stdin_pipe
-	bt_eval test_dir_process
+	bt_eval test_exit_codes
 }
 
 function test_all

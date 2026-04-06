@@ -11,6 +11,10 @@
 #include <cerrno>
 #include <filesystem>
 
+#define BLOCKS_EXIT_HAD_MATCH EXIT_SUCCESS
+#define BLOCKS_EXIT_NO_MATCH  1
+#define BLOCKS_EXIT_HAD_ERROR 2
+
 static const char program_name[] = "blocks";
 static const char program_version[] = "2.0";
 
@@ -61,10 +65,15 @@ static void print_err(const char * str)
 	std::cerr << program_name << ": error: " << str << std::endl;
 }
 
+static inline void exit_err()
+{
+	exit(BLOCKS_EXIT_HAD_ERROR);
+}
+
 static void errq(const char * str)
 {
 	print_err(str);
-	exit(EXIT_FAILURE);
+	exit_err();
 }
 
 #include "opts_impl.ic"
@@ -99,8 +108,10 @@ static const char * line_num_str(size_t num)
 
 static void fatal_error_exit()
 {
-	print_line_stderr("quitting due to fatal error");
-	exit(EXIT_FAILURE);
+	std::string err("quitting due to --");
+	err.append(fatal_error_opt_long);
+	print_line_stderr(err.c_str());
+	exit_err();
 }
 
 static void print_block_stderr(
@@ -445,6 +456,7 @@ static void process_file(
 
 	if (!total.was_match)
 		total.was_match = curr.was_match;
+
 	if (!total.was_err)
 		total.was_err = curr.was_err;
 }
@@ -459,8 +471,7 @@ static int process(
 		print_debug_and_quit(opts, pats);
 
 	if (0 == opts.block_count)
-		return 0;
-
+		return BLOCKS_EXIT_HAD_MATCH;
 
 	bool was_file_open_err = false;
 	process_result total;
@@ -499,7 +510,7 @@ static int process(
 	{
 		static std::string err;
 
-		for (auto fname : file_names)
+		for (auto& fname : file_names)
 		{
 			current_file = fname;
 			if (std::filesystem::is_directory(current_file))
@@ -552,13 +563,13 @@ static int process(
 		}
 	}
 
-	int ret = 0;
-	if (!total.was_match)
-		ret = 1;
 	if (total.was_err || was_file_open_err)
-		ret = 2;
+		return BLOCKS_EXIT_HAD_ERROR;
 
-	return ret;
+	if (!total.was_match)
+		return BLOCKS_EXIT_NO_MATCH;
+
+	return BLOCKS_EXIT_HAD_MATCH;
 }
 
 int main(int argc, char * argv[])

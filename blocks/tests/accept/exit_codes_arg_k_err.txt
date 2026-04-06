@@ -1,0 +1,2 @@
+blocks: error: option 'k': 'foo' bad number
+Try 'blocks --help' for more information

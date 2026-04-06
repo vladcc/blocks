@@ -9,13 +9,15 @@ static void opts_errq(const char * msg, ...);
 fprintf(stderr, "Try '%s --%s' for more information\n",\
 program_name, help_opt_long)
 
-#define print_use()\
-fprintf(stderr, "Use: %s [options] [files]\n", program_name)
+#define print_use(where)\
+fprintf((where), "Use: %s [options] [files]\n", program_name)
 
 static void help_message(void)
 {
 printf("-- %s %s --\n", program_name, program_version);
 puts("grep for nested data");
+puts("");
+print_use(stdout);
 puts("");
 printf(
 "Prints proper nested blocks like so:\n"
@@ -31,10 +33,19 @@ printf(
 "regex library depending on the option provided before a <matcher> is\n"
 "defined. The default for all <matcher>s is fixed string. Setting a <matcher>\n"
 "to the empty string disables the <matcher>. I.e. setting the line comment to\n"
-"\"\", or '', means %s will consider line comments ordinary input. Block\n"
-"start and block end are mandatory. If block name is not given, it is set to\n"
-"block start.\n",
+"\"\", or '', means %s will consider line comments as ordinary input.\n",
 program_name
+);
+puts("");
+puts(
+"Note that the empty string should not touch the option string because there\n"
+"is no way to distinguish between the empty string as an argument and the end\n"
+"of the option string. I.e. use \"-X ''\" instead of \"-X''\"."
+);
+puts("");
+puts(
+"Block start and block end are mandatory. If block name is not given, it is\n"
+"set to block start."
 );
 puts("");
 printf(
@@ -78,7 +89,19 @@ puts(
 "subsequent searching begins one character after the start match."
 );
 puts("");
-puts("The available options are:");
+puts("Return codes:");
+printf(
+"help/version message:         %u\n"
+"No error, match was found:    %u\n"
+"No error, no match was found: %u\n"
+"An error happened:            %u\n",
+EXIT_SUCCESS,
+BLOCKS_EXIT_HAD_MATCH,
+BLOCKS_EXIT_NO_MATCH,
+BLOCKS_EXIT_HAD_ERROR
+);
+puts("");
+puts("Options:");
 }
 
 #include "opts_definitions.ic"
@@ -88,10 +111,10 @@ static void opts_errq(const char * msg, ...)
 	va_list args;
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
-	va_end (args);
+	va_end(args);
 	fprintf(stderr, "%s", "\n");
 	print_try();
-	exit(EXIT_FAILURE);
+	exit_err();
 }
 
 static void handle_options(

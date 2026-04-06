@@ -1,19 +1,9 @@
-2020-08-02
-v1.0 -> v1.1
--k|--skip option added.
-Option generator defines options names instead of generating literals.
+2026-04-06
+blocks 2.0
+incompatible with previous versions
 
-v1.1 -> v1.2
--C|--comment option added.
-
-2020-08-03
-v1.2 -> v1.3
--r|--regex-match and -R|--regex-no-match options added.
-
-2020-08-07
-v1.3 -> v1.4
-Help message updated. Now signed.
--P|--print-file-names-match option added.
+2020-09-01
+options/user_code.awk updated to v1.1
 
 2020-08-30
 v1.4 -> v1.41
@@ -22,5 +12,19 @@ code is generated from options/options.txt.
 'Use' and 'Try' messages now print on input errors.
 Input error test introduced.
 
-2020-09-01
-options/user_code.awk updated to v1.1
+2020-08-07
+v1.3 -> v1.4
+Help message updated. Now signed.
+-P|--print-file-names-match option added.
+
+2020-08-03
+v1.2 -> v1.3
+-r|--regex-match and -R|--regex-no-match options added.
+
+2020-08-02
+v1.0 -> v1.1
+-k|--skip option added.
+Option generator defines options names instead of generating literals.
+
+v1.1 -> v1.2
+-C|--comment option added.

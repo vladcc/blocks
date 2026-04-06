@@ -208,7 +208,9 @@ void block_parser::error::create(
 	err->append(bad_line_text);
 
 	err = &_text[2];
-	err->append(lex_line_pos, ' ').append("^");
+	for (size_t i = 0; i < lex_line_pos; ++i)
+		err->append(('\t' == bad_line_text[i]) ? "\t" : " ");
+	err->append("^");
 }
 
 void block_parser::error::reset()

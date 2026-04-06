@@ -1,0 +1,2 @@
+blocks: error: option 'c': '-5' has to be positive
+Try 'blocks --help' for more information

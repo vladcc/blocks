@@ -1,0 +1,14 @@
+foo main
+bar
+main
+baz
+xx main
+yy
+// main
+zig
+/* main */
+zag
+{
+
+}
+end

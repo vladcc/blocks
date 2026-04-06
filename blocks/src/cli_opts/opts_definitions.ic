@@ -136,6 +136,7 @@ static void help_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which at least one line matches <matcher>.");
+puts("Cancels any previous \"match\"/\"don't match\" options.");
 puts("");
 }
 
@@ -154,6 +155,7 @@ static void help_dont_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which no line matches <matcher>.");
+puts("Cancels any previous \"match\"/\"don't match\" options.");
 puts("");
 }
 
@@ -482,10 +484,10 @@ static void on_error(opts_err_code err_code, const char * err_opt, void * ctx)
 		break;
 	}
 
-	print_use();
+	print_use(stderr);
 	print_try();
 
-	exit(EXIT_FAILURE);
+	exit_err();
 
 #undef eprintf
 }

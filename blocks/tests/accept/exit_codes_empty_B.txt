@@ -1,0 +1,1 @@
+blocks: error: if block comment terminate exists, block comment begin has to exist

@@ -136,9 +136,11 @@ compile: $(BLOCKS_BIN) $(UNIT_TESTS_BIN)
 
 # <testing>
 TEST_DIR := ./tests
+TESTS_RUN := tests_run.txt
+TESTS_EXPECTED := tests_expected.txt
 
 .PHONY: test
-test: blocks utest btest
+test: blocks utest bsure
 
 .PHONY: btest
 btest: blocks
@@ -147,6 +149,11 @@ btest: blocks
 .PHONY: btestv
 btestv: blocks
 	cd $(TEST_DIR) && bash run_tests.sh x
+
+.PHONY: bsure
+bsure: blocks
+	cd $(TEST_DIR) && bash run_tests.sh x | grep '^test_' | sort > $(TESTS_RUN)
+	cd $(TEST_DIR) && diff $(TESTS_EXPECTED) $(TESTS_RUN)
 
 .PHONY: utest
 utest: unit-tests
@@ -168,6 +175,7 @@ _help:
 	@echo 'make $(UNIT_TESTS_BIN) - compile unit tests'
 	@echo 'make cli_opts   - generate the command line options'
 	@echo 'make test       - run all tests'
+	@echo 'make bsure      - run binary tests and make sure all of them run'
 	@echo 'make btest      - run binary tests'
 	@echo 'make btestv     - run binary tests verbose'
 	@echo 'make utest      - run unit tests'

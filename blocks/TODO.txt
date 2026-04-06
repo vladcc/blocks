@@ -1,2 +1,0 @@
-- ignore top : delete including until the first block open and after the close
-- bashtest all options

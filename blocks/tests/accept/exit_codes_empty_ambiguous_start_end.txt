@@ -1,0 +1,1 @@
+blocks: error: ambiguous: block start and block end cannot be the same.

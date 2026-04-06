@@ -1,0 +1,2 @@
+blocks: error: no-file: No such file or directory
+blocks: error: ./input/empty.dir: Is a directory

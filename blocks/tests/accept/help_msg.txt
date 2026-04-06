@@ -1,6 +1,8 @@
 -- blocks 2.0 --
 grep for nested data
 
+Use: blocks [options] [files]
+
 Prints proper nested blocks like so:
 1. Match the name of the block, e.g. 'main'
 2. Match the opening symbol, e.g. '{'
@@ -10,9 +12,14 @@ Matching is done either as fixed strings or with the ECMAScript C++ std
 regex library depending on the option provided before a <matcher> is
 defined. The default for all <matcher>s is fixed string. Setting a <matcher>
 to the empty string disables the <matcher>. I.e. setting the line comment to
-"", or '', means blocks will consider line comments ordinary input. Block
-start and block end are mandatory. If block name is not given, it is set to
-block start.
+"", or '', means blocks will consider line comments as ordinary input.
+
+Note that the empty string should not touch the option string because there
+is no way to distinguish between the empty string as an argument and the end
+of the option string. I.e. use "-X ''" instead of "-X''".
+
+Block start and block end are mandatory. If block name is not given, it is
+set to block start.
 
 blocks prints everything in-between the block name and the closing symbol.
 
@@ -35,7 +42,13 @@ blocks -n '(define' -s '(' -e ')'
 Input is advanced when either block start or block end are matched and
 subsequent searching begins one character after the start match.
 
-The available options are:
+Return codes:
+help/version message:         0
+No error, match was found:    0
+No error, no match was found: 1
+An error happened:            2
+
+Options:
 -n|--block-name <matcher>
 Print only blocks starting with a name which matches <matcher>.
 Default is '{'
@@ -57,9 +70,11 @@ Set <matcher> as the end of block comment symbol. Default is '*/'
 
 -m|--match <matcher>
 Print only blocks in which at least one line matches <matcher>.
+Cancels any previous "match"/"don't match" options.
 
 -M|--dont-match <matcher>
 Print only blocks in which no line matches <matcher>.
+Cancels any previous "match"/"don't match" options.
 
 -S|--mark-start <string>
 When given, <string> will be printed before each block.

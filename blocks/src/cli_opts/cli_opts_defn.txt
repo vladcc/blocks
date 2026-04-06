@@ -55,10 +55,10 @@ on_error_code
 		break;
 	}
 
-	print_use();
+	print_use(stderr);
 	print_try();
 
-	exit(EXIT_FAILURE);
+	exit_err();
 
 #undef eprintf
 end_code
@@ -191,6 +191,7 @@ end_code
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which at least one line matches <matcher>.");
+puts("Cancels any previous \"match\"/\"don't match\" options.");
 puts("");
 end_code
 end
@@ -208,6 +209,7 @@ end_code
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which no line matches <matcher>.");
+puts("Cancels any previous \"match\"/\"don't match\" options.");
 puts("");
 end_code
 end
