@@ -81,7 +81,7 @@ static void fatal_error_exit() { print_line_stderr("quitting due to fatal error"
 
 ```
 
-5. Like find ```exit_err()``` across the whole project
+5. Find ```exit_err()``` across the whole project
 ```
 $ find src/ -type f | xargs ./blocks -Nl -r -n '[a-zA-Z_]+ ' -f -m 'exit_err()' 2>/dev/null
 src/cli_opts/opts_definitions.ic:467:static void on_error(opts_err_code err_code, const char * err_opt, void * ctx)
