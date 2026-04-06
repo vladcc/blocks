@@ -4,10 +4,12 @@ test_block_comment
 test_block_count
 test_block_name
 test_block_start_end
+test_bug_fixes
 test_case_insensitive
 test_closest_name_to_block
 test_comment_no_comment
 test_debug
+test_eoi_before_comment_end
 test_exit_codes
 test_fatal_error
 test_files_with_without_match

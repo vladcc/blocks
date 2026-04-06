@@ -1,3 +1,7 @@
+2026-04-07
+blocks 2.1
+bugfix - do not loop forever if eoi is encountered before comment end
+
 2026-04-06
 blocks 2.0
 incompatible with previous versions

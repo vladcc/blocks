@@ -476,6 +476,31 @@ function test_version
 	diff_stdout "version_msg.txt"
 	unset_run_prefix
 }
+
+function test_flags
+{
+	bt_eval test_block_name
+	bt_eval test_block_start_end
+	bt_eval test_comment_no_comment
+	bt_eval test_block_comment
+	bt_eval test_match_dont_match
+	bt_eval test_block_count
+	bt_eval test_mark_start_end
+	bt_eval test_skip
+	bt_eval test_line_numbers
+	bt_eval test_with_filename
+	bt_eval test_with_filename_and_numbers
+	bt_eval test_files_with_without_match
+	bt_eval test_case_insensitive
+	bt_eval test_ignore_top
+	bt_eval test_no_defaults
+	bt_eval test_fatal_error
+	bt_eval test_verbose_error
+	bt_eval test_debug
+	bt_eval test_help
+	bt_eval test_version
+	bt_eval test_closest_name_to_block
+}
 # </flags>
 
 # <behavior>
@@ -649,34 +674,6 @@ function test_closest_name_to_block
 	run_ok "-ln 'main' -B '' -T '' $L_FILE"
 	diff_stdout "closest_name_to_block_3.txt"
 }
-# </behavior>
-
-# make sure all tests run
-
-function test_flags
-{
-	bt_eval test_block_name
-	bt_eval test_block_start_end
-	bt_eval test_comment_no_comment
-	bt_eval test_block_comment
-	bt_eval test_match_dont_match
-	bt_eval test_block_count
-	bt_eval test_mark_start_end
-	bt_eval test_skip
-	bt_eval test_line_numbers
-	bt_eval test_with_filename
-	bt_eval test_with_filename_and_numbers
-	bt_eval test_files_with_without_match
-	bt_eval test_case_insensitive
-	bt_eval test_ignore_top
-	bt_eval test_no_defaults
-	bt_eval test_fatal_error
-	bt_eval test_verbose_error
-	bt_eval test_debug
-	bt_eval test_help
-	bt_eval test_version
-	bt_eval test_closest_name_to_block
-}
 
 function test_behavior
 {
@@ -684,11 +681,29 @@ function test_behavior
 	bt_eval test_stdin_pipe
 	bt_eval test_exit_codes
 }
+# </behavior>
+
+# <bug_fixes>
+function test_eoi_before_comment_end
+{
+	local L_FILE="./input/bug_input_eoi_before_comment_end.txt"
+
+	run_ok "$L_FILE"
+	diff_stdout "bugfix_eoi_before_comment_end.txt"
+}
+
+function test_bug_fixes
+{
+	bt_eval test_eoi_before_comment_end
+}
+# </bug_fixes>
+
 
 function test_all
 {
 	bt_eval test_flags
 	bt_eval test_behavior
+	bt_eval test_bug_fixes
 }
 # </tests>
 

@@ -63,8 +63,8 @@ lexer::_internal_tok lexer::_leftmost_non_comment_intl(
 	}
 	else
 	{
-		if (lexer::_internal_tok::_COMMENT_END ==
-			_match_leftmost_of(_comment_end.data(), _comment_end.size()))
+		ret = _match_leftmost_of(_comment_end.data(), _comment_end.size());
+		if (lexer::_internal_tok::_COMMENT_END == ret)
 		{
 			_block_comment = false;
 			advance_past_match();

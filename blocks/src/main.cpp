@@ -16,7 +16,7 @@
 #define BLOCKS_EXIT_HAD_ERROR 2
 
 static const char program_name[] = "blocks";
-static const char program_version[] = "2.0";
+static const char program_version[] = "2.1";
 
 enum {
 	B_NAME,
