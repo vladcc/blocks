@@ -8,8 +8,9 @@
 #define LONG_NAME_BUFF_LEN  128
 
 enum {SHORT, LONG, ARG, DOUBLE_DASH};
-
 //-----------------------------------------------------------------------------
+
+static bool g_is_everything_an_arg = false;
 
 static int what(char * str)
 {
@@ -33,25 +34,24 @@ static int what(char * str)
 void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
 {
     char sname_str[SHORT_NAME_BUFF_LEN];
-	
+
 	opts_table * the_tbl = parse_data->the_tbl;
 	opts_on_unbound_arg unbound_arg = parse_data->on_unbound.handler;
 	void * unbound_arg_arg = parse_data->on_unbound.context;
 	opts_on_error on_error = parse_data->on_error.handler;
 	void * err_ctx = parse_data->on_error.context;
-	
+
     char * str;
     opts_entry * this_opt;
     opts_handler cbk;
     void * cbk_arg;
     opts_entry * opts_tbl = the_tbl->tbl;
     int opts_tbl_size = the_tbl->length;
-    bool everything_is_arg = false;
 
     for (int i = 0; i < argc; ++i)
     {
         str = argv[i];
-        if (!everything_is_arg)
+        if (!g_is_everything_an_arg)
         {
             switch (what(str))
             {
@@ -174,7 +174,7 @@ void opts_parse(int argc, char * argv[], opts_parse_data * parse_data)
                     break;
 
                 case DOUBLE_DASH:
-                    everything_is_arg = true;
+                    g_is_everything_an_arg = true;
                     break;
 
                 default:
@@ -249,5 +249,11 @@ void opts_print_help(opts_table * the_tbl)
 
         this_opt->print_help(sname_str, lname_str);
     }
+}
+//------------------------------------------------------------------------------
+
+bool opts_is_everything_an_arg(void)
+{
+	return g_is_everything_an_arg;
 }
 //------------------------------------------------------------------------------

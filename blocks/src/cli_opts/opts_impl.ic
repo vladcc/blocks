@@ -1,4 +1,6 @@
+extern "C" {
 #include "parse_opts.h"
+}
 
 #include <cstdarg>
 
@@ -11,6 +13,66 @@ program_name, help_opt_long)
 
 #define print_use(where)\
 fprintf((where), "Use: %s [options] [files]\n", program_name)
+
+static void help_message(void);
+static void opts_unbound_arg(const char * arg, void * ctx);
+static void handle_matcher(b_matcher which, const char * opt_arg, void * ctx);
+
+#include "opts_definitions.ic"
+
+static void handle_matcher(b_matcher which, const char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+
+	context->b_matchers[which] = opt_arg;
+	if (context->is_plus_arg_matcher)
+	{
+		context->is_plus_arg_matcher = false;
+		context->is_b_matcher_regex[which] =
+			context->is_only_next_matcher_regex;
+	}
+	else
+	{
+		context->is_b_matcher_regex[which] = context->is_matcher_regex;
+	}
+}
+
+static void opts_unbound_arg(const char * arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	if (!opts_is_everything_an_arg() && ('+' == arg[0]))
+	{
+		if ('r' == arg[1])
+		{
+			context->is_plus_arg_matcher = true;
+			context->is_only_next_matcher_regex = true;
+		}
+		else if ('f' == arg[1])
+		{
+			context->is_plus_arg_matcher = true;
+			context->is_only_next_matcher_regex = false;
+		}
+		else
+		{
+			on_error(OPTS_UNKOWN_OPT_ERR, arg, ctx);
+		}
+	}
+	else
+	{
+		context->file_names->push_back(arg);
+	}
+}
+
+static void opts_errq(const char * msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+	fprintf(stderr, "%s", "\n");
+	print_try();
+	exit_err();
+}
 
 static void help_message(void)
 {
@@ -102,19 +164,6 @@ BLOCKS_EXIT_HAD_ERROR
 );
 puts("");
 puts("Options:");
-}
-
-#include "opts_definitions.ic"
-
-static void opts_errq(const char * msg, ...)
-{
-	va_list args;
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
-	fprintf(stderr, "%s", "\n");
-	print_try();
-	exit_err();
 }
 
 static void handle_options(

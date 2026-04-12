@@ -18,7 +18,7 @@
 static const char program_name[] = "blocks";
 static const char program_version[] = "2.1";
 
-enum {
+enum b_matcher {
 	B_NAME,
 	B_START,
 	B_END,
@@ -47,7 +47,9 @@ struct prog_options {
 	bool fatal_error;
 	bool verbose_error;
 	bool debug;
-	bool is_next_matcher_regex;
+	bool is_plus_arg_matcher;
+	bool is_matcher_regex;
+	bool is_only_next_matcher_regex;
 	bool is_b_matcher_regex[B_TOTAL];
 	bool is_match_dont_match_regex;
 };

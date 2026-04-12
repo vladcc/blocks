@@ -1,9 +1,11 @@
 #ifndef PARSER_IO_HPP
 #define PARSER_IO_HPP
 
+#include "regex_matcher.hpp"
 #include "matcher.hpp"
 
 #include <iostream>
+#include <vector>
 #include <array>
 
 class lexer
@@ -46,6 +48,7 @@ public:
 public:
 	lexer(std::istream& in, const matchers& pats) :
 		_pats(pats),
+		_str_find(nullptr),
 		_in(in),
 		_line_pos(0),
 		_line_no(0),
@@ -139,6 +142,32 @@ private:
 		_internal_tok t;
 	};
 
+protected:
+	class string_finder
+	{
+	public:
+		string_finder(const regex_matcher * string_rx) :
+			_str_rx(string_rx)
+		{
+			_ranges.reserve(8);
+		}
+
+		void find_strings(const char * str, size_t len);
+		bool is_in_string(size_t pos) const;
+	private:
+		struct range
+		{
+			range(size_t s, size_t e) :
+				start(s), end_incl(e)
+			{}
+
+			size_t start;
+			size_t end_incl;
+		};
+		std::vector<range> _ranges;
+		const regex_matcher * _str_rx;
+	};
+
 private:
 	bool _read_line();
 	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
@@ -160,6 +189,7 @@ private:
 
 private:
 	matchers _pats;
+	string_finder _str_find;
 	std::array<_tok_match, 5> _name_open_close;
 	std::array<_tok_match, 4> _open_close;
 	std::array<_tok_match, 3> _name;

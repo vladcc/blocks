@@ -3,6 +3,7 @@ help: _help
 
 AWK := awk
 CMPL := g++
+CCMPL := gcc
 EXTRA_FLAGS :=
 INCL_PATHS := -I ./src/matcher -I ./src/lexer -I ./src/parser
 INCL_PATHS += -I ./src/parse_opts -I ./src/cli_opts
@@ -28,7 +29,7 @@ PARSE_OPTS_BASE := parse_opts
 PARSE_OPTS_SRC := $(PARSE_OPTS_SRC_DIR)/$(PARSE_OPTS_BASE).c
 PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
 $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
-	$(CMPL) -c $< -o $@ $(FLAGS)
+	$(CCMPL) -c $< -o $@ $(FLAGS)
 # </parse_opts>
 
 # <cli_opts>

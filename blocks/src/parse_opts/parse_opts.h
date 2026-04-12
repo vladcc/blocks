@@ -1,9 +1,9 @@
 /*  parse_opts.h -- command line options parsing
-    v2.0
-    
+    v2.1
+
     Command line option parsing for the classic syntax you'd find on *nix
     systems, implemented with callbacks.
-    
+
     Options can have a single character short name which starts with a dash and
     a long name which starts with a double dash. Short names of options that do
     not takes arguments can be bunched together (e.g. -ixyz). Options that
@@ -22,7 +22,7 @@
     names. This library does not copy argv, but does change the strings. If a
     long option name ends in with a '=', the '=' is replaced with '\0', as is
     the first delimiter after a sub-argument when opts_get_sub_arg() is used.
-    
+
     Author: Vladimir Dinev
     vld.dinev@gmail.com
     2020-08-30
@@ -141,5 +141,14 @@ following code can be used to split the string into the arguments "a", "b",
 char * sub_arg, ** parg = &arg;
 while ((sub_arg = opts_get_sub_arg(parg, ',')))
     <do-something-with-sub_arg>;
+*/
+
+bool opts_is_everything_an_arg(void);
+/*
+Returns: true if "--" has been encountered and all remaining command line
+strings are now considered arguments to the program, false otherwise.
+Description: Useful to know whether or not an unbound argument should be
+interpreted as an option when implementing non-standard options (e.g. options
+starting with a "+").
 */
 #endif

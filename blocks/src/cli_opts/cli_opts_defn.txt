@@ -1,4 +1,6 @@
 #-n|--block-name=<matcher>
+defn_start
+
 #-s|--block-start=<matcher>
 #-e|--block-end=<matcher>
 #-C|--comment=<matcher>
@@ -32,8 +34,7 @@ context_arg_type prog_options
 context_var_name context
 
 unbound_arg_code
-	prog_options * context = (prog_options *)ctx;
-	context->file_names->push_back(arg);
+	opts_unbound_arg(arg, ctx);
 end_code
 
 on_error_code
@@ -67,9 +68,7 @@ long_name  block-name
 short_name n
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_NAME] = opt_arg;
-	context->is_b_matcher_regex[B_NAME] = context->is_next_matcher_regex;
+	handle_matcher(B_NAME, opt_arg, ctx);
 end_code
 
 help_code
@@ -84,9 +83,7 @@ long_name  block-start
 short_name s
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_START] = opt_arg;
-	context->is_b_matcher_regex[B_START] = context->is_next_matcher_regex;
+	handle_matcher(B_START, opt_arg, ctx);
 end_code
 
 help_code
@@ -103,9 +100,7 @@ long_name  block-end
 short_name e
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_END] = opt_arg;
-	context->is_b_matcher_regex[B_END] = context->is_next_matcher_regex;
+	handle_matcher(B_END, opt_arg, ctx);
 end_code
 
 help_code
@@ -122,10 +117,7 @@ long_name  comment
 short_name C
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_LINE_COMMENT] = opt_arg;
-	context->is_b_matcher_regex[B_LINE_COMMENT] =
-		context->is_next_matcher_regex;
+	handle_matcher(B_LINE_COMMENT, opt_arg, ctx);
 end_code
 
 help_code
@@ -142,10 +134,7 @@ long_name  block-comment-begin
 short_name B
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_COMMENT_BEGIN] = opt_arg;
-	context->is_b_matcher_regex[B_COMMENT_BEGIN] =
-		context->is_next_matcher_regex;
+	handle_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
 end_code
 
 help_code
@@ -162,10 +151,7 @@ long_name  block-comment-terminate
 short_name T
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->b_matchers[B_COMMENT_TERM] = opt_arg;
-	context->is_b_matcher_regex[B_COMMENT_TERM] =
-		context->is_next_matcher_regex;
+	handle_matcher(B_COMMENT_TERM, opt_arg, ctx);
 end_code
 
 help_code
@@ -185,7 +171,7 @@ handler_code
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = true;
 	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_next_matcher_regex;
+	context->is_match_dont_match_regex = context->is_matcher_regex;
 end_code
 
 help_code
@@ -203,7 +189,7 @@ handler_code
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = false;
 	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_next_matcher_regex;
+	context->is_match_dont_match_regex = context->is_matcher_regex;
 end_code
 
 help_code
@@ -438,7 +424,7 @@ short_name r
 takes_args false
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->is_next_matcher_regex = true;
+	context->is_matcher_regex = true;
 end_code
 
 help_code
@@ -453,7 +439,7 @@ short_name f
 takes_args false
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->is_next_matcher_regex = false;
+	context->is_matcher_regex = false;
 end_code
 
 help_code
@@ -492,3 +478,5 @@ printf("%s|%s\n", short_name, long_name);
 puts("Print version info and quit.");
 end_code
 end
+
+defn_end
