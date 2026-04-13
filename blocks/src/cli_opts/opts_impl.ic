@@ -16,11 +16,12 @@ fprintf((where), "Use: %s [options] [files]\n", program_name)
 
 static void help_message(void);
 static void opts_unbound_arg(const char * arg, void * ctx);
-static void handle_matcher(b_matcher which, const char * opt_arg, void * ctx);
+static void handle_b_matcher(b_matcher which, const char * opt_arg, void * ctx);
+static void handle_m_matcher(const char * opt_arg, void * ctx);
 
 #include "opts_definitions.ic"
 
-static void handle_matcher(b_matcher which, const char * opt_arg, void * ctx)
+static void handle_b_matcher(b_matcher which, const char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
 
@@ -34,6 +35,23 @@ static void handle_matcher(b_matcher which, const char * opt_arg, void * ctx)
 	else
 	{
 		context->is_b_matcher_regex[which] = context->is_matcher_regex;
+	}
+}
+
+static void handle_m_matcher(const char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+
+	context->match_dont_match = opt_arg;
+	if (context->is_plus_arg_matcher)
+	{
+		context->is_plus_arg_matcher = false;
+		context->is_match_dont_match_regex =
+			context->is_only_next_matcher_regex;
+	}
+	else
+	{
+		context->is_match_dont_match_regex = context->is_matcher_regex;
 	}
 }
 

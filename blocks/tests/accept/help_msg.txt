@@ -122,10 +122,14 @@ Print what was parsed along with the error message to stderr.
 Print debug info about matchers and quit.
 
 -r|--regex-match
-All matchers after this argument are regex. This is the default.
+All matchers after this argument are regex.
++r
+Only the next matcher after this argument is regex.
 
 -f|--fixed-match
 All matchers after this argument are fixed strings.
++f
+Only the next matcher after this argument is fixed string.
 
 -h|--help
 Print this screen and quit.

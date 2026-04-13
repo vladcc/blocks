@@ -5,7 +5,7 @@ static const char block_name_opt_short = 'n';
 static const char block_name_opt_long[] = "block-name";
 static void handle_block_name(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_NAME, opt_arg, ctx);
+	handle_b_matcher(B_NAME, opt_arg, ctx);
 }
 
 static void help_block_name(const char * short_name, const char * long_name)
@@ -21,7 +21,7 @@ static const char block_start_opt_short = 's';
 static const char block_start_opt_long[] = "block-start";
 static void handle_block_start(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_START, opt_arg, ctx);
+	handle_b_matcher(B_START, opt_arg, ctx);
 }
 
 static void help_block_start(const char * short_name, const char * long_name)
@@ -39,7 +39,7 @@ static const char block_end_opt_short = 'e';
 static const char block_end_opt_long[] = "block-end";
 static void handle_block_end(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_END, opt_arg, ctx);
+	handle_b_matcher(B_END, opt_arg, ctx);
 }
 
 static void help_block_end(const char * short_name, const char * long_name)
@@ -57,7 +57,7 @@ static const char comment_opt_short = 'C';
 static const char comment_opt_long[] = "comment";
 static void handle_comment(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_LINE_COMMENT, opt_arg, ctx);
+	handle_b_matcher(B_LINE_COMMENT, opt_arg, ctx);
 }
 
 static void help_comment(const char * short_name, const char * long_name)
@@ -75,7 +75,7 @@ static const char block_comment_begin_opt_short = 'B';
 static const char block_comment_begin_opt_long[] = "block-comment-begin";
 static void handle_block_comment_begin(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
+	handle_b_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
 }
 
 static void help_block_comment_begin(const char * short_name, const char * long_name)
@@ -93,7 +93,7 @@ static const char block_comment_terminate_opt_short = 'T';
 static const char block_comment_terminate_opt_long[] = "block-comment-terminate";
 static void handle_block_comment_terminate(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_matcher(B_COMMENT_TERM, opt_arg, ctx);
+	handle_b_matcher(B_COMMENT_TERM, opt_arg, ctx);
 }
 
 static void help_block_comment_terminate(const char * short_name, const char * long_name)
@@ -113,8 +113,7 @@ static void handle_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = true;
-	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_matcher_regex;
+	handle_m_matcher(opt_arg, ctx);
 }
 
 static void help_match(const char * short_name, const char * long_name)
@@ -132,8 +131,7 @@ static void handle_dont_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = false;
-	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_matcher_regex;
+	handle_m_matcher(opt_arg, ctx);
 }
 
 static void help_dont_match(const char * short_name, const char * long_name)
@@ -389,7 +387,9 @@ static void handle_regex_match(const char * opt, char * opt_arg, void * ctx)
 static void help_regex_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s\n", short_name, long_name);
-puts("All matchers after this argument are regex. This is the default.");
+puts("All matchers after this argument are regex.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is regex.");
 puts("");
 }
 
@@ -406,6 +406,8 @@ static void help_fixed_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s\n", short_name, long_name);
 puts("All matchers after this argument are fixed strings.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is fixed string.");
 puts("");
 }
 

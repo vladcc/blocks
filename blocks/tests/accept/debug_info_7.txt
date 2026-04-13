@@ -1,0 +1,13 @@
+default block name: default block start
+default block start: '{'
+default block end: '}'
+default line comment: '//'
+default block comment begin: '/*'
+default block comment terminate: '*/'
+block name: 'A' type: string
+block start: 'B' type: regex
+block end: 'C' type: string
+line comment: 'D' type: regex
+block comment begin: 'E' type: string
+block comment terminate: 'F' type: regex
+match/don't match: match, 'G', type: string

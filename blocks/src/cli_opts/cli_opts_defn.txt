@@ -68,7 +68,7 @@ long_name  block-name
 short_name n
 takes_args true
 handler_code
-	handle_matcher(B_NAME, opt_arg, ctx);
+	handle_b_matcher(B_NAME, opt_arg, ctx);
 end_code
 
 help_code
@@ -83,7 +83,7 @@ long_name  block-start
 short_name s
 takes_args true
 handler_code
-	handle_matcher(B_START, opt_arg, ctx);
+	handle_b_matcher(B_START, opt_arg, ctx);
 end_code
 
 help_code
@@ -100,7 +100,7 @@ long_name  block-end
 short_name e
 takes_args true
 handler_code
-	handle_matcher(B_END, opt_arg, ctx);
+	handle_b_matcher(B_END, opt_arg, ctx);
 end_code
 
 help_code
@@ -117,7 +117,7 @@ long_name  comment
 short_name C
 takes_args true
 handler_code
-	handle_matcher(B_LINE_COMMENT, opt_arg, ctx);
+	handle_b_matcher(B_LINE_COMMENT, opt_arg, ctx);
 end_code
 
 help_code
@@ -134,7 +134,7 @@ long_name  block-comment-begin
 short_name B
 takes_args true
 handler_code
-	handle_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
+	handle_b_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
 end_code
 
 help_code
@@ -151,7 +151,7 @@ long_name  block-comment-terminate
 short_name T
 takes_args true
 handler_code
-	handle_matcher(B_COMMENT_TERM, opt_arg, ctx);
+	handle_b_matcher(B_COMMENT_TERM, opt_arg, ctx);
 end_code
 
 help_code
@@ -170,8 +170,7 @@ takes_args true
 handler_code
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = true;
-	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_matcher_regex;
+	handle_m_matcher(opt_arg, ctx);
 end_code
 
 help_code
@@ -188,8 +187,7 @@ takes_args true
 handler_code
 	prog_options * context = (prog_options *)ctx;
 	context->should_match_in_block = false;
-	context->match_dont_match = opt_arg;
-	context->is_match_dont_match_regex = context->is_matcher_regex;
+	handle_m_matcher(opt_arg, ctx);
 end_code
 
 help_code
@@ -429,7 +427,9 @@ end_code
 
 help_code
 printf("%s|%s\n", short_name, long_name);
-puts("All matchers after this argument are regex. This is the default.");
+puts("All matchers after this argument are regex.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is regex.");
 puts("");
 end_code
 end
@@ -445,6 +445,8 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("All matchers after this argument are fixed strings.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is fixed string.");
 puts("");
 end_code
 end

@@ -423,11 +423,18 @@ function test_verbose_error
 		"verbose_error_on_stderr.txt"
 }
 
-function test_debug
+function test_debug_base
 {
 	run_ok "-D"
 	diff_stdout "debug_info_1.txt"
 
+	# long option
+	run_ok "--debug"
+	diff_stdout "debug_info_1.txt"
+}
+
+function test_dash_matcher_types
+{
 	# long option
 	run_ok "-r -n 'A' -s 'B' -e 'C' -f -C 'D' -B 'E' -T 'F' -r -m 'G' --debug"
 	diff_stdout "debug_info_2.txt"
@@ -445,6 +452,48 @@ function test_debug
 	run_ok "-D -n 'A' -s 'B' -e 'C' -C 'D' -r -B '' -T '' $G_TEST_FILE_2"
 	diff_stdout "debug_info_5.txt"
 	unset_run_prefix
+}
+
+function test_plus_matcher_types
+{
+	# +f
+	run_ok "-r -n 'A' +f -s 'B' -e 'C' +f -C 'D' -B 'E' +f -T 'F' -m 'G' -D"
+	diff_stdout "debug_info_6.txt"
+
+	run_ok "-D -r +f -n 'A' -s 'B' +f -e 'C' -C 'D' +f -B 'E' -T 'F' +f -m 'G'"
+	diff_stdout "debug_info_7.txt"
+
+	run_ok "-r -n 'A' +f -s 'B' -e 'C' +f -C 'D' -B 'E' +f -T 'F' -M 'G' -D"
+	diff_stdout "debug_info_8.txt"
+
+	run_ok "-D -r +f -n 'A' -s 'B' +f -e 'C' -C 'D' +f -B 'E' -T 'F' +f -M 'G'"
+	diff_stdout "debug_info_9.txt"
+
+	# +r
+	run_ok "-f -n 'A' +r -s 'B' -e 'C' +r -C 'D' -B 'E' +r -T 'F' -m 'G' -D"
+	diff_stdout "debug_info_10.txt"
+
+	run_ok "-D -f +r -n 'A' -s 'B' +r -e 'C' -C 'D' +r -B 'E' -T 'F' +r -m 'G'"
+	diff_stdout "debug_info_11.txt"
+
+	run_ok "-f -n 'A' +r -s 'B' -e 'C' +r -C 'D' -B 'E' +r -T 'F' -M 'G' -D"
+	diff_stdout "debug_info_12.txt"
+
+	run_ok "-D -f +r -n 'A' -s 'B' +r -e 'C' -C 'D' +r -B 'E' -T 'F' +r -M 'G'"
+	diff_stdout "debug_info_13.txt"
+
+	run_nok "+z"
+	diff_stderr "plus_arg_err_1.txt"
+
+	run_nok "-- +z"
+	diff_stderr "plus_arg_err_2.txt"
+}
+
+function test_debug
+{
+	bt_eval test_debug_base
+	bt_eval test_dash_matcher_types
+	bt_eval test_plus_matcher_types
 }
 
 function test_help
