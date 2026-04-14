@@ -154,15 +154,21 @@ protected:
 
 		void find_strings(const char * str, size_t len);
 		bool is_in_string(size_t pos) const;
+
+		inline const auto& _test_get_ranges() const
+		{
+			return _ranges;
+		}
+
 	private:
 		struct range
 		{
 			range(size_t s, size_t e) :
-				start(s), end_incl(e)
+				start(s), end(e)
 			{}
 
 			size_t start;
-			size_t end_incl;
+			size_t end;
 		};
 		std::vector<range> _ranges;
 		const regex_matcher * _str_rx;

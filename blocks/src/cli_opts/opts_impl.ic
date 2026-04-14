@@ -60,13 +60,19 @@ static void opts_unbound_arg(const char * arg, void * ctx)
 	prog_options * context = (prog_options *)ctx;
 	if (!opts_is_everything_an_arg() && ('+' == arg[0]))
 	{
-		if ('r' == arg[1])
+		if (regex_match_opt_short == arg[1])
 		{
+			if (arg[2])
+				equit("option +%c has to be space delimited", arg[1]);
+
 			context->is_plus_arg_matcher = true;
 			context->is_only_next_matcher_regex = true;
 		}
-		else if ('f' == arg[1])
+		else if (fixed_match_opt_short == arg[1])
 		{
+			if (arg[2])
+				equit("option +%c has to be space delimited", arg[1]);
+
 			context->is_plus_arg_matcher = true;
 			context->is_only_next_matcher_regex = false;
 		}

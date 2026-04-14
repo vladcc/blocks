@@ -98,20 +98,16 @@ bool lexer::next_line()
 void lexer::string_finder::find_strings(const char * str, size_t len)
 {
 	size_t start = 0;
-	size_t end_incl = 0;
+	size_t end = 0;
 	regex_matcher * m = const_cast<regex_matcher *>(_str_rx);
 
 	_ranges.clear();
-	while (m->match(str, len, start))
+	while (start < len && m->match(str, len, start))
 	{
-		start = m->position();
-
-		if ((end_incl = m->length()))
-			--end_incl;
-
-		_ranges.emplace_back(start, end_incl);
-
-		start += end_incl + 1;
+		start += m->position();
+		end = start + m->length();
+		_ranges.emplace_back(start, end);
+		start = end;
 	}
 }
 
@@ -119,7 +115,7 @@ bool lexer::string_finder::is_in_string(size_t pos) const
 {
 	for (const auto& r : _ranges)
 	{
-		if (pos >= r.start && pos <= r.end_incl)
+		if (pos >= r.start && pos < r.end)
 			return true;
 	}
 	return false;

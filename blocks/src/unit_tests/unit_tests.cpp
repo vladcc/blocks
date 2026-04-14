@@ -2,6 +2,7 @@
 #include "lexer.hpp"
 #include "block_parser.hpp"
 
+#include <memory>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -16,12 +17,14 @@ return false
 typedef bool(*ftest)(void);
 
 static bool test_lexer();
+static bool test_lexer_string_finder();
 static bool test_block_parser();
 static bool test_block_comment();
 static bool test_closest_name_to_block_open();
 
 static ftest tests[] = {
 	test_lexer,
+	test_lexer_string_finder,
 	test_block_parser,
 	test_block_comment,
 	test_closest_name_to_block_open
@@ -303,6 +306,59 @@ static std::string cat(const std::string * arr, size_t len)
 		ret += '\n';
 	}
 	return ret;
+}
+
+
+static bool test_lexer_string_finder()
+{
+	class str_find_test : public lexer
+	{
+	public:
+		using lexer::string_finder;
+	};
+
+	static std::string str;
+	const char * str_rx = "\"([^\\\\\"]|[\\\\].)*\"";
+	static std::unique_ptr<regex_matcher> rxm(new regex_matcher(
+			str_rx, matcher::flags::NONE
+		)
+	);
+
+	str_find_test::string_finder str_find(rxm.get());
+	const auto& ranges = str_find._test_get_ranges();
+
+	check(ranges.empty());
+
+	str.assign("");
+	str_find.find_strings(str.c_str(), str.length());
+	check(ranges.empty());
+
+	str.assign("no string here");
+	str_find.find_strings(str.c_str(), str.length());
+	check(ranges.empty());
+
+	str.assign("\"\"");
+	str_find.find_strings(str.c_str(), str.length());
+	check(1 == ranges.size());
+	check(0 == ranges[0].start);
+	check(2 == ranges[0].end);
+	check(str_find.is_in_string(0));
+	check(str_find.is_in_string(1));
+	check(!str_find.is_in_string(2));
+	check(!str_find.is_in_string(2222));
+
+	str.assign("foo \"bar\" baz \"zig\" zag \"zog\"");
+	str_find.find_strings(str.c_str(), str.length());
+	check(3 == ranges.size());
+	check(4 == ranges[0].start);
+	check(9 == ranges[0].end);
+	check(14 == ranges[1].start);
+	check(19 == ranges[1].end);
+	check(24 == ranges[2].start);
+	check(29 == ranges[2].end);
+
+	check(false);
+	return true;
 }
 
 static bool test_block_parser_test_blocks(

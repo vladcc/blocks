@@ -1,1 +1,3 @@
+blocks: error: +r: No such file or directory
+blocks: error: +f: No such file or directory
 blocks: error: +z: No such file or directory

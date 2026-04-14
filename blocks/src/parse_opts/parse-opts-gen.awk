@@ -39,10 +39,11 @@ function exit_failure() {exit(1)}
 
 # <user_error>
 function did_err_happen() {
-	return _b_err_happened
+	return _B_err_happened
 }
 function err_print(msg) {
-	_b_err_happened = 1
+	_B_err_happened = 1
+	set_should_skip_end()
 	print_puts_err(sprintf("%s: error: %s", SCRIPT_NAME(), msg))
 }
 function err_quit(msg) {
@@ -50,7 +51,11 @@ function err_quit(msg) {
 	exit_failure()
 }
 function err_input(msg) {
-	err_print(sprintf("file '%s', line %d: %s", filename, fnr, msg))
+	err_print(sprintf("%s:%d: %s", FILENAME, FNR, msg))
+}
+function err_input_quit(msg) {
+	err_input(msg)
+	exit_failure()
 }
 # </user_error>
 
@@ -107,16 +112,37 @@ function name_check(name) {
 	}
 }
 
-function init() {
+function enter() {
 
 	out_dir_set(OutDir)
 
-	if (Help)
+	if (Help) {
+		set_should_skip_end()
 		print_help()
-	if (Version)
+	}
+	if (Version) {
+		set_should_skip_end()
 		print_version()
-	if (ARGC != 2)
+	}
+	if (ARGC != 2) {
+		set_should_skip_end()
 		print_use_try()
+	}
+}
+
+function set_should_skip_end() {_B_should_skip_end = 1}
+function get_should_skip_end() {return _B_should_skip_end}
+function set_can_end() {_B_can_end = 1}
+function get_can_end() {return _B_can_end}
+
+function leave(    _st) {
+
+	if (!did_err_happen() && !get_should_skip_end()) {
+		if (!get_can_end())
+			err_input_quit(sprintf("%s was not encountered", STM_DEFN_END()))
+		else
+			main()
+	}
 }
 
 function save_context_arg_type(context_arg_type) {__context_arg_type_arr__[++__context_arg_type_num__] = context_arg_type}
@@ -172,10 +198,9 @@ print DESCRIPT_FSM()
 # </user_messages>
 
 # <user_code>
-# v2.0
 
 function SCRIPT_NAME() {return "parse-opts-gen.awk"}
-function SCRIPT_VERSION() {return "2.0"}
+function SCRIPT_VERSION() {return "2.2"}
 
 function get_cname(name) {
 	gsub("-", "_", name)
@@ -370,19 +395,13 @@ function main(    i, end, opt) {
 	print_puts("// </opts_process>")
 }
 
+function get_state() {return stm_get_state(_B_the_fsm)}
 function transition(st) {stm_next(_B_the_fsm, st)}
 # </user_code>
 
 # <awk_loop>
-BEGIN {init()}
-
-END {
-	if (!did_err_happen()) {
-		main()
-	} else {
-		exit_failure()
-	}
-}
+BEGIN {enter()}
+END   {leave()}
 
 /^#|^[[:space:]]*$/ {next}
 {transition($1); next}
@@ -395,7 +414,10 @@ END {
 # <stm>
 # <handlers>
 function stm_on_defn_start() {
-
+	if (++_B_defn_start > 1) {
+		err_input_quit(\
+			sprintf("encountered %s more than once", STM_DEFN_START()))
+	}
 }
 function stm_on_context_arg_type() {
 	data_or_err()
@@ -437,7 +459,7 @@ function stm_on_end() {
 
 }
 function stm_on_defn_end() {
-	exit
+	set_can_end()
 }
 function stm_on_error(curr_st, expected, got) {
 	err_quit("line " FNR ": expected " expected ", got " got)

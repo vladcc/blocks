@@ -485,8 +485,14 @@ function test_plus_matcher_types
 	run_nok "+z"
 	diff_stderr "plus_arg_err_1.txt"
 
-	run_nok "-- +z"
+	run_nok "-- +r +f +z"
 	diff_stderr "plus_arg_err_2.txt"
+
+	run_nok "-D +rfoo +f"
+	diff_stderr "plus_arg_err_3.txt"
+
+	run_nok "-D +fbar +r"
+	diff_stderr "plus_arg_err_4.txt"
 }
 
 function test_debug
