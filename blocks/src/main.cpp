@@ -16,7 +16,7 @@
 #define BLOCKS_EXIT_HAD_ERROR 2
 
 static const char program_name[] = "blocks";
-static const char program_version[] = "2.1";
+static const char program_version[] = "2.2";
 
 enum b_matcher {
 	B_NAME,
@@ -31,13 +31,13 @@ enum b_matcher {
 struct prog_options {
 	std::vector<const char *> * file_names;
 	const char * b_matchers[B_TOTAL];
-	const char * match_dont_match;
+	const char * match;
+	const char * dont_match;
 	const char * mark_start;
 	const char * mark_end;
 	const char * string_rx;
 	int block_count;
 	int skip_count;
-	bool should_match_in_block;
 	bool line_numbers;
 	bool with_filename;
 	bool files_with_match;
@@ -53,7 +53,10 @@ struct prog_options {
 	bool is_matcher_regex;
 	bool is_only_next_matcher_regex;
 	bool is_b_matcher_regex[B_TOTAL];
-	bool is_match_dont_match_regex;
+	bool is_match_regex;
+	bool is_dont_match_regex;
+	bool logic_match_dont_match;
+	bool and_match_dont_match;
 };
 
 struct {
@@ -190,7 +193,8 @@ static void print_block(
 
 struct patterns {
 	const matcher * b_matchers[B_TOTAL];
-	const matcher * match_dont_match;
+	const matcher * match;
+	const matcher * dont_match;
 	const regex_matcher * string_rx;
 };
 
@@ -247,19 +251,24 @@ static void print_debug_and_quit(
 		print_line(buff.c_str());
 	}
 
-	buff.assign("match/don't match: ");
-	if (pats.match_dont_match)
-	{
-		buff.append(opts.should_match_in_block ? "match" : "don't match").
-			append(", '").append(pats.match_dont_match->pattern()).
-			append("', type: ").append(pats.match_dont_match->type_of());
-		print_line(buff.c_str());
-	}
+	buff.assign("match: ").append("'").
+		append(opts.match ? pats.match->pattern() : "").
+		append("' type: ").
+		append(opts.match ? pats.match->type_of() : "none");
+	print_line(buff.c_str());
+
+	buff.assign("dont match: ").append("'").
+		append(opts.dont_match ? pats.dont_match->pattern() : "").
+		append("' type: ").
+		append(opts.dont_match ? pats.dont_match->type_of() : "none");
+	print_line(buff.c_str());
+
+	buff.assign("match/don't match logic: ");
+	if (opts.logic_match_dont_match)
+		buff.append(opts.and_match_dont_match ? "and" : "or");
 	else
-	{
 		buff.append("none");
-		print_line(buff.c_str());
-	}
+	print_line(buff.c_str());
 
 	buff.assign("string regex: ");
 	buff.append(pats.string_rx ? pats.string_rx->pattern() : "none");
@@ -276,7 +285,7 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 {
 	// so valgrind can track
 	static std::unique_ptr<matcher> b_matchers[B_TOTAL];
-	static std::unique_ptr<matcher> match_dont_match;
+	static std::unique_ptr<matcher> match, dont_match;
 	static std::unique_ptr<matcher> string_rx;
 
 	try
@@ -308,15 +317,26 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 			pats.b_matchers[i] = b_matchers[i].get();
 
 		// create only if not empty string
-		if (opts.match_dont_match && *opts.match_dont_match)
+		if (opts.match && *opts.match)
 		{
-			match_dont_match =  mfact.create(
-				mtypes[opts.is_match_dont_match_regex],
-				opts.match_dont_match,
+			match =  mfact.create(
+				mtypes[opts.is_match_regex],
+				opts.match,
 				matcher_flags
 			);
 
-			pats.match_dont_match = match_dont_match.get();
+			pats.match = match.get();
+		}
+
+		if (opts.dont_match && *opts.dont_match)
+		{
+			dont_match =  mfact.create(
+				mtypes[opts.is_dont_match_regex],
+				opts.dont_match,
+				matcher_flags
+			);
+
+			pats.dont_match = dont_match.get();
 		}
 
 		if (opts.no_strings && opts.string_rx && *opts.string_rx)
@@ -360,25 +380,55 @@ static bool match_in_block(
 	return ret;
 }
 
-static bool process_single_block(
+static bool match_single_block(
 	prog_options& opts,
-	const matcher * pat_match_dont_match,
+	const matcher * pat_match,
+	const matcher * pat_dont_match,
 	const std::vector<block_parser::block_line>& block
 )
 {
-	if (pat_match_dont_match)
+	if (pat_match && pat_dont_match)
 	{
-		if (opts.should_match_in_block &&
-			!match_in_block(pat_match_dont_match, block))
+		if (opts.and_match_dont_match)
 		{
-			return false;
+			return (
+				match_in_block(pat_match, block)
+				&&
+				!match_in_block(pat_dont_match, block)
+			);
 		}
+		else
+		{
+			return (
+				match_in_block(pat_match, block)
+				||
+				!match_in_block(pat_dont_match, block)
+			);
+		}
+	}
+	else if (pat_match)
+	{
+		return match_in_block(pat_match, block);
+	}
+	else if (pat_dont_match)
+	{
+		return !match_in_block(pat_dont_match, block);
+	}
 
-		if (!opts.should_match_in_block &&
-			match_in_block(pat_match_dont_match, block))
-		{
+	return false;
+}
+
+static bool process_single_block(
+	prog_options& opts,
+	const matcher * pat_match,
+	const matcher * pat_dont_match,
+	const std::vector<block_parser::block_line>& block
+)
+{
+	if (pat_match || pat_dont_match)
+	{
+		if (!match_single_block(opts, pat_match, pat_dont_match, block))
 			return false;
-		}
 	}
 
 	bool should_print = false;
@@ -412,7 +462,8 @@ static process_result process_blocks_from_file(
 	block_parser& parser,
 	prog_options& opts,
 	const char * fname,
-	const matcher * pat_match_dont_match
+	const matcher * pat_match,
+	const matcher * pat_dont_match
 )
 {
 	process_result res;
@@ -440,7 +491,8 @@ static process_result process_blocks_from_file(
 		{
 			if (process_single_block(
 					opts,
-					pat_match_dont_match,
+					pat_match,
+					pat_dont_match,
 					parser.get_block()
 				))
 			{
@@ -469,14 +521,16 @@ static void process_file(
 	block_parser& parser,
 	prog_options& opts,
 	const char * fname,
-	const matcher * pat_match_dont_match
+	const matcher * pat_match,
+	const matcher * pat_dont_match
 )
 {
 	process_result curr = process_blocks_from_file(
 		parser,
 		opts,
 		fname,
-		pat_match_dont_match
+		pat_match,
+		pat_dont_match
 	);
 
 	if (!total.was_match)
@@ -529,7 +583,8 @@ static int process(
 			b_parser,
 			opts,
 			current_file,
-			pats.match_dont_match
+			pats.match,
+			pats.dont_match
 		);
 	}
 	else
@@ -576,7 +631,8 @@ static int process(
 				b_parser,
 				opts,
 				current_file,
-				pats.match_dont_match
+				pats.match,
+				pats.dont_match
 			);
 			opts.block_count = block_count;
 			opts.skip_count = skip_count;

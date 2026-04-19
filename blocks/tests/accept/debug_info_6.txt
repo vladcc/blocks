@@ -10,6 +10,8 @@ block end: 'C' type: regex
 line comment: 'D' type: string
 block comment begin: 'E' type: regex
 block comment terminate: 'F' type: string
-match/don't match: match, 'G', type: regex
+match: 'G' type: regex
+dont match: '' type: none
+match/don't match logic: none
 string regex: none
 no strings: off

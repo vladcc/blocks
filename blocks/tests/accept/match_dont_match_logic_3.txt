@@ -1,0 +1,8 @@
+block_a {
+    the quick brown
+    foo
+}
+block_c {
+    fox jumps
+    baz
+}

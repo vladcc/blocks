@@ -13,5 +13,5 @@ block comment terminate: '*/' type: string
 match: '' type: none
 dont match: '' type: none
 match/don't match logic: none
-string regex: none
-no strings: off
+string regex: "([^\\"]|[\\].)*"
+no strings: on

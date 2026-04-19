@@ -112,15 +112,31 @@ static const char match_opt_long[] = "match";
 static void handle_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->should_match_in_block = true;
-	handle_m_matcher(opt_arg, ctx);
+
+	context->match = opt_arg;
+	if (context->is_plus_arg_matcher)
+	{
+		context->is_plus_arg_matcher = false;
+		context->is_match_regex = context->is_only_next_matcher_regex;
+	}
+	else
+	{
+		context->is_match_regex = context->is_matcher_regex;
+	}
 }
 
 static void help_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which at least one line matches <matcher>.");
-puts("Cancels any previous \"match\"/\"don't match\" options.");
+puts("Does not ignore comments and strings.");
+puts("If both match and don't match are given, logical and is applied even if");
+puts("it is not specified on the command line. If a logical operation is");
+puts("specified on the command line, both match and don't match must be give.");
+puts("Logical operations:");
+puts("+a - Logical and. Both matchers must match.");
+puts("+o - Logical or. One or the other matcher must match.");
+puts("+a|+o can appear anywhere on the command line.");
 puts("");
 }
 
@@ -130,15 +146,31 @@ static const char dont_match_opt_long[] = "dont-match";
 static void handle_dont_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->should_match_in_block = false;
-	handle_m_matcher(opt_arg, ctx);
+
+	context->dont_match = opt_arg;
+	if (context->is_plus_arg_matcher)
+	{
+		context->is_plus_arg_matcher = false;
+		context->is_dont_match_regex = context->is_only_next_matcher_regex;
+	}
+	else
+	{
+		context->is_dont_match_regex = context->is_matcher_regex;
+	}
 }
 
 static void help_dont_match(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
 puts("Print only blocks in which no line matches <matcher>.");
-puts("Cancels any previous \"match\"/\"don't match\" options.");
+puts("Does not ignore comments and strings.");
+puts("If both match and don't match are given, logical and is applied even if");
+puts("it is not specified on the command line. If a logical operation is");
+puts("specified on the command line, both match and don't match must be give.");
+puts("Logical operations:");
+puts("+a - Logical and. Both matchers must match.");
+puts("+o - Logical or. One or the other matcher must match.");
+puts("+a|+o can appear anywhere on the command line.");
 puts("");
 }
 

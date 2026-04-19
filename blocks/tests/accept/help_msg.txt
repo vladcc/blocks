@@ -1,4 +1,4 @@
--- blocks 2.1 --
+-- blocks 2.2 --
 grep for nested data
 
 Use: blocks [options] [files]
@@ -48,6 +48,9 @@ No error, match was found:    0
 No error, no match was found: 1
 An error happened:            2
 
+Unless stated otherwise, when multiple of the same option are given,
+the last one applies.
+
 Options:
 -n|--block-name <matcher>
 Print only blocks starting with a name which matches <matcher>.
@@ -70,11 +73,25 @@ Set <matcher> as the end of block comment symbol. Default is '*/'
 
 -m|--match <matcher>
 Print only blocks in which at least one line matches <matcher>.
-Cancels any previous "match"/"don't match" options.
+Does not ignore comments and strings.
+If both match and don't match are given, logical and is applied even if
+it is not specified on the command line. If a logical operation is
+specified on the command line, both match and don't match must be give.
+Logical operations:
++a - Logical and. Both matchers must match.
++o - Logical or. One or the other matcher must match.
++a|+o can appear anywhere on the command line.
 
 -M|--dont-match <matcher>
 Print only blocks in which no line matches <matcher>.
-Cancels any previous "match"/"don't match" options.
+Does not ignore comments and strings.
+If both match and don't match are given, logical and is applied even if
+it is not specified on the command line. If a logical operation is
+specified on the command line, both match and don't match must be give.
+Logical operations:
++a - Logical and. Both matchers must match.
++o - Logical or. One or the other matcher must match.
++a|+o can appear anywhere on the command line.
 
 -S|--mark-start <string>
 When given, <string> will be printed before each block.

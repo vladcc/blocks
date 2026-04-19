@@ -1,0 +1,1 @@
+blocks: error: match/don't match logic op requires both patterns to exist

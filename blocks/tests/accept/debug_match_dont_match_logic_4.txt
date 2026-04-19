@@ -10,6 +10,8 @@ block end: '}' type: string
 line comment: '//' type: string
 block comment begin: '/*' type: string
 block comment terminate: '*/' type: string
-match/don't match: none
+match: '' type: none
+dont match: 'bar' type: string
+match/don't match logic: none
 string regex: none
 no strings: off

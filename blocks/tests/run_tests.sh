@@ -193,12 +193,6 @@ function test_match_dont_match
 	run_ok "-m '[t]he quick' -m 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_default.txt"
 
-	run_ok "-M 'the quick' -m 'the quick' $G_TEST_FILE_1"
-	diff_stdout "block_match_default.txt"
-
-	run_ok "-m 'the quick' -M 'the quick' -m 'the quick' $G_TEST_FILE_1"
-	diff_stdout "block_match_default.txt"
-
 	run_ok "-n 'max' -m 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_name.txt"
 
@@ -215,11 +209,32 @@ function test_match_dont_match
 	run_ok "-M 'foo' -M 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_dont_match_default.txt"
 
-	run_ok "-M 'the quick' -m 'the quick' -M 'the quick' $G_TEST_FILE_1"
-	diff_stdout "block_dont_match_default.txt"
+	# logic
+	local L_FILE="./input/match_dont_match_logic.txt"
 
-	run_ok "-m 'the quick' -M 'the quick' $G_TEST_FILE_1"
-	diff_stdout "block_dont_match_default.txt"
+	run_nok "-M 'the quick' -m 'the quick' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_nok "+a -m 'the quick' -M 'the quick' $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-n 'block' -m 'the quick brown' $L_FILE"
+	diff_stdout "match_dont_match_logic_1.txt"
+
+	run_ok "-n 'block' -m 'the quick brown' -M 'foo' $L_FILE"
+	diff_stdout "match_dont_match_logic_2.txt"
+
+	run_ok "-n 'block' -m 'the quick brown' -M 'foo' +a $L_FILE"
+	diff_stdout "match_dont_match_logic_2.txt"
+
+	run_ok "-n 'block' +o -m 'fox jumps' -M 'bar' $L_FILE"
+	diff_stdout "match_dont_match_logic_3.txt"
+
+	run_ok "-n 'block' -m 'fox jumps' +o -M 'bar' $L_FILE"
+	diff_stdout "match_dont_match_logic_3.txt"
+
+	run_ok "-n 'block' -m 'fox jumps' -M 'bar' +o $L_FILE"
+	diff_stdout "match_dont_match_logic_3.txt"
 }
 
 function test_mark_start_end
@@ -498,23 +513,59 @@ function test_debug_plus_matcher_types
 function test_debug_nostr_strrx
 {
 	run_ok "-D"
-	diff_stdout "nostr_strrx_0.txt"
+	diff_stdout "debug_nostr_strrx_0.txt"
 
 	run_ok "-D --string-rx 'foo'"
-	diff_stdout "nostr_strrx_0.txt"
+	diff_stdout "debug_nostr_strrx_0.txt"
 
 	run_ok "-D -z"
-	diff_stdout "nostr_strrx_1.txt"
+	diff_stdout "debug_nostr_strrx_1.txt"
 
 	# long option
 	run_ok "-D --no-strings"
-	diff_stdout "nostr_strrx_1.txt"
+	diff_stdout "debug_nostr_strrx_1.txt"
 
 	run_ok "-D --no-strings --string-rx 'foo'"
-	diff_stdout "nostr_strrx_2.txt"
+	diff_stdout "debug_nostr_strrx_2.txt"
 
 	run_ok "-D --no-strings --string-rx ''"
-	diff_stdout "nostr_strrx_3.txt"
+	diff_stdout "debug_nostr_strrx_3.txt"
+}
+
+function test_debug_match_dont_match_logic
+{
+	run_ok "-D -m 'foo' -M 'bar'"
+	diff_stdout "debug_match_dont_match_logic_1.txt"
+
+	run_ok "-D +a -m 'foo' -M 'bar'"
+	diff_stdout "debug_match_dont_match_logic_1.txt"
+
+	run_ok "-D +o -m 'foo' -M 'bar'"
+	diff_stdout "debug_match_dont_match_logic_2.txt"
+
+	run_ok "-D -m 'foo' -M ''"
+	diff_stdout "debug_match_dont_match_logic_3.txt"
+
+	run_ok "-D -m '' -M 'bar'"
+	diff_stdout "debug_match_dont_match_logic_4.txt"
+
+	run_nok "-D +a -M 'bar'"
+	diff_stderr "match_dont_match_logic_err.txt"
+
+	run_nok "-D +a -m 'foo'"
+	diff_stderr "match_dont_match_logic_err.txt"
+
+	run_nok "-D +o -m 'foo'"
+	diff_stderr "match_dont_match_logic_err.txt"
+
+	run_nok "-D +o -M 'bar'"
+	diff_stderr "match_dont_match_logic_err.txt"
+
+	run_nok "-D +a -m 'foo' -M ''"
+	diff_stderr "match_dont_match_logic_err.txt"
+
+	run_nok "-D +o -m '' -M 'bar'"
+	diff_stderr "match_dont_match_logic_err.txt"
 }
 
 function test_debug
@@ -523,6 +574,7 @@ function test_debug
 	bt_eval test_debug_dash_matcher_types
 	bt_eval test_debug_plus_matcher_types
 	bt_eval test_debug_nostr_strrx
+	bt_eval test_debug_match_dont_match_logic
 }
 
 function test_help
