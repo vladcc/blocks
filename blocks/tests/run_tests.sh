@@ -555,22 +555,28 @@ function test_debug_match_dont_match_logic
 	diff_stdout "debug_match_dont_match_logic_4.txt"
 
 	run_nok "-D +a -M 'bar'"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
 
 	run_nok "-D +a -m 'foo'"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
 
 	run_nok "-D +o -m 'foo'"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
 
 	run_nok "-D +o -M 'bar'"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
 
 	run_nok "-D +a -m 'foo' -M ''"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
 
 	run_nok "-D +o -m '' -M 'bar'"
-	diff_stderr "match_dont_match_logic_err.txt"
+	diff_stderr "match_dont_match_logic_err_1.txt"
+
+	run_nok "+ofoo"
+	diff_stderr "match_dont_match_logic_err_2.txt"
+
+	run_nok "+afoo"
+	diff_stderr "match_dont_match_logic_err_3.txt"
 }
 
 function test_debug

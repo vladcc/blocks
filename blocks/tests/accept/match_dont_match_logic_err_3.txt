@@ -1,0 +1,2 @@
+blocks: error: option +a has to be space delimited
+Try 'blocks --help' for more information
