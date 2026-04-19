@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 typedef const char * cpstr;
 bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, size_t line);
@@ -16,20 +17,131 @@ return false
 
 typedef bool(*ftest)(void);
 
+static bool test_matchers();
 static bool test_lexer();
 static bool test_lexer_string_finder();
 static bool test_block_parser();
 static bool test_block_comment();
 static bool test_closest_name_to_block_open();
+static bool test_no_strings();
 
 static ftest tests[] = {
+	test_matchers,
 	test_lexer,
 	test_lexer_string_finder,
 	test_block_parser,
 	test_block_comment,
-	test_closest_name_to_block_open
+	test_closest_name_to_block_open,
+	test_no_strings
 };
 
+static bool test_matchers()
+{
+
+	const std::string str("foo bar foo baz");
+	const char * txt = str.c_str();
+	size_t len = str.length();
+
+	/*** regex matchers ***/
+	{
+		matcher_factory mfact;
+
+		std::unique_ptr<matcher> rm[3];
+		rm[0] = mfact.create(matcher::type::REGEX, "foo");
+		rm[1] = mfact.create(matcher::type::REGEX, "bar ");
+		rm[2] = mfact.create(matcher::type::REGEX, "no");
+
+		check(strcmp(rm[0]->type_of(), "regex") == 0);
+		check(strcmp(rm[1]->type_of(), "regex") == 0);
+		check(strcmp(rm[2]->type_of(), "regex") == 0);
+
+		check(strcmp(rm[0]->pattern(), "foo") == 0);
+		check(strcmp(rm[1]->pattern(), "bar ") == 0);
+		check(strcmp(rm[2]->pattern(), "no") == 0);
+
+		check(!rm[0]->match(txt, len, len));
+		check(!rm[0]->match(txt, len, len+10));
+
+		size_t start = 0;
+		check(rm[0]->match(txt, len, 0));
+		check(rm[0]->position() == 0);
+		check(rm[0]->length() == 3);
+
+		start = rm[0]->position() + rm[0]->length();
+		check(rm[0]->match(txt, len, start));
+		check(rm[0]->position() == 8);
+		check(rm[0]->length() == 3);
+
+		start = rm[0]->position() + rm[0]->length();
+		check(!rm[0]->match(txt, len, start));
+
+		check(rm[1]->match(txt, len, 0));
+		check(rm[1]->position() == 4);
+		check(rm[1]->length() == 4);
+
+		check(!rm[1]->match(txt, 4, 0));
+
+		check(rm[1]->match(txt+4, 4, 0));
+		check(rm[1]->position() == 0);
+		check(rm[1]->length() == 4);
+
+		check(!rm[1]->match(txt+5, 4, 0));
+		check(!rm[1]->match(txt+4, 4, 1));
+
+		check(!rm[2]->match(txt, len, 0));
+	}
+
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+
+		std::unique_ptr<matcher> sm[4];
+		sm[0] = mfact.create(matcher::type::STRING, "foo");
+		sm[1] = mfact.create(matcher::type::STRING, "bar ");
+		sm[2] = mfact.create(matcher::type::STRING, "no");
+
+		check(strcmp(sm[0]->type_of(), "string") == 0);
+		check(strcmp(sm[1]->type_of(), "string") == 0);
+		check(strcmp(sm[2]->type_of(), "string") == 0);
+
+		check(strcmp(sm[0]->pattern(), "foo") == 0);
+		check(strcmp(sm[1]->pattern(), "bar ") == 0);
+		check(strcmp(sm[2]->pattern(), "no") == 0);
+
+		check(!sm[0]->match(txt, len, len));
+		check(!sm[0]->match(txt, len, len+10));
+
+		size_t start = 0;
+		check(sm[0]->match(txt, len, 0));
+		check(sm[0]->position() == 0);
+		check(sm[0]->length() == 3);
+
+		start = sm[0]->position() + sm[0]->length();
+		check(sm[0]->match(txt, len, start));
+		check(sm[0]->position() == 8);
+		check(sm[0]->length() == 3);
+
+		start = sm[0]->position() + sm[0]->length();
+		check(!sm[0]->match(txt, len, start));
+
+		check(sm[1]->match(txt, len, 0));
+		check(sm[1]->position() == 4);
+		check(sm[1]->length() == 4);
+
+		check(!sm[1]->match(txt, 4, 0));
+
+		check(sm[1]->match(txt+4, 4, 0));
+		check(sm[1]->position() == 0);
+		check(sm[1]->length() == 4);
+
+		check(!sm[1]->match(txt+5, 4, 0));
+		check(!sm[1]->match(txt+4, 4, 1));
+
+		check(!sm[2]->match(txt, len, 0));
+	}
+
+	return true;
+}
 
 static bool test_lexer_tests_trivial_multiline_comment(
 	const lexer::matchers& pats
@@ -37,7 +149,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 {
 	/*** test trivial case ***/
 	{
-		std::string input("main{}");
+		const std::string input("main{}");
 		std::stringstream isstrm;
 		lexer lex(isstrm, pats);
 
@@ -81,6 +193,8 @@ static bool test_lexer_tests_trivial_multiline_comment(
 
 			// no more name
 			check(lex.block_name() == lexer::tok::NONE);
+			check(lex.line_pos() == 4);
+			check(lex.line_num() == 1);
 
 			// match main{
 			check(lex.block_open_close() == lexer::tok::OPEN);
@@ -130,7 +244,7 @@ static bool test_lexer_tests_trivial_multiline_comment(
 
 	/*** test multi line case ***/
 	{
-		std::string input(
+		const std::string input(
 			"main // {\n"
 			"}\n"
 			"\n"
@@ -308,6 +422,7 @@ static std::string cat(const std::string * arr, size_t len)
 	return ret;
 }
 
+#define STRING_RX "\"([^\\\\\"]|[\\\\].)*\""
 
 static bool test_lexer_string_finder()
 {
@@ -318,9 +433,9 @@ static bool test_lexer_string_finder()
 	};
 
 	static std::string str;
-	const char * str_rx = "\"([^\\\\\"]|[\\\\].)*\"";
+	const char * string_rx = STRING_RX;
 	static std::unique_ptr<regex_matcher> rxm(new regex_matcher(
-			str_rx, matcher::flags::NONE
+			string_rx, matcher::flags::NONE
 		)
 	);
 
@@ -458,7 +573,7 @@ static bool test_block_parser_test_blocks(
 {
 	/*** test trivial case ***/
 	{
-		std::string input("{} } {}\n");
+		const std::string input("{} } {}\n");
 		std::stringstream isstrm;
 		lexer::matchers pats(m_name, m_open, m_close);
 		lexer lex(isstrm, pats);
@@ -501,7 +616,7 @@ static bool test_block_parser_test_blocks(
 		{
 			/*** test matching with spaces ***/
 			{
-				std::string input("foo main } { { } ");
+				const std::string input("foo main } { { } ");
 				std::stringstream isstrm;
 				lexer::matchers pats(m_name, m_open, m_close);
 				lexer lex(isstrm, pats);
@@ -548,7 +663,7 @@ static bool test_block_parser_test_blocks(
 
 			/*** test matching without spaces ***/
 			{
-				std::string input("foo main }{{}");
+				const std::string input("foo main }{{}");
 				std::stringstream isstrm;
 				lexer::matchers pats(m_name, m_open, m_close);
 				lexer lex(isstrm, pats);
@@ -599,7 +714,7 @@ static bool test_block_parser_test_blocks(
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 			"foo {",     // 0
 			"{ bar",     // 1
 			"}",         // 2
@@ -609,7 +724,7 @@ static bool test_block_parser_test_blocks(
 			"something", // 6
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
 		/*** no error case ***/
 		{
@@ -659,7 +774,7 @@ static bool test_block_parser_test_blocks(
 		{
 			std::stringstream isstrm;
 
-			std::string lines[] = {
+			const std::string lines[] = {
 				"main {",         // 0
 				"{ bar",          // 1
 				"} }",            // 2
@@ -669,7 +784,7 @@ static bool test_block_parser_test_blocks(
 				"something",      // 6
 			};
 
-			std::string input(cat(lines, ARR_SIZE(lines)));
+			const std::string input(cat(lines, ARR_SIZE(lines)));
 
 			lexer::matchers pats(m_name2, m_open, m_close);
 			lexer lex(isstrm, pats);
@@ -716,7 +831,7 @@ static bool test_block_parser_test_blocks(
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 			"// main {", // 0
 			"}",         // 1
 			"} }",       // 2
@@ -726,7 +841,7 @@ static bool test_block_parser_test_blocks(
 			"} //",      // 6
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
 		lexer::matchers pats(m_name2, m_open, m_close, m_comment);
 		lexer lex(isstrm, pats);
@@ -813,7 +928,7 @@ static bool test_block_parser_test_icase(const lexer::matchers * pats)
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 			"foo bar",   // 0
 			"Main",      // 1
 			"{",         // 2
@@ -822,7 +937,7 @@ static bool test_block_parser_test_icase(const lexer::matchers * pats)
 			"zig zag",   // 5
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
 		lexer lex(isstrm, *pats);
 		block_parser pars(lex);
@@ -863,7 +978,7 @@ static bool test_block_parser_icase()
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close;
 		rm_name = mfact.create(
 			matcher::type::REGEX,
-			"mAin",
+			"MAiN",
 			matcher::flags::ICASE
 		);
 		rm_open = mfact.create(matcher::type::REGEX, "\\{");
@@ -880,7 +995,7 @@ static bool test_block_parser_icase()
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close;
 		sm_name = mfact.create(
 			matcher::type::STRING,
-			"maIn",
+			"MaIN",
 			matcher::flags::ICASE
 		);
 		sm_open = mfact.create(matcher::type::STRING, "{");
@@ -905,7 +1020,7 @@ static bool test_block_comment_impl(const lexer::matchers * pats)
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 		/* 0 */  "/* foo {} */",
 		/* 1 */  "bar {}",
 		/* 2 */  "/*",
@@ -931,13 +1046,13 @@ static bool test_block_comment_impl(const lexer::matchers * pats)
 		/* 22 */ "} */",
 		};
 
-		std::string err[] = {
+		const std::string err[] = {
 			"n/a:23:5: improper nesting from line 22",
 			"} */",
 			"    ^",
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
 		lexer lex(isstrm, *pats);
 		block_parser pars(lex);
@@ -1096,7 +1211,7 @@ static bool test_closes_name_to_block_open_impl_1(const lexer::matchers * pats)
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 		/* 0 */  "main",
 		/* 1 */  "foo",
 		/* 2 */  "main",
@@ -1118,7 +1233,7 @@ static bool test_closes_name_to_block_open_impl_1(const lexer::matchers * pats)
 		/* 18 */ "}",
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
 		lexer lex(isstrm, *pats);
 		block_parser pars(lex);
@@ -1168,7 +1283,7 @@ static bool test_closes_name_to_block_open_impl_2(const lexer::matchers * pats)
 	{
 		std::stringstream isstrm;
 
-		std::string lines[] = {
+		const std::string lines[] = {
 		/* 0 */  "main",
 		/* 1 */  "foo",
 		/* 2 */  "main",
@@ -1191,9 +1306,9 @@ static bool test_closes_name_to_block_open_impl_2(const lexer::matchers * pats)
 		/* 19 */ "...",
 		};
 
-		std::string input(cat(lines, ARR_SIZE(lines)));
+		const std::string input(cat(lines, ARR_SIZE(lines)));
 
-		std::string err[] = {
+		const std::string err[] = {
 			"n/a:20:1: improper nesting from line 14",
 			"...",
 			"^",
@@ -1337,6 +1452,295 @@ static bool test_closest_name_to_block_open()
 		check(test_closes_name_to_block_open_impl_2(&patterns));
 	}
 
+	return true;
+}
+
+static bool test_no_strings_impl(lexer::matchers * pats)
+{
+	const std::string lines[] = {
+	/* 0 */  "main {",
+	/* 1 */  "// }",
+	/* 2 */  "/* }",
+	/* 3 */  "*/",
+	/* 4 */  "foo \" } \" bar",
+	/* 5 */  "\"}\"",
+	/* 6 */  "\"} \"",
+	/* 7 */  "\" }\"",
+	/* 8 */  "\" } \\\" } \"",
+	/* 9 */  "}",
+	/* 10 */ " ",
+	/* 11 */ "main ",
+	/* 12 */ " \" main } \" ",
+	/* 13 */ " \" { \" {",
+	/* 14 */ "\" {\"}",
+	/* 15 */ "...",
+	};
+
+	const std::string lines_2[] = {
+	/* 0 */  "main ",
+	/* 1 */  "\" \\\" { \"",
+	/* 2 */  "}",
+	/* 3 */  "...",
+	};
+
+	{
+
+		std::stringstream isstrm;
+
+		const std::string input(cat(lines_2, ARR_SIZE(lines_2)));
+
+		const std::string err[] = {
+			"n/a:13:9: improper nesting from line 13",
+			" \" main } \" ",
+			"        ^",
+		};
+
+		const regex_matcher * string_rx = pats->string_rx;
+		pats->string_rx = nullptr;
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+
+			pars.init("n/a");
+
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 3);
+			check(1 == block[0].get_line_no());
+			check(2 == block[1].get_line_no());
+			check(3 == block[2].get_line_no());
+		}
+
+		pats->string_rx = string_rx;
+	}
+
+	/*** without string rx ***/
+	{
+		std::stringstream isstrm;
+
+		const std::string input(cat(lines, ARR_SIZE(lines)));
+
+		const std::string err[] = {
+			"n/a:13:9: improper nesting from line 13",
+			" \" main } \" ",
+			"        ^",
+		};
+
+		const regex_matcher * string_rx = pats->string_rx;
+		pats->string_rx = nullptr;
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+
+			pars.init("n/a");
+
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 5);
+			check(1 == block[0].get_line_no());
+			check(2 == block[1].get_line_no());
+			check(3 == block[2].get_line_no());
+			check(4 == block[3].get_line_no());
+			check(5 == block[4].get_line_no());
+			check(lines[0] == block[0].get_line());
+			check(lines[1] == block[1].get_line());
+			check(lines[2] == block[2].get_line());
+			check(lines[3] == block[3].get_line());
+			check(lines[4] == block[4].get_line());
+
+			check(pars.parse_block());
+			check(pars.had_error());
+			auto err_report = pars.get_error_report();
+			check(err[0] == err_report[0]);
+			check(err[1] == err_report[1]);
+			check(err[2] == err_report[2]);
+		}
+		pats->string_rx = string_rx;
+	}
+
+	{
+		std::stringstream isstrm;
+
+		const std::string input(cat(lines_2, ARR_SIZE(lines_2)));
+
+		const regex_matcher * string_rx = pats->string_rx;
+		pats->string_rx = nullptr;
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+
+			pars.init("n/a");
+
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 3);
+			check(1 == block[0].get_line_no());
+			check(2 == block[1].get_line_no());
+			check(3 == block[2].get_line_no());
+		}
+		pats->string_rx = string_rx;
+	}
+
+	/*** with string rx ***/
+	{
+		std::stringstream isstrm;
+
+		const std::string input(cat(lines, ARR_SIZE(lines)));
+
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+
+			pars.init("n/a");
+
+			check(pars.parse_block());
+			check(!pars.had_error());
+			auto block = pars.get_block();
+			check(block.size() == 10);
+			check(1 == block[0].get_line_no());
+			check(2 == block[1].get_line_no());
+			check(3 == block[2].get_line_no());
+			check(4 == block[3].get_line_no());
+			check(5 == block[4].get_line_no());
+			check(6 == block[5].get_line_no());
+			check(7 == block[6].get_line_no());
+			check(8 == block[7].get_line_no());
+			check(9 == block[8].get_line_no());
+			check(10 == block[9].get_line_no());
+			check(lines[0] == block[0].get_line());
+			check(lines[1] == block[1].get_line());
+			check(lines[2] == block[2].get_line());
+			check(lines[3] == block[3].get_line());
+			check(lines[4] == block[4].get_line());
+			check(lines[5] == block[5].get_line());
+			check(lines[6] == block[6].get_line());
+			check(lines[7] == block[7].get_line());
+			check(lines[8] == block[8].get_line());
+			check(lines[9] == block[9].get_line());
+
+			check(pars.parse_block());
+			check(!pars.had_error());
+			block = pars.get_block();
+			check(block.size() == 4);
+			check(12 == block[0].get_line_no());
+			check(13 == block[1].get_line_no());
+			check(14 == block[2].get_line_no());
+			check(15 == block[3].get_line_no());
+			check(lines[11] == block[0].get_line());
+			check(lines[12] == block[1].get_line());
+			check(lines[13] == block[2].get_line());
+			check(lines[14] == block[3].get_line());
+		}
+	}
+
+	{
+		std::stringstream isstrm;
+
+		const std::string input(cat(lines_2, ARR_SIZE(lines_2)));
+
+		const std::string err[] = {
+			"n/a:3:1: improper nesting from line 1",
+			"}",
+			"^",
+		};
+
+		lexer lex(isstrm, *pats);
+		block_parser pars(lex);
+
+		for (int i = 0; i < 2; ++i)
+		{
+			isstrm.str(input);
+
+			pars.init("n/a");
+
+			check(pars.parse_block());
+			check(pars.had_error());
+			auto err_report = pars.get_error_report();
+			check(err[0] == err_report[0]);
+			check(err[1] == err_report[1]);
+			check(err[2] == err_report[2]);
+		}
+	}
+
+	return true;
+}
+
+
+static bool test_no_strings()
+{
+	matcher_factory mfact;
+	std::unique_ptr<matcher> string_rx = mfact.create(
+		matcher::type::REGEX,
+		STRING_RX
+	);
+
+	/*** regex matchers ***/
+	{
+
+		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
+			rm_comment, rm_comment_start, rm_comment_end;
+
+		rm_name = mfact.create(matcher::type::REGEX, "main");
+		rm_open = mfact.create(matcher::type::REGEX, "\\{");
+		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_comment = mfact.create(matcher::type::REGEX, "//");
+		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
+		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+
+		lexer::matchers patterns(
+			rm_name.get(),
+			rm_open.get(),
+			rm_close.get(),
+			rm_comment.get(),
+			rm_comment_start.get(),
+			rm_comment_end.get(),
+			static_cast<regex_matcher *>(string_rx.get())
+		);
+
+		check(test_no_strings_impl(&patterns));
+	}
+
+	/*** string matchers ***/
+	{
+		matcher_factory mfact;
+
+		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
+			sm_comment, sm_comment_start, sm_comment_end;
+
+		sm_name = mfact.create(matcher::type::STRING, "main");
+		sm_open = mfact.create(matcher::type::STRING, "{");
+		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_comment = mfact.create(matcher::type::STRING, "//");
+		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
+		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+
+		lexer::matchers patterns(
+			sm_name.get(),
+			sm_open.get(),
+			sm_close.get(),
+			sm_comment.get(),
+			sm_comment_start.get(),
+			sm_comment_end.get(),
+			static_cast<regex_matcher *>(string_rx.get())
+		);
+
+		check(test_no_strings_impl(&patterns));
+	}
 	return true;
 }
 

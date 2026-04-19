@@ -20,6 +20,8 @@ public:
 public:
 	virtual ~matcher() {}
 	virtual bool match(const char * text, size_t len, size_t start) = 0;
+
+	// returns the position from the first character of the string
 	virtual ptrdiff_t position() const = 0;
 	virtual size_t length() const = 0;
 	virtual const char * type_of() const = 0;

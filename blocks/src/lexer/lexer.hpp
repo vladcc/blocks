@@ -27,14 +27,16 @@ public:
 			const matcher * block_close = nullptr,
 			const matcher * comment       = nullptr,
 			const matcher * comment_start = nullptr,
-			const matcher * comment_end   = nullptr
+			const matcher * comment_end   = nullptr,
+			const regex_matcher * string_rx = nullptr
 		) :
 			name(block_name),
 			open(block_open),
 			close(block_close),
 			comment(comment),
 			comment_start(comment_start),
-			comment_end(comment_end)
+			comment_end(comment_end),
+			string_rx(string_rx)
 		{}
 
 		const matcher * name;
@@ -43,12 +45,13 @@ public:
 		const matcher * comment;
 		const matcher * comment_start;
 		const matcher * comment_end;
+		const regex_matcher * string_rx;
 	};
 
 public:
 	lexer(std::istream& in, const matchers& pats) :
 		_pats(pats),
-		_str_find(nullptr),
+		_str_find(pats.string_rx),
 		_in(in),
 		_line_pos(0),
 		_line_no(0),
@@ -175,7 +178,7 @@ protected:
 	};
 
 private:
-	bool _read_line();
+	bool _match(matcher * m, const char * text, size_t len, size_t start);
 	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
 	_internal_tok _leftmost_non_comment_intl(const _tok_match * tm, size_t len);
 

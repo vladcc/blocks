@@ -267,6 +267,30 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = no_strings_opt_long,
+			.short_name = no_strings_opt_short
+		},
+		.handler = {
+			.handler = handle_no_strings,
+			.context = (void *)context,
+		},
+		.print_help = help_no_strings,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = string_rx_opt_long,
+			.short_name = string_rx_opt_short
+		},
+		.handler = {
+			.handler = handle_string_rx,
+			.context = (void *)context,
+		},
+		.print_help = help_string_rx,
+		.takes_arg = true,
+	},
+	{
+		.names = {
 			.long_name = regex_match_opt_long,
 			.short_name = regex_match_opt_short
 		},

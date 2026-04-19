@@ -12,12 +12,22 @@ public:
 	regex_matcher(const char * rx, uint32_t opts);
 	bool match(const char * text, size_t len, size_t start) override
 	{
+		if (start >= len)
+			return false;
+
+		_start = start;
 		return (_prx &&
-			std::regex_search(text + start, text + len, _match, *_prx));
+			std::regex_search(
+				text + start,
+				text + len,
+				_match,
+				*_prx
+			)
+		);
 	}
 	ptrdiff_t position() const override
 	{
-		return _match.position();
+		return (_start + _match.position());
 	}
 	size_t length() const override
 	{
@@ -36,5 +46,6 @@ private:
 	std::string _str_rx;
 	std::cmatch _match;
 	std::unique_ptr<std::regex> _prx;
+	size_t _start;
 };
 #endif

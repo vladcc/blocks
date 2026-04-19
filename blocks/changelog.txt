@@ -1,3 +1,10 @@
+xxxx-xx-xx
+blocks 2.2
+-z|--no-strings implemented
+--string-rx implemented
++r/+f implemented
+bugfix: save line correctly when looking for block open
+
 2026-04-07
 blocks 2.1
 bugfix - do not loop forever if eoi is encountered before comment end

@@ -433,7 +433,7 @@ function test_debug_base
 	diff_stdout "debug_info_1.txt"
 }
 
-function test_dash_matcher_types
+function test_debug_dash_matcher_types
 {
 	# long option
 	run_ok "-r -n 'A' -s 'B' -e 'C' -f -C 'D' -B 'E' -T 'F' -r -m 'G' --debug"
@@ -454,7 +454,7 @@ function test_dash_matcher_types
 	unset_run_prefix
 }
 
-function test_plus_matcher_types
+function test_debug_plus_matcher_types
 {
 	# +f
 	run_ok "-r -n 'A' +f -s 'B' -e 'C' +f -C 'D' -B 'E' +f -T 'F' -m 'G' -D"
@@ -495,11 +495,34 @@ function test_plus_matcher_types
 	diff_stderr "plus_arg_err_4.txt"
 }
 
+function test_debug_nostr_strrx
+{
+	run_ok "-D"
+	diff_stdout "nostr_strrx_0.txt"
+
+	run_ok "-D --string-rx 'foo'"
+	diff_stdout "nostr_strrx_0.txt"
+
+	run_ok "-D -z"
+	diff_stdout "nostr_strrx_1.txt"
+
+	# long option
+	run_ok "-D --no-strings"
+	diff_stdout "nostr_strrx_1.txt"
+
+	run_ok "-D --no-strings --string-rx 'foo'"
+	diff_stdout "nostr_strrx_2.txt"
+
+	run_ok "-D --no-strings --string-rx ''"
+	diff_stdout "nostr_strrx_3.txt"
+}
+
 function test_debug
 {
 	bt_eval test_debug_base
-	bt_eval test_dash_matcher_types
-	bt_eval test_plus_matcher_types
+	bt_eval test_debug_dash_matcher_types
+	bt_eval test_debug_plus_matcher_types
+	bt_eval test_debug_nostr_strrx
 }
 
 function test_help
@@ -555,6 +578,7 @@ function test_flags
 	bt_eval test_help
 	bt_eval test_version
 	bt_eval test_closest_name_to_block
+	bt_eval test_no_strings
 }
 # </flags>
 
@@ -728,6 +752,20 @@ function test_closest_name_to_block
 
 	run_ok "-ln 'main' -B '' -T '' $L_FILE"
 	diff_stdout "closest_name_to_block_3.txt"
+}
+
+function test_no_strings
+{
+	local L_FILE="./input/no_strings.txt"
+
+	run_nok "-ln 'main' $L_FILE"
+	diff_stderr "no_strings_err.txt"
+
+	run_nok "-ln 'main' -V $L_FILE"
+	diff_stderr "no_strings_err_verbose.txt"
+
+	run_ok "-ln 'main' -z $L_FILE"
+	diff_stdout "no_strings_ok.txt"
 }
 
 function test_behavior

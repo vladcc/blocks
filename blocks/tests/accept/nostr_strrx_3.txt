@@ -4,12 +4,12 @@ default block end: '}'
 default line comment: '//'
 default block comment begin: '/*'
 default block comment terminate: '*/'
-block name: 'A' type: string
-block start: 'B' type: string
-block end: 'C' type: string
-line comment: 'D' type: string
-block comment begin: '' type: none
-block comment terminate: '' type: none
+block name: '{' type: string
+block start: '{' type: string
+block end: '}' type: string
+line comment: '//' type: string
+block comment begin: '/*' type: string
+block comment terminate: '*/' type: string
 match/don't match: none
 string regex: none
-no strings: off
+no strings: on

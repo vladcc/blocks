@@ -24,6 +24,9 @@ defn_start
 #-V|--verbose-error
 #-D|--debug
 
+#-z|--no-strings
+# --string-rx
+
 #-r|--regex-match
 #-f|--fixed-match
 
@@ -413,6 +416,41 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("Print debug info about matchers and quit.");
+puts("");
+end_code
+end
+
+long_name  no-strings
+short_name z
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->no_strings = true;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("Ignore strings when looking for matching patterns.");
+puts("");
+end_code
+end
+
+long_name string-rx
+short_name \0
+takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->string_rx = opt_arg;
+end_code
+
+help_code
+printf("%s <regex>\n", long_name);
+puts("The regex used for identifying strings. Case sensitive.");
+printf(
+"Used only if --%s is turned on. Default is %s\n",
+string_rx_opt_long,
+defaults.string_rx
+);
 puts("");
 end_code
 end

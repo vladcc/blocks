@@ -137,11 +137,15 @@ function get_can_end() {return _B_can_end}
 
 function leave(    _st) {
 
-	if (!did_err_happen() && !get_should_skip_end()) {
-		if (!get_can_end())
-			err_input_quit(sprintf("%s was not encountered", STM_DEFN_END()))
-		else
-			main()
+	if (!did_err_happen()) {
+		if (!get_should_skip_end()) {
+			if (!get_can_end())
+				err_input_quit(sprintf("%s was not encountered", STM_DEFN_END()))
+			else
+				main()
+		}
+	} else {
+		exit_failure()
 	}
 }
 
@@ -200,7 +204,7 @@ print DESCRIPT_FSM()
 # <user_code>
 
 function SCRIPT_NAME() {return "parse-opts-gen.awk"}
-function SCRIPT_VERSION() {return "2.2"}
+function SCRIPT_VERSION() {return "2.3"}
 
 function get_cname(name) {
 	gsub("-", "_", name)

@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <string>
+#include <cstring>
 
 class str_matcher : public matcher
 {
@@ -29,12 +30,25 @@ public:
 	}
 
 private:
-	void _tolower(std::string& text);
+	inline void _tolower(std::string& text)
+	{
+		char * str = const_cast<char *>(text.c_str());
+		for (size_t i = 0, end = text.length(); i < end; ++i)
+			str[i] = tolower(str[i]);
+	}
+	inline char _ch_case(char ch) const
+	{
+		return _icase ? tolower(ch) : ch;
+	}
 
 private:
 	std::string _pattern;
-	std::string _icase_buff;
+	const char * _last_line;
+	const char * _ppat;
 	ptrdiff_t _pos;
+	size_t _plen;
 	uint32_t _opts;
+	char _cfirst;
+	bool _icase;
 };
 #endif

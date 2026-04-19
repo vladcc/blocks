@@ -1,0 +1,9 @@
+1:main {
+2:    "{"
+3:    "{ "
+4:    "  {"
+5:    "\"}\""
+6:}
+blocks: error: ./input/no_strings.txt:6:2: improper nesting from line 1
+blocks: error: }
+blocks: error:  ^

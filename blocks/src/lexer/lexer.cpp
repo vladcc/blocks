@@ -4,6 +4,23 @@
 
 #define left_of(a, b) (a < b)
 
+bool lexer::_match(matcher * m, const char * text, size_t len, size_t start)
+{
+	ptrdiff_t pos = 0;
+	while (m->match(text, len, start))
+	{
+		if (!_pats.string_rx)
+			return true;
+
+		pos = m->position();
+		if (!_str_find.is_in_string(pos))
+			return true;
+
+		start = pos + m->length();
+	}
+	return false;
+}
+
 lexer::_internal_tok lexer::_match_leftmost_of(
 	const _tok_match * tms,
 	size_t len
@@ -19,12 +36,14 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 
 		const _tok_match * ptm = nullptr;
 		matcher * m = nullptr;
+		const char * pline = _line.c_str();
+		size_t llen = _line.length();
 		for (size_t i = 0; i < len; ++i)
 		{
 			ptm = tms+i;
 			if ((m = const_cast<matcher *>(ptm->m)))
 			{
-				if (m->match(_line.c_str(), _line.length(), _line_pos))
+				if (_match(m, pline, llen, _line_pos))
 				{
 					match_pos = m->position();
 					if (left_of(match_pos, last_pos))
@@ -38,7 +57,7 @@ lexer::_internal_tok lexer::_match_leftmost_of(
 		}
 
 		if (match_tok != lexer::_internal_tok::_NONE)
-			_line_pos += last_pos;
+			_line_pos = last_pos;
 	}
 
 	return match_tok;
@@ -80,8 +99,8 @@ bool lexer::also_matches_open()
 	matcher * open = const_cast<matcher *>(_pats.open);
 
 	return (open
-		&& open->match(_line.c_str(), _line.length(), _line_pos)
-		&& (open->position() == 0));
+		&& _match(open, _line.c_str(), _line.length(), _line_pos)
+		&& (open->position() == static_cast<ptrdiff_t>(_line_pos)));
 }
 
 bool lexer::next_line()
@@ -91,6 +110,9 @@ bool lexer::next_line()
 		++_line_no;
 		_line_pos = 0;
 		_last_match_len = 0;
+
+		if (_pats.string_rx)
+			_str_find.find_strings(_line.c_str(), _line.length());
 	}
 	return _has_input;
 }
@@ -102,9 +124,9 @@ void lexer::string_finder::find_strings(const char * str, size_t len)
 	regex_matcher * m = const_cast<regex_matcher *>(_str_rx);
 
 	_ranges.clear();
-	while (start < len && m->match(str, len, start))
+	while (m->match(str, len, start))
 	{
-		start += m->position();
+		start = m->position();
 		end = start + m->length();
 		_ranges.emplace_back(start, end);
 		start = end;

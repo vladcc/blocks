@@ -72,12 +72,12 @@ bool block_parser::_find_block_open()
 
 	while ((which = _lexer.block_name_open_close()) != lexer::tok::EOI)
 	{
+		_save_line_unique(which);
 		switch (which)
 		{
 			default:
 			case lexer::tok::NONE:
 			{
-				_save_line_unique(which);
 				_lexer.next_line();
 				continue;
 			} break;
@@ -85,7 +85,6 @@ bool block_parser::_find_block_open()
 			case lexer::tok::NAME:
 			{
 				_clear_block();
-				_save_line_unique(which);
 
 				if (_lexer.also_matches_open())
 				{

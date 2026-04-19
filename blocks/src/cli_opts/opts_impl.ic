@@ -234,6 +234,9 @@ static void handle_options(
 
 		if (!opts.b_matchers[B_COMMENT_TERM])
 			opts.b_matchers[B_COMMENT_TERM] = defaults.block_comment_terminate;
+
+		if (opts.no_strings && !opts.string_rx)
+			opts.string_rx = defaults.string_rx;
 	}
 
 	// disable empty string matchers

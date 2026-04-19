@@ -11,3 +11,5 @@ line comment: 'D' type: string
 block comment begin: 'E' type: regex
 block comment terminate: 'F' type: string
 match/don't match: don't match, 'G', type: regex
+string regex: none
+no strings: off

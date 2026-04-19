@@ -128,6 +128,7 @@ $(BLOCKS_BIN): $(BLOCKS_DEP)
 
 UNIT_TESTS_BIN := unit-tests
 UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(MATCHERS_O) $(LEXER_O) $(PARSER_O)
+$(UNIT_TESTS_BIN): FLAGS += -g
 $(UNIT_TESTS_BIN): $(UNIT_TESTS_DEP)
 	$(CMPL) $^ -o ./$@ $(FLAGS)
 # </blocks>

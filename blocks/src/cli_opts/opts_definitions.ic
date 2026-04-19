@@ -375,6 +375,43 @@ puts("Print debug info about matchers and quit.");
 puts("");
 }
 
+// --no-strings|-z
+static const char no_strings_opt_short = 'z';
+static const char no_strings_opt_long[] = "no-strings";
+static void handle_no_strings(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->no_strings = true;
+}
+
+static void help_no_strings(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts("Ignore strings when looking for matching patterns.");
+puts("");
+}
+
+// --string-rx|-\0
+static const char string_rx_opt_short = '\0';
+static const char string_rx_opt_long[] = "string-rx";
+static void handle_string_rx(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->string_rx = opt_arg;
+}
+
+static void help_string_rx(const char * short_name, const char * long_name)
+{
+printf("%s <regex>\n", long_name);
+puts("The regex used for identifying strings. Case sensitive.");
+printf(
+"Used only if --%s is turned on. Default is %s\n",
+string_rx_opt_long,
+defaults.string_rx
+);
+puts("");
+}
+
 // --regex-match|-r
 static const char regex_match_opt_short = 'r';
 static const char regex_match_opt_long[] = "regex-match";

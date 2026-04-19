@@ -121,6 +121,13 @@ Print what was parsed along with the error message to stderr.
 -D|--debug
 Print debug info about matchers and quit.
 
+-z|--no-strings
+Ignore strings when looking for matching patterns.
+
+--string-rx <regex>
+The regex used for identifying strings. Case sensitive.
+Used only if --string-rx is turned on. Default is "([^\\"]|[\\].)*"
+
 -r|--regex-match
 All matchers after this argument are regex.
 +r

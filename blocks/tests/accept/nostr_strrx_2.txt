@@ -11,5 +11,5 @@ line comment: '//' type: string
 block comment begin: '/*' type: string
 block comment terminate: '*/' type: string
 match/don't match: none
-string regex: none
-no strings: off
+string regex: foo
+no strings: on

@@ -34,6 +34,7 @@ struct prog_options {
 	const char * match_dont_match;
 	const char * mark_start;
 	const char * mark_end;
+	const char * string_rx;
 	int block_count;
 	int skip_count;
 	bool should_match_in_block;
@@ -47,6 +48,7 @@ struct prog_options {
 	bool fatal_error;
 	bool verbose_error;
 	bool debug;
+	bool no_strings;
 	bool is_plus_arg_matcher;
 	bool is_matcher_regex;
 	bool is_only_next_matcher_regex;
@@ -60,6 +62,7 @@ struct {
 	const char * line_comment  = "//";
 	const char * block_comment_begin  = "/*";
 	const char * block_comment_terminate = "*/";
+	const char * string_rx = "\"([^\\\\\"]|[\\\\].)*\"";
 } defaults;
 
 static void print_err(const char * str)
@@ -188,6 +191,7 @@ static void print_block(
 struct patterns {
 	const matcher * b_matchers[B_TOTAL];
 	const matcher * match_dont_match;
+	const regex_matcher * string_rx;
 };
 
 static void print_debug_and_quit(
@@ -257,6 +261,14 @@ static void print_debug_and_quit(
 		print_line(buff.c_str());
 	}
 
+	buff.assign("string regex: ");
+	buff.append(pats.string_rx ? pats.string_rx->pattern() : "none");
+	print_line(buff.c_str());
+
+	buff.assign("no strings: ");
+	buff.append(opts.no_strings ? "on" : "off");
+	print_line(buff.c_str());
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -265,6 +277,7 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 	// so valgrind can track
 	static std::unique_ptr<matcher> b_matchers[B_TOTAL];
 	static std::unique_ptr<matcher> match_dont_match;
+	static std::unique_ptr<matcher> string_rx;
 
 	try
 	{
@@ -291,6 +304,9 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 			}
 		}
 
+		for (int i = 0; i < B_TOTAL; ++i)
+			pats.b_matchers[i] = b_matchers[i].get();
+
 		// create only if not empty string
 		if (opts.match_dont_match && *opts.match_dont_match)
 		{
@@ -299,17 +315,24 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 				opts.match_dont_match,
 				matcher_flags
 			);
+
+			pats.match_dont_match = match_dont_match.get();
+		}
+
+		if (opts.no_strings && opts.string_rx && *opts.string_rx)
+		{
+			string_rx = mfact.create(
+				matcher::type::REGEX,
+				opts.string_rx,
+				matcher_flags
+			);
+			pats.string_rx = static_cast<regex_matcher *>(string_rx.get());
 		}
 	}
 	catch(const std::runtime_error& e)
 	{
 		errq(e.what());
 	}
-
-	for (int i = 0; i < B_TOTAL; ++i)
-		pats.b_matchers[i] = b_matchers[i].get();
-
-	pats.match_dont_match = match_dont_match.get();
 }
 
 static bool match_in_block(
@@ -492,7 +515,8 @@ static int process(
 		pats.b_matchers[B_END],
 		pats.b_matchers[B_LINE_COMMENT],
 		pats.b_matchers[B_COMMENT_BEGIN],
-		pats.b_matchers[B_COMMENT_TERM]
+		pats.b_matchers[B_COMMENT_TERM],
+		pats.string_rx
 	);
 
 	lexer lex(generic_in_stream, lex_matchers);

@@ -5,7 +5,8 @@
 
 regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
 	 _str_rx(rx ? rx : ""),
-	 _prx(nullptr)
+	 _prx(nullptr),
+	 _start(0)
 {
 	if (rx)
 	{
