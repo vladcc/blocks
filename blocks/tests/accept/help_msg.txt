@@ -138,6 +138,10 @@ Print what was parsed along with the error message to stderr.
 -D|--debug
 Print debug info about matchers and quit.
 
+-L|--file-list <file>
+Read a list of input files from <file>. Processed after the files given
+on the command line.
+
 -z|--no-strings
 Ignore strings when looking for matching patterns.
 

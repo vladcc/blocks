@@ -267,6 +267,18 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = file_list_opt_long,
+			.short_name = file_list_opt_short
+		},
+		.handler = {
+			.handler = handle_file_list,
+			.context = (void *)context,
+		},
+		.print_help = help_file_list,
+		.takes_arg = true,
+	},
+	{
+		.names = {
 			.long_name = no_strings_opt_long,
 			.short_name = no_strings_opt_short
 		},

@@ -1,5 +1,6 @@
 xxxx-xx-xx
 blocks 2.2
+-L|--file-list implemented
 -m -M logic ops implemented
 -z|--no-strings implemented
 --string-rx implemented

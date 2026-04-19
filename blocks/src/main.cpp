@@ -36,6 +36,7 @@ struct prog_options {
 	const char * mark_start;
 	const char * mark_end;
 	const char * string_rx;
+	const char * file_list;
 	int block_count;
 	int skip_count;
 	bool line_numbers;
@@ -654,6 +655,36 @@ static int process(
 	return BLOCKS_EXIT_HAD_MATCH;
 }
 
+static void append_file_list(
+	const prog_options opts,
+	std::vector<const char *>& file_names
+)
+{
+	static std::vector<std::string> flist;
+
+	if (opts.file_list)
+	{
+		std::ifstream flist_file(opts.file_list);
+		if (!flist_file.is_open())
+		{
+			std::string err;
+			err.assign("file list: ").append(opts.file_list);
+			err.append(": ").append(std::strerror(errno));
+			errq(err.c_str());
+		}
+
+		std::string line;
+		while (std::getline(flist_file, line))
+			flist.push_back(line);
+
+		if (!flist.empty())
+		{
+			for (size_t i = 0, end = flist.size(); i < end; ++i)
+				file_names.push_back(flist[i].c_str());
+		}
+	}
+}
+
 int main(int argc, char * argv[])
 {
 	static prog_options opts;
@@ -661,6 +692,7 @@ int main(int argc, char * argv[])
 	static std::vector<const char *> file_names;
 
 	handle_options(argc, argv, opts, file_names);
+	append_file_list(opts, file_names);
 	make_patterns(opts, pats);
 	return process(opts, pats, file_names);
 }

@@ -1,6 +1,6 @@
-#-n|--block-name=<matcher>
 defn_start
 
+#-n|--block-name=<matcher>
 #-s|--block-start=<matcher>
 #-e|--block-end=<matcher>
 #-C|--comment=<matcher>
@@ -24,6 +24,7 @@ defn_start
 #-V|--verbose-error
 #-D|--debug
 
+#-L|--file-list
 #-z|--no-strings
 # --string-rx
 
@@ -448,6 +449,22 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("Print debug info about matchers and quit.");
+puts("");
+end_code
+end
+
+long_name  file-list
+short_name L
+takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->file_list = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <file>\n", short_name, long_name);
+puts("Read a list of input files from <file>. Processed after the files given");
+puts("on the command line.");
 puts("");
 end_code
 end

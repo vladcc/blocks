@@ -17,6 +17,7 @@ test_debug_plus_matcher_types
 test_eoi_before_comment_end
 test_exit_codes
 test_fatal_error
+test_file_list
 test_files_with_without_match
 test_flags
 test_help

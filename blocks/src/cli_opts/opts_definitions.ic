@@ -407,6 +407,23 @@ puts("Print debug info about matchers and quit.");
 puts("");
 }
 
+// --file-list|-L
+static const char file_list_opt_short = 'L';
+static const char file_list_opt_long[] = "file-list";
+static void handle_file_list(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->file_list = opt_arg;
+}
+
+static void help_file_list(const char * short_name, const char * long_name)
+{
+printf("%s|%s <file>\n", short_name, long_name);
+puts("Read a list of input files from <file>. Processed after the files given");
+puts("on the command line.");
+puts("");
+}
+
 // --no-strings|-z
 static const char no_strings_opt_short = 'z';
 static const char no_strings_opt_long[] = "no-strings";

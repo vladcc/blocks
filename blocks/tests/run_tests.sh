@@ -420,6 +420,11 @@ function test_fatal_error
 	# long option
 	run_nok "$G_TEST_FILE_WITH_ERR $G_TEST_FILE_WITH_ERR --fatal-error"
 	diff_stdout_stderr "fatal_error_on_stdout.txt" "fatal_error_on_stderr.txt"
+
+	# with file list
+	local L_FLIST_ERR="./file_list_with_err_file.txt"
+	run_nok "-F -L $L_FLIST_ERR"
+	diff_stdout_stderr "fatal_error_on_stdout.txt" "fatal_error_on_stderr.txt"
 }
 
 function test_verbose_error
@@ -731,6 +736,33 @@ function test_stdin_pipe
 	unset_run_prefix
 }
 
+function test_file_list
+{
+	local L_TEST_FILE_3="./input/test_input_3.txt"
+	local L_FLIST="./file_list.txt"
+
+	run_nok "-L none"
+	diff_stderr "file_list_err.txt"
+
+	# long option
+	run_nok "--file-list none"
+	diff_stderr "file_list_err.txt"
+
+	# file names + line numbers
+	run_ok "-r -n 'main|zing' -N -L $L_FLIST"
+	diff_stdout "mult_files_filenames.txt"
+
+	# long option
+	run_ok "-r -n 'main|zing' -N --file-list $L_FLIST"
+	diff_stdout "mult_files_filenames.txt"
+
+	run_ok "-r -n 'main|zing' -lN -L $L_FLIST"
+	diff_stdout "mult_files_filenames_line_numbers.txt"
+
+	run_ok "-r -n 'main|zing' -lN $G_TEST_FILE_2 -L $L_FLIST $L_TEST_FILE_3"
+	diff_stdout "file_list_1.txt"
+}
+
 function test_exit_codes
 {
 	run "-n 'main' $G_TEST_FILE_1"
@@ -824,6 +856,7 @@ function test_behavior
 {
 	bt_eval test_multiple_files
 	bt_eval test_stdin_pipe
+	bt_eval test_file_list
 	bt_eval test_exit_codes
 }
 # </behavior>
