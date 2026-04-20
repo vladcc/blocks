@@ -1,4 +1,4 @@
-xxxx-xx-xx
+2026-04-20
 blocks 2.2
 -L|--file-list implemented
 -m -M logic ops implemented
