@@ -148,6 +148,15 @@ Print what was parsed along with the error message to stderr.
 -D|--debug
 Print debug info about matchers and quit.
 
+-g|--lang <name>
+Select language defaults. <name> is case insensitive and one of:
+C, awk, json, xml, info
+If used, all block matchers given on the command line but the block name
+are ignored. info is the boost ptree info. xml takes care to place the
+block name inside the tag automatically. To see the resulting matchers
+for each language, use the debug info option. Ignores the no defaults
+option.
+
 -L|--file-list <file>
 Read a list of input files from <file>. Processed after the files given
 on the command line.

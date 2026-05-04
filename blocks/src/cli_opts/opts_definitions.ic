@@ -405,6 +405,29 @@ puts("Print debug info about matchers and quit.");
 puts("");
 }
 
+// --lang|-g
+static const char lang_opt_short = 'g';
+static const char lang_opt_long[] = "lang";
+static void handle_lang(const char * opt, char * opt_arg, void * ctx)
+{
+	handle_lang(opt_arg, ctx);
+}
+
+static void help_lang(const char * short_name, const char * long_name)
+{
+printf("%s|%s <name>\n", short_name, long_name);
+puts("Select language defaults. <name> is case insensitive and one of:");
+puts("C, awk, json, xml, info");
+puts(
+"If used, all block matchers given on the command line but the block name"
+);
+puts("are ignored. info is the boost ptree info. xml takes care to place the");
+puts("block name inside the tag automatically. To see the resulting matchers");
+puts("for each language, use the debug info option. Ignores the no defaults");
+puts("option.");
+puts("");
+}
+
 // --file-list|-L
 static const char file_list_opt_short = 'L';
 static const char file_list_opt_long[] = "file-list";

@@ -32,6 +32,15 @@ enum ematcher {
 	M_TOTAL,
 };
 
+enum elang {
+	LANG_NONE = 0,
+	LANG_C,
+	LANG_AWK,
+	LANG_JSON,
+	LANG_XML,
+	LANG_INFO
+};
+
 struct mdata {
 	const char * pat;
 	bool is_regex;
@@ -59,6 +68,7 @@ struct prog_options {
 	const char * mark_start;
 	const char * mark_end;
 	const char * file_list;
+	elang which_lang;
 	int block_count;
 	int skip_count;
 	bool line_numbers;

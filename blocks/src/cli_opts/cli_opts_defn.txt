@@ -29,6 +29,7 @@ defn_start
 #-V|--verbose-error
 #-D|--debug
 
+#-g|--lang
 #-L|--file-list
 #-z|--no-strings
 # --string-rx
@@ -453,6 +454,28 @@ end_code
 help_code
 printf("%s|%s\n", short_name, long_name);
 puts("Print debug info about matchers and quit.");
+puts("");
+end_code
+end
+
+long_name  lang
+short_name g
+takes_args true
+handler_code
+	handle_lang(opt_arg, ctx);
+end_code
+
+help_code
+printf("%s|%s <name>\n", short_name, long_name);
+puts("Select language defaults. <name> is case insensitive and one of:");
+puts("C, awk, json, xml, info");
+puts(
+"If used, all block matchers given on the command line but the block name"
+);
+puts("are ignored. info is the boost ptree info. xml takes care to place the");
+puts("block name inside the tag automatically. To see the resulting matchers");
+puts("for each language, use the debug info option. Ignores the no defaults");
+puts("option.");
 puts("");
 end_code
 end

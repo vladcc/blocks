@@ -16,12 +16,54 @@ fprintf((where), "Use: %s [options] [files]\n", program_name)
 
 static void help_message(void);
 static void opts_unbound_arg(const char * arg, void * ctx);
+static void handle_lang(const char * opt_arg, void * ctx);
 static void handle_matcher(ematcher which, const char * opt_arg, void * ctx);
 
 const char mM_or = 'o';
 const char mM_and = 'a';
 
 #include "opts_definitions.ic"
+
+static void handle_lang(const char * opt_arg, void * ctx)
+{
+#define BUFF_SZ 16
+	struct lang {
+		const char * name;
+		elang which;
+	};
+
+	static const lang langs[] = {
+		{"c",    LANG_C},
+		{"awk",  LANG_AWK},
+		{"json", LANG_JSON},
+		{"xml",  LANG_XML},
+		{"info", LANG_INFO},
+	};
+
+	static char buff[BUFF_SZ];
+
+	prog_options * context = (prog_options *)ctx;
+
+	char ch = '\0';
+	for (size_t i = 0; i < BUFF_SZ; ++i)
+	{
+		if (!(ch = opt_arg[i]))
+			break;
+		buff[i] = tolower(ch);
+	}
+
+	for (size_t i = 0; i < sizeof(langs)/sizeof(*langs); ++i)
+	{
+		if (strcmp(buff, langs[i].name) == 0)
+		{
+			context->which_lang = langs[i].which;
+			return;
+		}
+	}
+
+	equit("unknown lang argument %s", opt_arg);
+#undef BUFF_SZ
+}
 
 static void handle_matcher(ematcher which, const char * opt_arg, void * ctx)
 {
@@ -252,6 +294,224 @@ puts("");
 puts("Options:");
 }
 
+static void make_lang(prog_options& opts)
+{
+	switch (opts.which_lang)
+	{
+		default:
+		case LANG_NONE: {
+			if (!opts.matchers[B_NAME].pat && opts.matchers[B_START].pat)
+			{
+				// when only the block open/close is changed and no name is
+				// given the name should be the same as block open
+				opts.matchers[B_NAME] = opts.matchers[B_START];
+			}
+
+			if (false == opts.no_defaults)
+			{
+				// matcher patterns that won't be used will be set to the empty
+				// string matcher patterns which are null have never been set
+				if (!opts.matchers[B_NAME].pat)
+					opts.matchers[B_NAME].pat = defaults.block_open;
+
+				if (!opts.matchers[B_START].pat)
+					opts.matchers[B_START].pat = defaults.block_open;
+
+				if (!opts.matchers[B_END].pat)
+					opts.matchers[B_END].pat = defaults.block_close;
+
+				if (!opts.matchers[B_LINE_COMMENT].pat)
+					opts.matchers[B_LINE_COMMENT].pat = defaults.line_comment;
+
+				if (!opts.matchers[B_COMMENT_BEGIN].pat)
+				{
+					opts.matchers[B_COMMENT_BEGIN].pat =
+						defaults.block_comment_begin;
+				}
+
+				if (!opts.matchers[B_COMMENT_TERM].pat)
+				{
+					opts.matchers[B_COMMENT_TERM].pat =
+						defaults.block_comment_terminate;
+				}
+
+				if (opts.no_strings)
+				{
+					if (!opts.matchers[STRING_RX].pat)
+					{
+						opts.matchers[STRING_RX].pat = defaults.string_rx;
+						opts.matchers[STRING_RX].is_regex = true;
+					}
+				}
+				else
+				{
+					opts.matchers[STRING_RX].pat = nullptr;
+				}
+			}
+		} break;
+
+		case LANG_C: {
+			opts.matchers[B_START].pat = "{";
+			opts.matchers[B_START].is_regex = false;
+			opts.matchers[B_START].is_icase = false;
+
+			opts.matchers[B_END].pat = "}";
+			opts.matchers[B_END].is_regex = false;
+			opts.matchers[B_END].is_icase = false;
+
+			opts.matchers[B_LINE_COMMENT].pat = "//";
+			opts.matchers[B_LINE_COMMENT].is_regex = false;
+			opts.matchers[B_LINE_COMMENT].is_icase = false;
+
+			opts.matchers[B_COMMENT_BEGIN].pat = "/*";
+			opts.matchers[B_COMMENT_BEGIN].is_regex = false;
+			opts.matchers[B_COMMENT_BEGIN].is_icase = false;
+
+			opts.matchers[B_COMMENT_TERM].pat = "*/";
+			opts.matchers[B_COMMENT_TERM].is_regex = false;
+			opts.matchers[B_COMMENT_TERM].is_icase = false;
+
+			opts.no_strings = true;
+			opts.matchers[STRING_RX].pat = defaults.string_rx;
+			opts.matchers[STRING_RX].is_regex = true;
+			opts.matchers[STRING_RX].is_icase = false;
+		} break;
+
+		case LANG_AWK: {
+			opts.matchers[B_START].pat = "{";
+			opts.matchers[B_START].is_regex = false;
+			opts.matchers[B_START].is_icase = false;
+
+			opts.matchers[B_END].pat = "}";
+			opts.matchers[B_END].is_regex = false;
+			opts.matchers[B_END].is_icase = false;
+
+			opts.matchers[B_LINE_COMMENT].pat = "#";
+			opts.matchers[B_LINE_COMMENT].is_regex = false;
+			opts.matchers[B_LINE_COMMENT].is_icase = false;
+
+			opts.matchers[B_COMMENT_BEGIN].pat = nullptr;
+			opts.matchers[B_COMMENT_BEGIN].is_regex = false;
+			opts.matchers[B_COMMENT_BEGIN].is_icase = false;
+
+			opts.matchers[B_COMMENT_TERM].pat = nullptr;
+			opts.matchers[B_COMMENT_TERM].is_regex = false;
+			opts.matchers[B_COMMENT_TERM].is_icase = false;
+
+			opts.no_strings = true;
+			opts.matchers[STRING_RX].pat = defaults.string_rx;
+			opts.matchers[STRING_RX].is_regex = true;
+			opts.matchers[STRING_RX].is_icase = false;
+		} break;
+
+		case LANG_JSON: {
+			opts.matchers[B_START].pat = "\\{|\\[";
+			opts.matchers[B_START].is_regex = true;
+			opts.matchers[B_START].is_icase = false;
+
+			opts.matchers[B_END].pat = "\\}|\\]";
+			opts.matchers[B_END].is_regex = true;
+			opts.matchers[B_END].is_icase = false;
+
+			opts.matchers[B_LINE_COMMENT].pat = nullptr;
+			opts.matchers[B_LINE_COMMENT].is_regex = false;
+			opts.matchers[B_LINE_COMMENT].is_icase = false;
+
+			opts.matchers[B_COMMENT_BEGIN].pat = nullptr;
+			opts.matchers[B_COMMENT_BEGIN].is_regex = false;
+			opts.matchers[B_COMMENT_BEGIN].is_icase = false;
+
+			opts.matchers[B_COMMENT_TERM].pat = nullptr;
+			opts.matchers[B_COMMENT_TERM].is_regex = false;
+			opts.matchers[B_COMMENT_TERM].is_icase = false;
+
+			opts.no_strings = false;
+			opts.matchers[STRING_RX].pat = nullptr;
+			opts.matchers[STRING_RX].is_regex = true;
+			opts.matchers[STRING_RX].is_icase = false;
+		} break;
+
+		case LANG_XML: {
+			static std::string start_pat("<");
+			static std::string end_pat("</");
+
+			const char * xml_name_rx = "[_:a-zA-Z][-._:a-zA-Z0-9]+";
+
+			if (opts.matchers[B_NAME].pat)
+			{
+				start_pat.append(opts.matchers[B_NAME].pat);
+				end_pat.append(opts.matchers[B_NAME].pat);
+			}
+			else
+			{
+				start_pat.append(xml_name_rx);
+				end_pat.append(xml_name_rx);
+				opts.matchers[B_NAME].is_regex = true;
+				opts.matchers[B_END].is_regex = true;
+			}
+			end_pat.append(">");
+
+			opts.matchers[B_NAME].pat = start_pat.c_str();
+
+			opts.matchers[B_START] = opts.matchers[B_NAME];
+
+			opts.matchers[B_END] = opts.matchers[B_NAME];
+			opts.matchers[B_END].pat = end_pat.c_str();
+
+			opts.matchers[B_LINE_COMMENT].pat = "<.*/>";
+			opts.matchers[B_LINE_COMMENT].is_regex = true;
+			opts.matchers[B_LINE_COMMENT].is_icase = false;
+
+			opts.matchers[B_COMMENT_BEGIN].pat = "<!--";
+			opts.matchers[B_COMMENT_BEGIN].is_regex = false;
+			opts.matchers[B_COMMENT_BEGIN].is_icase = false;
+
+			opts.matchers[B_COMMENT_TERM].pat = "-->";
+			opts.matchers[B_COMMENT_TERM].is_regex = false;
+			opts.matchers[B_COMMENT_TERM].is_icase = false;
+
+			opts.no_strings = true;
+			opts.matchers[STRING_RX].pat = "\"[^\"]*\"|'[^']*'";
+			opts.matchers[STRING_RX].is_regex = true;
+			opts.matchers[STRING_RX].is_icase = false;
+		} break;
+
+		case LANG_INFO: {
+			opts.matchers[B_START].pat = "{";
+			opts.matchers[B_START].is_regex = false;
+			opts.matchers[B_START].is_icase = false;
+
+			opts.matchers[B_END].pat = "}";
+			opts.matchers[B_END].is_regex = false;
+			opts.matchers[B_END].is_icase = false;
+
+			opts.matchers[B_LINE_COMMENT].pat = ";";
+			opts.matchers[B_LINE_COMMENT].is_regex = false;
+			opts.matchers[B_LINE_COMMENT].is_icase = false;
+
+			opts.matchers[B_COMMENT_BEGIN].pat = nullptr;
+			opts.matchers[B_COMMENT_BEGIN].is_regex = false;
+			opts.matchers[B_COMMENT_BEGIN].is_icase = false;
+
+			opts.matchers[B_COMMENT_TERM].pat = nullptr;
+			opts.matchers[B_COMMENT_TERM].is_regex = false;
+			opts.matchers[B_COMMENT_TERM].is_icase = false;
+
+			opts.no_strings = false;
+			opts.matchers[STRING_RX].pat = nullptr;
+			opts.matchers[STRING_RX].is_regex = false;
+			opts.matchers[STRING_RX].is_icase = false;
+		} break;
+	}
+
+	if (!opts.matchers[B_NAME].pat)
+	{
+		// when only the block open/close is changed and no name is
+		// given the name should be the same as block open
+		opts.matchers[B_NAME] = opts.matchers[B_START];
+	}
+}
+
 static void handle_options(
 	int argc,
 	char * argv[],
@@ -267,52 +527,7 @@ static void handle_options(
 
 #include "opts_process.ic"
 
-	if (!opts.matchers[B_NAME].pat && opts.matchers[B_START].pat)
-	{
-		// when only the block open/close is changed and no name is given
-		// the name should be the same as block open and the types should match
-		opts.matchers[B_NAME].pat = opts.matchers[B_START].pat;
-		opts.matchers[B_NAME].is_regex = opts.matchers[B_START].is_regex;
-	}
-
-	if (false == opts.no_defaults)
-	{
-		// matcher patterns that won't be used will be set to the empty string
-		// matcher patterns which are null have never been set
-		if (!opts.matchers[B_NAME].pat)
-			opts.matchers[B_NAME].pat = defaults.block_open;
-
-		if (!opts.matchers[B_START].pat)
-			opts.matchers[B_START].pat = defaults.block_open;
-
-		if (!opts.matchers[B_END].pat)
-			opts.matchers[B_END].pat = defaults.block_close;
-
-		if (!opts.matchers[B_LINE_COMMENT].pat)
-			opts.matchers[B_LINE_COMMENT].pat = defaults.line_comment;
-
-		if (!opts.matchers[B_COMMENT_BEGIN].pat)
-			opts.matchers[B_COMMENT_BEGIN].pat = defaults.block_comment_begin;
-
-		if (!opts.matchers[B_COMMENT_TERM].pat)
-		{
-			opts.matchers[B_COMMENT_TERM].pat =
-				defaults.block_comment_terminate;
-		}
-
-		if (opts.no_strings)
-		{
-			if (!opts.matchers[STRING_RX].pat)
-			{
-				opts.matchers[STRING_RX].pat = defaults.string_rx;
-				opts.matchers[STRING_RX].is_regex = true;
-			}
-		}
-		else
-		{
-			opts.matchers[STRING_RX].pat = nullptr;
-		}
-	}
+	make_lang(opts);
 
 	// disable empty string matchers
 	{
@@ -336,14 +551,6 @@ static void handle_options(
 			opts.match_how.do_logic = true;
 			opts.match_how.and_mM_together = true;
 		}
-	}
-
-	if (!opts.matchers[B_NAME].pat)
-	{
-		// if the name was disabled by assigning it an empty string, the value
-		// should be same as the start and the types should match
-		opts.matchers[B_NAME].pat = opts.matchers[B_START].pat;
-		opts.matchers[B_NAME].is_regex = opts.matchers[B_START].is_regex;
 	}
 
 	if (!opts.matchers[B_START].pat)
