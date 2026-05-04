@@ -363,11 +363,17 @@ function test_case_insensitive
 	run_nok "-n 'mAiN' $G_TEST_FILE_1"
 	diff_stdout "empty"
 
-	run_ok "-n 'mAiN' -i $G_TEST_FILE_1"
+	run_nok "-n 'mAiN' -i $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "-i -n 'mAiN' $G_TEST_FILE_1"
 	diff_stdout "case_insensitive.txt"
 
 	# long option
-	run_ok "-n 'mAiN' --case-insensitive $G_TEST_FILE_1"
+	run_nok "-n 'mAiN' --case-insensitive $G_TEST_FILE_1"
+	diff_stdout "empty"
+
+	run_ok "--case-insensitive -n 'mAiN' $G_TEST_FILE_1"
 	diff_stdout "case_insensitive.txt"
 
 	run_nok "-r -n 'mAiN' $G_TEST_FILE_1"
@@ -513,6 +519,26 @@ function test_debug_plus_matcher_types
 
 	run_nok "-D +fbar +r"
 	diff_stderr "plus_arg_err_4.txt"
+
+	run_nok "-D +far +r"
+	diff_stderr "plus_arg_err_5.txt"
+}
+
+function test_debug_plus_dash_matcher_case
+{
+	run_ok "-n 'A' -i -s 'B' -e 'C' -C 'D' -B 'E' -A -T 'F' -m 'G' -M 'h' -D"
+	diff_stdout "plus_dash_matcher_case_1.txt"
+
+	run_ok "-r -n 'A' -i -s 'B' -e 'C' -C 'D' -B 'E' -A -T 'F' -m 'G' -M 'h' -D"
+	diff_stdout "plus_dash_matcher_case_2.txt"
+
+	run_ok \
+	"-r -n 'A' -i -s 'B' +A -e 'C' -C 'D' -B 'E' -A -T 'F' +i -m 'G' -M 'h' -D"
+	diff_stdout "plus_dash_matcher_case_3.txt"
+
+	run_ok "+rA -n 'A' +fi -s 'B' +rAfi -e 'C' +ri -C 'D' +fA -B 'E'" \
+	"-T 'F' -m 'G' -M 'h' --no-strings +fi --string-rx 'foo' -D"
+	diff_stdout "plus_dash_matcher_case_4.txt"
 }
 
 function test_debug_nostr_strrx
@@ -584,6 +610,7 @@ function test_debug
 	bt_eval test_debug_base
 	bt_eval test_debug_dash_matcher_types
 	bt_eval test_debug_plus_matcher_types
+	bt_eval test_debug_plus_dash_matcher_case
 	bt_eval test_debug_nostr_strrx
 	bt_eval test_debug_match_dont_match_logic
 }

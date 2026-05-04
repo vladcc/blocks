@@ -4,6 +4,7 @@
 (std::regex::ECMAScript|std::regex::optimize|std::regex::nosubs)
 
 regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
+	 matcher(),
 	 _str_rx(rx ? rx : ""),
 	 _prx(nullptr),
 	 _start(0)
@@ -13,7 +14,10 @@ regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
 		auto re_flags = DEFAULT_FALGS;
 
 		if (opts & matcher::flags::ICASE)
+		{
 			re_flags |= std::regex::icase;
+			matcher::_is_icase = true;
+		}
 
 		_prx.reset(new std::regex(rx, re_flags));
 	}

@@ -16,79 +16,123 @@ fprintf((where), "Use: %s [options] [files]\n", program_name)
 
 static void help_message(void);
 static void opts_unbound_arg(const char * arg, void * ctx);
-static void handle_b_matcher(b_matcher which, const char * opt_arg, void * ctx);
+static void handle_matcher(ematcher which, const char * opt_arg, void * ctx);
+
+const char mM_or = 'o';
+const char mM_and = 'a';
 
 #include "opts_definitions.ic"
 
-static void handle_b_matcher(b_matcher which, const char * opt_arg, void * ctx)
+static void handle_matcher(ematcher which, const char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
+	mdata * matcher = (context->matchers + which);
 
-	context->b_matchers[which] = opt_arg;
-	if (context->is_plus_arg_matcher)
+	matcher->pat = opt_arg;
+	matcher->is_icase = context->are_all_matchers_icase;
+	if (context->next_type.is_plus_type_arg)
 	{
-		context->is_plus_arg_matcher = false;
-		context->is_b_matcher_regex[which] =
-			context->is_only_next_matcher_regex;
+		context->next_type.is_plus_type_arg = false;
+		matcher->is_regex = context->next_type.is_only_next_regex;
 	}
 	else
 	{
-		context->is_b_matcher_regex[which] = context->is_matcher_regex;
+		matcher->is_regex = context->are_all_matchers_regex;
+	}
+
+	if (context->next_case.is_plus_case_arg)
+	{
+		context->next_case.is_plus_case_arg = false;
+		matcher->is_icase = context->next_case.is_only_next_icase;
+	}
+	else
+	{
+		matcher->is_icase = context->are_all_matchers_icase;
+	}
+
+	if (STRING_RX == which)
+		matcher->is_regex = true;
+}
+
+static void handle_plus_arguments(const char * arg, void * ctx, int depth)
+{
+	static const char plus_args[] = {
+		regex_match_opt_short,
+		fixed_match_opt_short,
+		case_insensitive_opt_short,
+		case_sensitive_opt_short,
+		mM_or,
+		mM_and,
+		'\0'
+	};
+
+	prog_options * context = (prog_options *)ctx;
+	const char ch_opt = arg[depth];
+
+	if (!ch_opt)
+	{
+		return;
+	}
+	else if (strchr(plus_args, ch_opt))
+	{
+		if (
+			(ch_opt == mM_and || ch_opt == mM_or)
+			&&
+			(depth > 1 || arg[depth+1])
+		)
+		{
+			equit("option +%c has to appear alone", ch_opt);
+		}
+		else if (regex_match_opt_short == ch_opt)
+		{
+			context->next_type.is_plus_type_arg = true;
+			context->next_type.is_only_next_regex = true;
+		}
+		else if (fixed_match_opt_short == ch_opt)
+		{
+			context->next_type.is_plus_type_arg = true;
+			context->next_type.is_only_next_regex = false;
+		}
+		else if (case_insensitive_opt_short == ch_opt)
+		{
+			context->next_case.is_plus_case_arg = true;
+			context->next_case.is_only_next_icase = true;
+		}
+		else if (case_sensitive_opt_short == ch_opt)
+		{
+			context->next_case.is_plus_case_arg = true;
+			context->next_case.is_only_next_icase = false;
+		}
+		else if (mM_or == ch_opt)
+		{
+			context->match_how.do_logic = true;
+			context->match_how.and_mM_together = false;
+		}
+		else if (mM_and == ch_opt)
+		{
+			context->match_how.do_logic = true;
+			context->match_how.and_mM_together = true;
+		}
+
+		handle_plus_arguments(arg, ctx, depth+1);
+	}
+	else
+	{
+		std::string err_arg;
+		err_arg.push_back(ch_opt);
+		err_arg.append(" in");
+		print_err(err_arg.c_str());
+		on_error(OPTS_UNKOWN_OPT_ERR, arg, ctx);
 	}
 }
 
 static void opts_unbound_arg(const char * arg, void * ctx)
 {
-	const char mM_or = 'o';
-	const char mM_and = 'a';
-	static const char plus_args[] = {
-		regex_match_opt_short,
-		fixed_match_opt_short,
-		mM_or,
-		mM_and,
-		'\0'
-	};
 	prog_options * context = (prog_options *)ctx;
-
 	if (!opts_is_everything_an_arg() && ('+' == arg[0]))
-	{
-		if (strpbrk(arg, plus_args))
-		{
-			if (arg[2])
-			{
-				equit("option +%c has to be space delimited", arg[1]);
-			}
-			else if (regex_match_opt_short == arg[1])
-			{
-				context->is_plus_arg_matcher = true;
-				context->is_only_next_matcher_regex = true;
-			}
-			else if (fixed_match_opt_short == arg[1])
-			{
-				context->is_plus_arg_matcher = true;
-				context->is_only_next_matcher_regex = false;
-			}
-			else if (mM_or == arg[1])
-			{
-				context->logic_match_dont_match = true;
-				context->and_match_dont_match = false;
-			}
-			else if (mM_and == arg[1])
-			{
-				context->logic_match_dont_match = true;
-				context->and_match_dont_match = true;
-			}
-		}
-		else
-		{
-			on_error(OPTS_UNKOWN_OPT_ERR, arg, ctx);
-		}
-
-	}
+		handle_plus_arguments(arg, ctx, 1);
 	else
-	{
 		context->file_names->push_back(arg);
-	}
 }
 
 static void opts_errq(const char * msg, ...)
@@ -191,8 +235,19 @@ BLOCKS_EXIT_NO_MATCH,
 BLOCKS_EXIT_HAD_ERROR
 );
 puts("");
-puts("Unless stated otherwise, when multiple of the same option are given,");
+puts("Unless stated otherwise, when multiples of the same option are given,");
 puts("the last one applies.");
+puts("");
+printf(
+"Out of the plus options, %c/%c, %c/%c can appear together, e.g. +%c%c\n",
+fixed_match_opt_short,
+regex_match_opt_short,
+case_insensitive_opt_short,
+case_sensitive_opt_short,
+fixed_match_opt_short,
+case_insensitive_opt_short
+);
+printf("Plus options %c, %c need to appear alone.\n", mM_and, mM_or);
 puts("");
 puts("Options:");
 }
@@ -212,80 +267,93 @@ static void handle_options(
 
 #include "opts_process.ic"
 
-	if (!opts.b_matchers[B_NAME] && opts.b_matchers[B_START])
+	if (!opts.matchers[B_NAME].pat && opts.matchers[B_START].pat)
 	{
 		// when only the block open/close is changed and no name is given
 		// the name should be the same as block open and the types should match
-		opts.b_matchers[B_NAME] = opts.b_matchers[B_START];
-		opts.is_b_matcher_regex[B_NAME] = opts.is_b_matcher_regex[B_START];
+		opts.matchers[B_NAME].pat = opts.matchers[B_START].pat;
+		opts.matchers[B_NAME].is_regex = opts.matchers[B_START].is_regex;
 	}
 
 	if (false == opts.no_defaults)
 	{
 		// matcher patterns that won't be used will be set to the empty string
 		// matcher patterns which are null have never been set
-		if (!opts.b_matchers[B_NAME])
-			opts.b_matchers[B_NAME] = defaults.block_open;
+		if (!opts.matchers[B_NAME].pat)
+			opts.matchers[B_NAME].pat = defaults.block_open;
 
-		if (!opts.b_matchers[B_START])
-			opts.b_matchers[B_START] = defaults.block_open;
+		if (!opts.matchers[B_START].pat)
+			opts.matchers[B_START].pat = defaults.block_open;
 
-		if (!opts.b_matchers[B_END])
-			opts.b_matchers[B_END] = defaults.block_close;
+		if (!opts.matchers[B_END].pat)
+			opts.matchers[B_END].pat = defaults.block_close;
 
-		if (!opts.b_matchers[B_LINE_COMMENT])
-			opts.b_matchers[B_LINE_COMMENT] = defaults.line_comment;
+		if (!opts.matchers[B_LINE_COMMENT].pat)
+			opts.matchers[B_LINE_COMMENT].pat = defaults.line_comment;
 
-		if (!opts.b_matchers[B_COMMENT_BEGIN])
-			opts.b_matchers[B_COMMENT_BEGIN] = defaults.block_comment_begin;
+		if (!opts.matchers[B_COMMENT_BEGIN].pat)
+			opts.matchers[B_COMMENT_BEGIN].pat = defaults.block_comment_begin;
 
-		if (!opts.b_matchers[B_COMMENT_TERM])
-			opts.b_matchers[B_COMMENT_TERM] = defaults.block_comment_terminate;
-
-		if (opts.no_strings && !opts.string_rx)
-			opts.string_rx = defaults.string_rx;
-	}
-
-	// disable empty string matchers
-	const char * matcher = nullptr;
-	for (int i = 0; i < B_TOTAL; ++i)
-	{
-		matcher = opts.b_matchers[i];
-		if (matcher && !(*matcher))
-			opts.b_matchers[i] = nullptr;
-	}
-	if (opts.match && !(*opts.match))
-		opts.match = nullptr;
-	if (opts.dont_match && !(*opts.dont_match))
-		opts.dont_match = nullptr;
-
-	if (opts.match && opts.dont_match)
-	{
-		// if match and dont_match are given but no logic op is specified
-		// default to and
-		if (!opts.logic_match_dont_match)
+		if (!opts.matchers[B_COMMENT_TERM].pat)
 		{
-			opts.logic_match_dont_match = true;
-			opts.and_match_dont_match = true;
+			opts.matchers[B_COMMENT_TERM].pat =
+				defaults.block_comment_terminate;
+		}
+
+		if (opts.no_strings)
+		{
+			if (!opts.matchers[STRING_RX].pat)
+			{
+				opts.matchers[STRING_RX].pat = defaults.string_rx;
+				opts.matchers[STRING_RX].is_regex = true;
+			}
+		}
+		else
+		{
+			opts.matchers[STRING_RX].pat = nullptr;
 		}
 	}
 
-	if (!opts.b_matchers[B_NAME])
+	// disable empty string matchers
+	{
+		mdata * matcher = nullptr;
+		const char * mpat = nullptr;
+		for (int i = M_FIRST; i < M_TOTAL; ++i)
+		{
+			matcher = (opts.matchers + i);
+			mpat = matcher->pat;
+			if (mpat && !(*mpat))
+				matcher->pat = nullptr;
+		}
+	}
+
+	if (opts.matchers[MATCH].pat && opts.matchers[DONT_MATCH].pat)
+	{
+		// if match and dont_match are given but no logic op is specified
+		// default to and
+		if (!opts.match_how.do_logic)
+		{
+			opts.match_how.do_logic = true;
+			opts.match_how.and_mM_together = true;
+		}
+	}
+
+	if (!opts.matchers[B_NAME].pat)
 	{
 		// if the name was disabled by assigning it an empty string, the value
 		// should be same as the start and the types should match
-		opts.b_matchers[B_NAME] = opts.b_matchers[B_START];
-		opts.is_b_matcher_regex[B_NAME] = opts.is_b_matcher_regex[B_START];
+		opts.matchers[B_NAME].pat = opts.matchers[B_START].pat;
+		opts.matchers[B_NAME].is_regex = opts.matchers[B_START].is_regex;
 	}
 
-	if (!opts.b_matchers[B_START])
+	if (!opts.matchers[B_START].pat)
 		errq("block start cannot be empty");
 
-	if (!opts.b_matchers[B_END])
+	if (!opts.matchers[B_END].pat)
 		errq("block end cannot be empty");
 
-	if (!opts.b_matchers[B_COMMENT_BEGIN] &&
-		opts.b_matchers[B_COMMENT_TERM])
+	if (!opts.matchers[B_COMMENT_BEGIN].pat &&
+		opts.matchers[B_COMMENT_TERM].pat)
 	{
 		errq(
 			"if block comment terminate exists, "
@@ -293,8 +361,8 @@ static void handle_options(
 		);
 	}
 
-	if (opts.b_matchers[B_COMMENT_BEGIN] &&
-		!opts.b_matchers[B_COMMENT_TERM])
+	if (opts.matchers[B_COMMENT_BEGIN].pat &&
+		!opts.matchers[B_COMMENT_TERM].pat)
 	{
 		errq(
 			"if block comment begin exists, "
@@ -302,15 +370,15 @@ static void handle_options(
 		);
 	}
 
-	if (std::string(opts.b_matchers[B_START]) ==
-		std::string(opts.b_matchers[B_END]))
+	if (std::string(opts.matchers[B_START].pat) ==
+		std::string(opts.matchers[B_END].pat))
 	{
 		errq("ambiguous: block start and block end cannot be the same");
 	}
 
-	if (opts.logic_match_dont_match)
+	if (opts.match_how.do_logic)
 	{
-		if (!opts.match || !opts.dont_match)
+		if (!opts.matchers[MATCH].pat || !opts.matchers[DONT_MATCH].pat)
 			errq("match/don't match logic op requires both patterns to exist");
 	}
 }

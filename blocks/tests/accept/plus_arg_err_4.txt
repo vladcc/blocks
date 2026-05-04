@@ -1,2 +1,4 @@
-blocks: error: option +f has to be space delimited
+blocks: error: b in
+blocks: error: option '+fbar' unknown
+Use: blocks [options] [files]
 Try 'blocks --help' for more information

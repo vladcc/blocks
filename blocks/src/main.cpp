@@ -16,26 +16,48 @@
 #define BLOCKS_EXIT_HAD_ERROR 2
 
 static const char program_name[] = "blocks";
-static const char program_version[] = "2.2";
+static const char program_version[] = "3.0";
 
-enum b_matcher {
-	B_NAME,
+enum ematcher {
+	M_FIRST = 0,
+	B_NAME = M_FIRST,
 	B_START,
 	B_END,
 	B_LINE_COMMENT,
 	B_COMMENT_BEGIN,
 	B_COMMENT_TERM,
-	B_TOTAL
+	MATCH,
+	DONT_MATCH,
+	STRING_RX,
+	M_TOTAL,
+};
+
+struct mdata {
+	const char * pat;
+	bool is_regex;
+	bool is_icase;
+};
+
+struct m_single_type {
+	bool is_plus_type_arg;
+	bool is_only_next_regex;
+};
+
+struct m_single_case {
+	bool is_plus_case_arg;
+	bool is_only_next_icase;
+};
+
+struct match_logic {
+	bool do_logic;
+	bool and_mM_together;
 };
 
 struct prog_options {
 	std::vector<const char *> * file_names;
-	const char * b_matchers[B_TOTAL];
-	const char * match;
-	const char * dont_match;
+	mdata matchers[M_TOTAL];
 	const char * mark_start;
 	const char * mark_end;
-	const char * string_rx;
 	const char * file_list;
 	int block_count;
 	int skip_count;
@@ -43,21 +65,17 @@ struct prog_options {
 	bool with_filename;
 	bool files_with_match;
 	bool files_without_match;
-	bool case_insensitive;
+	bool are_all_matchers_icase;
 	bool ignore_top;
 	bool no_defaults;
 	bool fatal_error;
 	bool verbose_error;
 	bool debug;
 	bool no_strings;
-	bool is_plus_arg_matcher;
-	bool is_matcher_regex;
-	bool is_only_next_matcher_regex;
-	bool is_b_matcher_regex[B_TOTAL];
-	bool is_match_regex;
-	bool is_dont_match_regex;
-	bool logic_match_dont_match;
-	bool and_match_dont_match;
+	bool are_all_matchers_regex;
+	m_single_type next_type;
+	m_single_case next_case;
+	match_logic match_how;
 };
 
 struct {
@@ -193,10 +211,7 @@ static void print_block(
 }
 
 struct patterns {
-	const matcher * b_matchers[B_TOTAL];
-	const matcher * match;
-	const matcher * dont_match;
-	const regex_matcher * string_rx;
+	const matcher * matchers[M_TOTAL];
 };
 
 static void print_debug_and_quit(
@@ -211,6 +226,9 @@ static void print_debug_and_quit(
 		"line comment: ",
 		"block comment begin: ",
 		"block comment terminate: ",
+		"match: ",
+		"don't match: ",
+		"string rx: ",
 	};
 
 	std::string buff;
@@ -242,41 +260,41 @@ static void print_debug_and_quit(
 		print_line(buff.c_str());
 	}
 
-	for (int i = 0; i < B_TOTAL; ++i)
+	for (int i = M_FIRST; i < M_TOTAL; ++i)
 	{
-		mtchr = pats.b_matchers[i];
+		mtchr = pats.matchers[i];
 		buff.assign(dbg_str[i]).append("'").
 			append(mtchr ? mtchr->pattern() : "").
 			append("' type: ").
-			append(mtchr ? mtchr->type_of() : "none");
+			append(mtchr ? mtchr->type_of() : "none").
+			append(" case: ");
+
+			if (mtchr)
+			{
+				buff.push_back(
+					mtchr->is_icase() ?
+						case_insensitive_opt_short
+						:
+						case_sensitive_opt_short
+				);
+			}
+			else
+			{
+				buff.append("none");
+			}
+
 		print_line(buff.c_str());
 	}
 
-	buff.assign("match: ").append("'").
-		append(opts.match ? pats.match->pattern() : "").
-		append("' type: ").
-		append(opts.match ? pats.match->type_of() : "none");
-	print_line(buff.c_str());
-
-	buff.assign("dont match: ").append("'").
-		append(opts.dont_match ? pats.dont_match->pattern() : "").
-		append("' type: ").
-		append(opts.dont_match ? pats.dont_match->type_of() : "none");
+	buff.assign("no strings: ");
+	buff.append(opts.no_strings ? "on" : "off");
 	print_line(buff.c_str());
 
 	buff.assign("match/don't match logic: ");
-	if (opts.logic_match_dont_match)
-		buff.append(opts.and_match_dont_match ? "and" : "or");
+	if (opts.match_how.do_logic)
+		buff.append(opts.match_how.and_mM_together ? "and" : "or");
 	else
 		buff.append("none");
-	print_line(buff.c_str());
-
-	buff.assign("string regex: ");
-	buff.append(pats.string_rx ? pats.string_rx->pattern() : "none");
-	print_line(buff.c_str());
-
-	buff.assign("no strings: ");
-	buff.append(opts.no_strings ? "on" : "off");
 	print_line(buff.c_str());
 
 	exit(EXIT_SUCCESS);
@@ -285,9 +303,7 @@ static void print_debug_and_quit(
 static void make_patterns(const prog_options& opts, patterns& pats)
 {
 	// so valgrind can track
-	static std::unique_ptr<matcher> b_matchers[B_TOTAL];
-	static std::unique_ptr<matcher> match, dont_match;
-	static std::unique_ptr<matcher> string_rx;
+	static std::unique_ptr<matcher> matchers[M_TOTAL];
 
 	try
 	{
@@ -296,59 +312,30 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 			matcher::type::REGEX
 		};
 
-		uint32_t matcher_flags = matcher::flags::NONE;
-		if (opts.case_insensitive)
-			matcher_flags |= matcher::flags::ICASE;
+		const uint32_t matcher_flags[2] = {
+			matcher::flags::NONE,
+			(matcher::flags::NONE | matcher::flags::ICASE)
+		};
 
 		matcher_factory mfact;
-		const char * mtchr = nullptr;
-		for (int i = 0; i < B_TOTAL; ++i)
+		const mdata * matcher = nullptr;
+		const char * mpat = nullptr;
+		for (int i = M_FIRST; i < M_TOTAL; ++i)
 		{
-			if ((mtchr = opts.b_matchers[i]))
+			matcher = (opts.matchers + i);
+			mpat = matcher->pat;
+			if (mpat && *mpat)
 			{
-				b_matchers[i] = mfact.create(
-					mtypes[opts.is_b_matcher_regex[i]],
-					mtchr,
-					matcher_flags
+				matchers[i] = mfact.create(
+					mtypes[matcher->is_regex],
+					mpat,
+					matcher_flags[matcher->is_icase]
 				);
 			}
 		}
 
-		for (int i = 0; i < B_TOTAL; ++i)
-			pats.b_matchers[i] = b_matchers[i].get();
-
-		// create only if not empty string
-		if (opts.match && *opts.match)
-		{
-			match =  mfact.create(
-				mtypes[opts.is_match_regex],
-				opts.match,
-				matcher_flags
-			);
-
-			pats.match = match.get();
-		}
-
-		if (opts.dont_match && *opts.dont_match)
-		{
-			dont_match =  mfact.create(
-				mtypes[opts.is_dont_match_regex],
-				opts.dont_match,
-				matcher_flags
-			);
-
-			pats.dont_match = dont_match.get();
-		}
-
-		if (opts.no_strings && opts.string_rx && *opts.string_rx)
-		{
-			string_rx = mfact.create(
-				matcher::type::REGEX,
-				opts.string_rx,
-				matcher_flags
-			);
-			pats.string_rx = static_cast<regex_matcher *>(string_rx.get());
-		}
+		for (int i = M_FIRST; i < M_TOTAL; ++i)
+			pats.matchers[i] = matchers[i].get();
 	}
 	catch(const std::runtime_error& e)
 	{
@@ -356,6 +343,7 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 	}
 }
 
+// <process>
 static bool match_in_block(
 	const matcher * pat,
 	const std::vector<block_parser::block_line>& block
@@ -390,7 +378,7 @@ static bool match_single_block(
 {
 	if (pat_match && pat_dont_match)
 	{
-		if (opts.and_match_dont_match)
+		if (opts.match_how.and_mM_together)
 		{
 			return (
 				match_in_block(pat_match, block)
@@ -565,13 +553,13 @@ static int process(
 	std::istream generic_in_stream(std::cin.rdbuf());
 
 	lexer::matchers lex_matchers(
-		pats.b_matchers[B_NAME],
-		pats.b_matchers[B_START],
-		pats.b_matchers[B_END],
-		pats.b_matchers[B_LINE_COMMENT],
-		pats.b_matchers[B_COMMENT_BEGIN],
-		pats.b_matchers[B_COMMENT_TERM],
-		pats.string_rx
+		pats.matchers[B_NAME],
+		pats.matchers[B_START],
+		pats.matchers[B_END],
+		pats.matchers[B_LINE_COMMENT],
+		pats.matchers[B_COMMENT_BEGIN],
+		pats.matchers[B_COMMENT_TERM],
+		static_cast<const regex_matcher *>(pats.matchers[STRING_RX])
 	);
 
 	lexer lex(generic_in_stream, lex_matchers);
@@ -584,8 +572,8 @@ static int process(
 			b_parser,
 			opts,
 			current_file,
-			pats.match,
-			pats.dont_match
+			pats.matchers[MATCH],
+			pats.matchers[DONT_MATCH]
 		);
 	}
 	else
@@ -632,8 +620,8 @@ static int process(
 				b_parser,
 				opts,
 				current_file,
-				pats.match,
-				pats.dont_match
+				pats.matchers[MATCH],
+				pats.matchers[DONT_MATCH]
 			);
 			opts.block_count = block_count;
 			opts.skip_count = skip_count;
@@ -654,6 +642,7 @@ static int process(
 
 	return BLOCKS_EXIT_HAD_MATCH;
 }
+// </process>
 
 static void append_file_list(
 	const prog_options opts,

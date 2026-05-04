@@ -13,6 +13,7 @@ test_debug_base
 test_debug_dash_matcher_types
 test_debug_match_dont_match_logic
 test_debug_nostr_strrx
+test_debug_plus_dash_matcher_case
 test_debug_plus_matcher_types
 test_eoi_before_comment_end
 test_exit_codes

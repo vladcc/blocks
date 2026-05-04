@@ -1,4 +1,4 @@
--- blocks 2.2 --
+-- blocks 3.0 --
 grep for nested data
 
 Use: blocks [options] [files]
@@ -48,8 +48,11 @@ No error, match was found:    0
 No error, no match was found: 1
 An error happened:            2
 
-Unless stated otherwise, when multiple of the same option are given,
+Unless stated otherwise, when multiples of the same option are given,
 the last one applies.
+
+Out of the plus options, f/r, i/A can appear together, e.g. +fi
+Plus options a, o need to appear alone.
 
 Options:
 -n|--block-name <matcher>
@@ -118,7 +121,14 @@ Print only the names of files which contained at least one block.
 Print only the names of files which did not contain a block.
 
 -i|--case-insensitive
-Match all matchers case insensitive.
+All matchers after this argument are case insensitive.
++i
+Only the next matcher after this argument is case insensitive.
+
+-A|--case-sensitive
+All matchers after this argument are case sensitive.
++A
+Only the next matcher after this argument is case sensitive.
 
 -x|--no-defaults
 Do not use defaults for matchers.

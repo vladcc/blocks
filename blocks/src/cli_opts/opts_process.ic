@@ -207,6 +207,18 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = case_sensitive_opt_long,
+			.short_name = case_sensitive_opt_short
+		},
+		.handler = {
+			.handler = handle_case_sensitive,
+			.context = (void *)context,
+		},
+		.print_help = help_case_sensitive,
+		.takes_arg = false,
+	},
+	{
+		.names = {
 			.long_name = no_defaults_opt_long,
 			.short_name = no_defaults_opt_short
 		},

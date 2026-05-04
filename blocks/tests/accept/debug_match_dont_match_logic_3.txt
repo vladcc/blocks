@@ -4,14 +4,14 @@ default block end: '}'
 default line comment: '//'
 default block comment begin: '/*'
 default block comment terminate: '*/'
-block name: '{' type: string
-block start: '{' type: string
-block end: '}' type: string
-line comment: '//' type: string
-block comment begin: '/*' type: string
-block comment terminate: '*/' type: string
-match: 'foo' type: string
-dont match: '' type: none
-match/don't match logic: none
-string regex: none
+block name: '{' type: string case: A
+block start: '{' type: string case: A
+block end: '}' type: string case: A
+line comment: '//' type: string case: A
+block comment begin: '/*' type: string case: A
+block comment terminate: '*/' type: string case: A
+match: 'foo' type: string case: A
+don't match: '' type: none case: none
+string rx: '' type: none case: none
 no strings: off
+match/don't match logic: none

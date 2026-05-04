@@ -1,6 +1,7 @@
 #include "string_matcher.hpp"
 
 str_matcher::str_matcher(const char * pattern, uint32_t opts) :
+	matcher(),
 	_pattern(pattern ? pattern : ""),
 	_last_line(nullptr),
 	_ppat(nullptr),
@@ -15,6 +16,7 @@ str_matcher::str_matcher(const char * pattern, uint32_t opts) :
 		if (_opts & matcher::flags::ICASE)
 		{
 			_icase = true;
+			matcher::_is_icase = true;
 			_tolower(_pattern);
 		}
 		_ppat = _pattern.c_str();

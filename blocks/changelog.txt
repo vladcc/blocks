@@ -1,3 +1,13 @@
+xxxx-xx-xx
+#blocks 3.0
+#--lang=C,awk - turns on comments and --no-strings
+#--lang=C,awk,xml,lisp(comments? scheme?),default
+#add --lang and i/case to -D
+#no comments by default
+- case sensitive introduced
+- put +(r|f) and +(iA) together
+- incompatibility - now case in/sensitive act like -(f|r)/+(f|r)
+
 2026-04-20
 blocks 2.2
 -L|--file-list implemented

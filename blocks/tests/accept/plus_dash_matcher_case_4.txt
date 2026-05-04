@@ -5,13 +5,13 @@ default line comment: '//'
 default block comment begin: '/*'
 default block comment terminate: '*/'
 block name: 'A' type: regex case: A
-block start: 'B' type: regex case: A
-block end: 'C' type: regex case: A
-line comment: 'D' type: string case: A
+block start: 'b' type: string case: i
+block end: 'c' type: string case: i
+line comment: 'D' type: regex case: i
 block comment begin: 'E' type: string case: A
 block comment terminate: 'F' type: string case: A
-match: 'G' type: regex case: A
-don't match: '' type: none case: none
-string rx: '' type: none case: none
-no strings: off
-match/don't match logic: none
+match: 'G' type: string case: A
+don't match: 'h' type: string case: A
+string rx: 'foo' type: regex case: i
+no strings: on
+match/don't match logic: and

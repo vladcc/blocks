@@ -1,3 +1,4 @@
+blocks: error: z in
 blocks: error: option '+z' unknown
 Use: blocks [options] [files]
 Try 'blocks --help' for more information

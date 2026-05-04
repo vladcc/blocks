@@ -18,6 +18,10 @@ public:
 	};
 
 public:
+	matcher() :
+		_is_icase(false)
+	{}
+
 	virtual ~matcher() {}
 	virtual bool match(const char * text, size_t len, size_t start) = 0;
 
@@ -26,5 +30,13 @@ public:
 	virtual size_t length() const = 0;
 	virtual const char * type_of() const = 0;
 	virtual const char * pattern() const = 0;
+
+	const bool is_icase() const
+	{
+		return _is_icase;
+	}
+
+protected:
+	bool _is_icase;
 };
 #endif

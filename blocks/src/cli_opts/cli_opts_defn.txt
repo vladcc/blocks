@@ -8,6 +8,8 @@ defn_start
 #-T|--block-comment-terminate=<matcher>
 #-m|--match=<matcher>
 #-M|--dont-match=<matcher>
+#+a
+#+o
 #-S|--mark-start=<string>
 #-E|--mark-end=<string>
 #-c|--block-count=<num>
@@ -18,6 +20,9 @@ defn_start
 #-W|--files-without-match
 
 #-i|--case-insensitive
+#+i
+#-A|--case-sensitive
+#+A
 #-I|--ignore-top
 #-x|--no-defaults
 #-F|--fatal-error
@@ -29,7 +34,9 @@ defn_start
 # --string-rx
 
 #-r|--regex-match
+#+r
 #-f|--fixed-match
+#+f
 
 #-h|--help
 #-v|--version
@@ -72,7 +79,7 @@ long_name  block-name
 short_name n
 takes_args true
 handler_code
-	handle_b_matcher(B_NAME, opt_arg, ctx);
+	handle_matcher(B_NAME, opt_arg, ctx);
 end_code
 
 help_code
@@ -87,7 +94,7 @@ long_name  block-start
 short_name s
 takes_args true
 handler_code
-	handle_b_matcher(B_START, opt_arg, ctx);
+	handle_matcher(B_START, opt_arg, ctx);
 end_code
 
 help_code
@@ -104,7 +111,7 @@ long_name  block-end
 short_name e
 takes_args true
 handler_code
-	handle_b_matcher(B_END, opt_arg, ctx);
+	handle_matcher(B_END, opt_arg, ctx);
 end_code
 
 help_code
@@ -121,7 +128,7 @@ long_name  comment
 short_name C
 takes_args true
 handler_code
-	handle_b_matcher(B_LINE_COMMENT, opt_arg, ctx);
+	handle_matcher(B_LINE_COMMENT, opt_arg, ctx);
 end_code
 
 help_code
@@ -138,7 +145,7 @@ long_name  block-comment-begin
 short_name B
 takes_args true
 handler_code
-	handle_b_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
+	handle_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
 end_code
 
 help_code
@@ -155,7 +162,7 @@ long_name  block-comment-terminate
 short_name T
 takes_args true
 handler_code
-	handle_b_matcher(B_COMMENT_TERM, opt_arg, ctx);
+	handle_matcher(B_COMMENT_TERM, opt_arg, ctx);
 end_code
 
 help_code
@@ -172,18 +179,7 @@ long_name  match
 short_name m
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-
-	context->match = opt_arg;
-	if (context->is_plus_arg_matcher)
-	{
-		context->is_plus_arg_matcher = false;
-		context->is_match_regex = context->is_only_next_matcher_regex;
-	}
-	else
-	{
-		context->is_match_regex = context->is_matcher_regex;
-	}
+	handle_matcher(MATCH, opt_arg, ctx);
 end_code
 
 help_code
@@ -194,9 +190,9 @@ puts("If both match and don't match are given, logical and is applied even if");
 puts("it is not specified on the command line. If a logical operation is");
 puts("specified on the command line, both match and don't match must be give.");
 puts("Logical operations:");
-puts("+a - Logical and. Both matchers must match.");
-puts("+o - Logical or. One or the other matcher must match.");
-puts("+a|+o can appear anywhere on the command line.");
+printf("+%c - Logical and. Both matchers must match.\n", mM_and);
+printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
+printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
 puts("");
 end_code
 end
@@ -205,18 +201,7 @@ long_name  dont-match
 short_name M
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-
-	context->dont_match = opt_arg;
-	if (context->is_plus_arg_matcher)
-	{
-		context->is_plus_arg_matcher = false;
-		context->is_dont_match_regex = context->is_only_next_matcher_regex;
-	}
-	else
-	{
-		context->is_dont_match_regex = context->is_matcher_regex;
-	}
+	handle_matcher(DONT_MATCH, opt_arg, ctx);
 end_code
 
 help_code
@@ -227,9 +212,9 @@ puts("If both match and don't match are given, logical and is applied even if");
 puts("it is not specified on the command line. If a logical operation is");
 puts("specified on the command line, both match and don't match must be give.");
 puts("Logical operations:");
-puts("+a - Logical and. Both matchers must match.");
-puts("+o - Logical or. One or the other matcher must match.");
-puts("+a|+o can appear anywhere on the command line.");
+printf("+%c - Logical and. Both matchers must match.\n", mM_and);
+printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
+printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
 puts("");
 end_code
 end
@@ -365,12 +350,31 @@ short_name i
 takes_args false
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->case_insensitive = true;
+	context->are_all_matchers_icase = true;
 end_code
 
 help_code
 printf("%s|%s\n", short_name, long_name);
-puts("Match all matchers case insensitive.");
+puts("All matchers after this argument are case insensitive.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is case insensitive.");
+puts("");
+end_code
+end
+
+long_name  case-sensitive
+short_name A
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->are_all_matchers_icase = false;
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts("All matchers after this argument are case sensitive.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is case sensitive.");
 puts("");
 end_code
 end
@@ -488,8 +492,7 @@ long_name string-rx
 short_name \0
 takes_args true
 handler_code
-	prog_options * context = (prog_options *)ctx;
-	context->string_rx = opt_arg;
+	handle_matcher(STRING_RX, opt_arg, ctx);
 end_code
 
 help_code
@@ -509,7 +512,7 @@ short_name r
 takes_args false
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->is_matcher_regex = true;
+	context->are_all_matchers_regex = true;
 end_code
 
 help_code
@@ -526,7 +529,7 @@ short_name f
 takes_args false
 handler_code
 	prog_options * context = (prog_options *)ctx;
-	context->is_matcher_regex = false;
+	context->are_all_matchers_regex = false;
 end_code
 
 help_code

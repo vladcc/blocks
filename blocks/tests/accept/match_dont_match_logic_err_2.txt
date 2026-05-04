@@ -1,2 +1,2 @@
-blocks: error: option +o has to be space delimited
+blocks: error: option +o has to appear alone
 Try 'blocks --help' for more information

@@ -5,7 +5,7 @@ static const char block_name_opt_short = 'n';
 static const char block_name_opt_long[] = "block-name";
 static void handle_block_name(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_NAME, opt_arg, ctx);
+	handle_matcher(B_NAME, opt_arg, ctx);
 }
 
 static void help_block_name(const char * short_name, const char * long_name)
@@ -21,7 +21,7 @@ static const char block_start_opt_short = 's';
 static const char block_start_opt_long[] = "block-start";
 static void handle_block_start(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_START, opt_arg, ctx);
+	handle_matcher(B_START, opt_arg, ctx);
 }
 
 static void help_block_start(const char * short_name, const char * long_name)
@@ -39,7 +39,7 @@ static const char block_end_opt_short = 'e';
 static const char block_end_opt_long[] = "block-end";
 static void handle_block_end(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_END, opt_arg, ctx);
+	handle_matcher(B_END, opt_arg, ctx);
 }
 
 static void help_block_end(const char * short_name, const char * long_name)
@@ -57,7 +57,7 @@ static const char comment_opt_short = 'C';
 static const char comment_opt_long[] = "comment";
 static void handle_comment(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_LINE_COMMENT, opt_arg, ctx);
+	handle_matcher(B_LINE_COMMENT, opt_arg, ctx);
 }
 
 static void help_comment(const char * short_name, const char * long_name)
@@ -75,7 +75,7 @@ static const char block_comment_begin_opt_short = 'B';
 static const char block_comment_begin_opt_long[] = "block-comment-begin";
 static void handle_block_comment_begin(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
+	handle_matcher(B_COMMENT_BEGIN, opt_arg, ctx);
 }
 
 static void help_block_comment_begin(const char * short_name, const char * long_name)
@@ -93,7 +93,7 @@ static const char block_comment_terminate_opt_short = 'T';
 static const char block_comment_terminate_opt_long[] = "block-comment-terminate";
 static void handle_block_comment_terminate(const char * opt, char * opt_arg, void * ctx)
 {
-	handle_b_matcher(B_COMMENT_TERM, opt_arg, ctx);
+	handle_matcher(B_COMMENT_TERM, opt_arg, ctx);
 }
 
 static void help_block_comment_terminate(const char * short_name, const char * long_name)
@@ -111,18 +111,7 @@ static const char match_opt_short = 'm';
 static const char match_opt_long[] = "match";
 static void handle_match(const char * opt, char * opt_arg, void * ctx)
 {
-	prog_options * context = (prog_options *)ctx;
-
-	context->match = opt_arg;
-	if (context->is_plus_arg_matcher)
-	{
-		context->is_plus_arg_matcher = false;
-		context->is_match_regex = context->is_only_next_matcher_regex;
-	}
-	else
-	{
-		context->is_match_regex = context->is_matcher_regex;
-	}
+	handle_matcher(MATCH, opt_arg, ctx);
 }
 
 static void help_match(const char * short_name, const char * long_name)
@@ -134,9 +123,9 @@ puts("If both match and don't match are given, logical and is applied even if");
 puts("it is not specified on the command line. If a logical operation is");
 puts("specified on the command line, both match and don't match must be give.");
 puts("Logical operations:");
-puts("+a - Logical and. Both matchers must match.");
-puts("+o - Logical or. One or the other matcher must match.");
-puts("+a|+o can appear anywhere on the command line.");
+printf("+%c - Logical and. Both matchers must match.\n", mM_and);
+printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
+printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
 puts("");
 }
 
@@ -145,18 +134,7 @@ static const char dont_match_opt_short = 'M';
 static const char dont_match_opt_long[] = "dont-match";
 static void handle_dont_match(const char * opt, char * opt_arg, void * ctx)
 {
-	prog_options * context = (prog_options *)ctx;
-
-	context->dont_match = opt_arg;
-	if (context->is_plus_arg_matcher)
-	{
-		context->is_plus_arg_matcher = false;
-		context->is_dont_match_regex = context->is_only_next_matcher_regex;
-	}
-	else
-	{
-		context->is_dont_match_regex = context->is_matcher_regex;
-	}
+	handle_matcher(DONT_MATCH, opt_arg, ctx);
 }
 
 static void help_dont_match(const char * short_name, const char * long_name)
@@ -168,9 +146,9 @@ puts("If both match and don't match are given, logical and is applied even if");
 puts("it is not specified on the command line. If a logical operation is");
 puts("specified on the command line, both match and don't match must be give.");
 puts("Logical operations:");
-puts("+a - Logical and. Both matchers must match.");
-puts("+o - Logical or. One or the other matcher must match.");
-puts("+a|+o can appear anywhere on the command line.");
+printf("+%c - Logical and. Both matchers must match.\n", mM_and);
+printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
+printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
 puts("");
 }
 
@@ -314,13 +292,33 @@ static const char case_insensitive_opt_long[] = "case-insensitive";
 static void handle_case_insensitive(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->case_insensitive = true;
+	context->are_all_matchers_icase = true;
 }
 
 static void help_case_insensitive(const char * short_name, const char * long_name)
 {
 printf("%s|%s\n", short_name, long_name);
-puts("Match all matchers case insensitive.");
+puts("All matchers after this argument are case insensitive.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is case insensitive.");
+puts("");
+}
+
+// --case-sensitive|-A
+static const char case_sensitive_opt_short = 'A';
+static const char case_sensitive_opt_long[] = "case-sensitive";
+static void handle_case_sensitive(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->are_all_matchers_icase = false;
+}
+
+static void help_case_sensitive(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts("All matchers after this argument are case sensitive.");
+printf("+%c\n", short_name[1]);
+puts("Only the next matcher after this argument is case sensitive.");
 puts("");
 }
 
@@ -445,8 +443,7 @@ static const char string_rx_opt_short = '\0';
 static const char string_rx_opt_long[] = "string-rx";
 static void handle_string_rx(const char * opt, char * opt_arg, void * ctx)
 {
-	prog_options * context = (prog_options *)ctx;
-	context->string_rx = opt_arg;
+	handle_matcher(STRING_RX, opt_arg, ctx);
 }
 
 static void help_string_rx(const char * short_name, const char * long_name)
@@ -467,7 +464,7 @@ static const char regex_match_opt_long[] = "regex-match";
 static void handle_regex_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->is_matcher_regex = true;
+	context->are_all_matchers_regex = true;
 }
 
 static void help_regex_match(const char * short_name, const char * long_name)
@@ -485,7 +482,7 @@ static const char fixed_match_opt_long[] = "fixed-match";
 static void handle_fixed_match(const char * opt, char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	context->is_matcher_regex = false;
+	context->are_all_matchers_regex = false;
 }
 
 static void help_fixed_match(const char * short_name, const char * long_name)
