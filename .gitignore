@@ -1,4 +1,4 @@
-blocks/.obj/*.o
+blocks/obj/*.o
 blocks/blocks
 blocks/unit-tests
 *.swp
