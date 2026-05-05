@@ -1,0 +1,9 @@
+blocks: error: ./input/test_input_lang_awk.txt:4:3: improper nesting from line 3
+blocks: error: # } main }
+blocks: error:   ^
+blocks: error: ./input/test_input_lang_awk.txt:4:10: improper nesting from line 4
+blocks: error: # } main }
+blocks: error:          ^
+blocks: error: ./input/test_input_lang_awk.txt:6:17: improper nesting from line 6
+blocks: error:     foo "} main }" bar
+blocks: error:                 ^

@@ -1,0 +1,3 @@
+blocks: error: ./input/test_input_lang_c.txt:8:15: improper nesting from line 8
+blocks: error:        } main }
+blocks: error:               ^

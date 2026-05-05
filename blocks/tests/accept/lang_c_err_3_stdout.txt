@@ -1,0 +1,7 @@
+void main()
+// main }
+{
+    const char * foo = "} main } ";
+
+    /*
+       } main }

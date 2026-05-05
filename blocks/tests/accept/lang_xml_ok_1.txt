@@ -1,0 +1,21 @@
+./input/test_input_lang_xml.txt:3:<foo
+./input/test_input_lang_xml.txt:4:    ...
+./input/test_input_lang_xml.txt:5:</foo>
+./input/test_input_lang_xml.txt:7:<bar> ... </bar>
+./input/test_input_lang_xml.txt:11:<n.o-t_e: date="<_2007>">
+./input/test_input_lang_xml.txt:12:  <to>Bob</to>
+./input/test_input_lang_xml.txt:13:  <from>
+./input/test_input_lang_xml.txt:14:    Lisa
+./input/test_input_lang_xml.txt:15:  </from>
+./input/test_input_lang_xml.txt:16:</n.o-t_e:>
+./input/test_input_lang_xml.txt:18:<n:-ote date='<_2"007">'
+./input/test_input_lang_xml.txt:19:
+./input/test_input_lang_xml.txt:20:    <!--
+./input/test_input_lang_xml.txt:21:        <tag>
+./input/test_input_lang_xml.txt:22:    -->
+./input/test_input_lang_xml.txt:23:
+./input/test_input_lang_xml.txt:24:  <to>John</to>
+./input/test_input_lang_xml.txt:25:  <from>
+./input/test_input_lang_xml.txt:26:    Jane
+./input/test_input_lang_xml.txt:27:  </from>
+./input/test_input_lang_xml.txt:28:</n:-ote>

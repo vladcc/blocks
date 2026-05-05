@@ -1,0 +1,15 @@
+default block name: default block start
+default block start: '{'
+default block end: '}'
+lang: c
+block name: 'main' type: regex case: i
+block start: '{' type: string case: A
+block end: '}' type: string case: A
+line comment: '//' type: string case: A
+block comment begin: '/*' type: string case: A
+block comment terminate: '*/' type: string case: A
+match: '' type: none case: none
+don't match: '' type: none case: none
+string rx: '"([^\\"]|[\\].)*"' type: regex case: A
+match/don't match logic: none
+no strings: on

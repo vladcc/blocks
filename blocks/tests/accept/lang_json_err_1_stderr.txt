@@ -1,0 +1,3 @@
+blocks: error: ./input/test_input_lang_json.txt:9:1: improper nesting from line 6
+blocks: error: }
+blocks: error: ^

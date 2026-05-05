@@ -1,0 +1,10 @@
+void main()
+// main }
+{
+    const char * foo = "} main } ";
+
+    /*
+       } main }
+    */
+    return 0;
+}

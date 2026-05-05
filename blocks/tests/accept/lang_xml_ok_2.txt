@@ -1,0 +1,8 @@
+./input/test_input_lang_xml.txt:12:  <to>Bob</to>
+./input/test_input_lang_xml.txt:13:  <from>
+./input/test_input_lang_xml.txt:14:    Lisa
+./input/test_input_lang_xml.txt:15:  </from>
+./input/test_input_lang_xml.txt:24:  <to>John</to>
+./input/test_input_lang_xml.txt:25:  <from>
+./input/test_input_lang_xml.txt:26:    Jane
+./input/test_input_lang_xml.txt:27:  </from>

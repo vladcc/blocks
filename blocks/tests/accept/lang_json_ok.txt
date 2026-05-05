@@ -1,0 +1,6 @@
+./input/test_input_lang_json.txt:2:    "fOo" : {
+./input/test_input_lang_json.txt:3:        "bar" : "baz"
+./input/test_input_lang_json.txt:4:    },
+./input/test_input_lang_json.txt:6:    "ziG" : [
+./input/test_input_lang_json.txt:7:        1,2,3
+./input/test_input_lang_json.txt:8:    ]

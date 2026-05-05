@@ -1,0 +1,15 @@
+default block name: default block start
+default block start: '{'
+default block end: '}'
+lang: info
+block name: 'main' type: regex case: i
+block start: '{' type: string case: A
+block end: '}' type: string case: A
+line comment: ';' type: string case: A
+block comment begin: '' type: none case: none
+block comment terminate: '' type: none case: none
+match: '' type: none case: none
+don't match: '' type: none case: none
+string rx: '' type: none case: none
+match/don't match logic: none
+no strings: off

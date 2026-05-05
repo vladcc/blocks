@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<foo
+    ...
+</foo>
+
+<bar> ... </bar>
+
+<empty-tag/>
+
+<n.o-t_e: date="<_2007>">
+  <to>Bob</to>
+  <from>
+    Lisa
+  </from>
+</n.o-t_e:>
+
+<n:-ote date='<_2"007">'
+
+    <!--
+        <tag>
+    -->
+
+  <to>John</to>
+  <from>
+    Jane
+  </from>
+</n:-ote>

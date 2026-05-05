@@ -1,0 +1,10 @@
+./input/test_input_lang_xml.txt:3:<foo
+./input/test_input_lang_xml.txt:4:    ...
+./input/test_input_lang_xml.txt:5:</foo>
+./input/test_input_lang_xml.txt:7:<bar> ... </bar>
+./input/test_input_lang_xml.txt:11:<n.o-t_e: date="<_2007>">
+./input/test_input_lang_xml.txt:12:  <to>Bob</to>
+./input/test_input_lang_xml.txt:13:  <from>
+./input/test_input_lang_xml.txt:14:    Lisa
+./input/test_input_lang_xml.txt:15:  </from>
+./input/test_input_lang_xml.txt:16:</n.o-t_e:>

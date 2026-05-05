@@ -1,0 +1,6 @@
+blocks: error: ./input/test_input_lang_c.txt:5:32: improper nesting from line 5
+blocks: error:     const char * foo = "} main } ";
+blocks: error:                                ^
+blocks: error: ./input/test_input_lang_c.txt:8:15: improper nesting from line 8
+blocks: error:        } main }
+blocks: error:               ^

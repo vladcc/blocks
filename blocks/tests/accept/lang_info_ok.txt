@@ -1,0 +1,8 @@
+main val
+; } main }
+{
+    foo
+}
+"bar" {
+    ; "} bar }"
+}

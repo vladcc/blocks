@@ -1,0 +1,4 @@
+function main()
+# } main }
+{
+    foo "} main }" bar

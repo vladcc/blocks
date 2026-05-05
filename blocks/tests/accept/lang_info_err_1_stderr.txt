@@ -1,0 +1,9 @@
+blocks: error: ./input/test_input_lang_info.txt:4:3: improper nesting from line 3
+blocks: error: ; } main }
+blocks: error:   ^
+blocks: error: ./input/test_input_lang_info.txt:4:10: improper nesting from line 4
+blocks: error: ; } main }
+blocks: error:          ^
+blocks: error: ./input/test_input_lang_info.txt:10:14: improper nesting from line 10
+blocks: error:     ; "} bar }"
+blocks: error:              ^
