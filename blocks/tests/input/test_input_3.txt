@@ -1,3 +1,11 @@
 main {
 
 }
+(define something
+...
+)
+foo { lazy dog }
+
+{
+    empty
+}

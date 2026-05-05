@@ -63,10 +63,7 @@ static void handle_comment(const char * opt, char * opt_arg, void * ctx)
 static void help_comment(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the single line comment symbol. Default is '%s'\n",
-defaults.line_comment
-);
+puts("Set <matcher> as the single line comment symbol.");
 puts("");
 }
 
@@ -81,10 +78,7 @@ static void handle_block_comment_begin(const char * opt, char * opt_arg, void * 
 static void help_block_comment_begin(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the start of block comment symbol. Default is '%s'\n",
-defaults.block_comment_begin
-);
+puts("Set <matcher> as the start of block comment symbol.");
 puts("");
 }
 
@@ -99,10 +93,7 @@ static void handle_block_comment_terminate(const char * opt, char * opt_arg, voi
 static void help_block_comment_terminate(const char * short_name, const char * long_name)
 {
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the end of block comment symbol. Default is '%s'\n",
-defaults.block_comment_terminate
-);
+puts("Set <matcher> as the end of block comment symbol.");
 puts("");
 }
 
@@ -472,7 +463,7 @@ static void handle_string_rx(const char * opt, char * opt_arg, void * ctx)
 static void help_string_rx(const char * short_name, const char * long_name)
 {
 printf("%s <regex>\n", long_name);
-puts("The regex used for identifying strings. Case sensitive.");
+puts("The regex used for identifying strings.");
 printf(
 "Used only if --%s is turned on. Default is %s\n",
 string_rx_opt_long,

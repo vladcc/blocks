@@ -155,7 +155,7 @@ btestv: blocks
 .PHONY: bsure
 bsure: blocks
 	cd $(TEST_DIR) && bash run_tests.sh x | grep '^test_' | sort > $(TESTS_RUN)
-	cd $(TEST_DIR) && diff $(TESTS_EXPECTED) $(TESTS_RUN)
+	cd $(TEST_DIR) && diff $(TESTS_RUN) $(TESTS_EXPECTED)
 
 .PHONY: utest
 utest: unit-tests

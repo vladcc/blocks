@@ -23,6 +23,12 @@ test_files_with_without_match
 test_flags
 test_help
 test_ignore_top
+test_lang
+test_lang_awk
+test_lang_c
+test_lang_info
+test_lang_json
+test_lang_xml
 test_line_numbers
 test_mark_start_end
 test_match_dont_match

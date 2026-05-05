@@ -39,8 +39,7 @@ the block begins at the start of the name. This allows to match all blocks
 in a file when the name is the same as the opening symbol. It also allows
 to match LISP-like syntax where the block start comes before the name, e.g.:
 blocks -n '(define' -s '(' -e ')'
-Input is advanced when either block start or block end are matched and
-subsequent searching begins one character after the start match.
+Input is advanced when either block start or block end is matched.
 
 Return codes:
 help/version message:         0
@@ -66,13 +65,13 @@ Set <matcher> as the open block symbol. Default is '{'
 Set <matcher> as the close block symbol. Default is '}'
 
 -C|--comment <matcher>
-Set <matcher> as the single line comment symbol. Default is '//'
+Set <matcher> as the single line comment symbol.
 
 -B|--block-comment-begin <matcher>
-Set <matcher> as the start of block comment symbol. Default is '/*'
+Set <matcher> as the start of block comment symbol.
 
 -T|--block-comment-terminate <matcher>
-Set <matcher> as the end of block comment symbol. Default is '*/'
+Set <matcher> as the end of block comment symbol.
 
 -m|--match <matcher>
 Print only blocks in which at least one line matches <matcher>.
@@ -165,7 +164,7 @@ on the command line.
 Ignore strings when looking for matching patterns.
 
 --string-rx <regex>
-The regex used for identifying strings. Case sensitive.
+The regex used for identifying strings.
 Used only if --string-rx is turned on. Default is "([^\\"]|[\\].)*"
 
 -r|--regex-match

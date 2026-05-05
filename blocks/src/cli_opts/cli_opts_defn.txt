@@ -134,10 +134,7 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the single line comment symbol. Default is '%s'\n",
-defaults.line_comment
-);
+puts("Set <matcher> as the single line comment symbol.");
 puts("");
 end_code
 end
@@ -151,10 +148,7 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the start of block comment symbol. Default is '%s'\n",
-defaults.block_comment_begin
-);
+puts("Set <matcher> as the start of block comment symbol.");
 puts("");
 end_code
 end
@@ -168,10 +162,7 @@ end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-printf(
-"Set <matcher> as the end of block comment symbol. Default is '%s'\n",
-defaults.block_comment_terminate
-);
+puts("Set <matcher> as the end of block comment symbol.");
 puts("");
 end_code
 end
@@ -520,7 +511,7 @@ end_code
 
 help_code
 printf("%s <regex>\n", long_name);
-puts("The regex used for identifying strings. Case sensitive.");
+puts("The regex used for identifying strings.");
 printf(
 "Used only if --%s is turned on. Default is %s\n",
 string_rx_opt_long,

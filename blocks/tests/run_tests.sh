@@ -5,6 +5,7 @@ readonly G_TEST_RESULT_STDOUT="./test_result_stdout.txt"
 readonly G_TEST_RESULT_STDERR="./test_result_stderr.txt"
 readonly G_TEST_FILE_1="./input/test_input_1.txt"
 readonly G_TEST_FILE_2="./input/test_input_2.txt"
+readonly G_TEST_FILE_3="./input/test_input_3.txt"
 readonly G_TEST_FILES_1_2="$G_TEST_FILE_1 $G_TEST_FILE_2"
 readonly G_TEST_FILE_WITH_ERR="./input/test_input_with_err.txt"
 readonly G_TEST_EMPTY_DIR="./input/empty.dir"
@@ -69,8 +70,11 @@ function diff_stderr
 # <flags>
 function test_block_name
 {
-	# trivial
+	# default
 	run_ok "$G_TEST_FILE_1"
+	diff_stdout "block_name_default_no_comments.txt"
+
+	run_ok "-C '//' -B '/*' -T '*/' $G_TEST_FILE_1"
 	diff_stdout "block_name_default.txt"
 
 	# no match; fixed string explicit
@@ -135,7 +139,7 @@ function test_block_start_end
 
 function test_comment_no_comment
 {
-	run_ok "-s '<' -e '>' $G_TEST_FILE_1"
+	run_ok "-s '<' -e '>' -C '//' $G_TEST_FILE_1"
 	diff_stdout "block_comment_default.txt"
 
 	run_ok "-C '#' -s '<' -e '>' $G_TEST_FILE_1"
@@ -149,16 +153,22 @@ function test_comment_no_comment
 	diff_stdout "block_comment_regex.txt"
 
 	# no comment
-	run_ok "-r -C '' -f -s '<' -e '>' $G_TEST_FILE_1"
+	run_ok "-C '' -f -s '<' -e '>' $G_TEST_FILE_1"
+	diff_stdout "block_comment_no_comment.txt"
+
+	run_ok "-f -s '<' -e '>' $G_TEST_FILE_1"
 	diff_stdout "block_comment_no_comment.txt"
 }
 
 function test_block_comment
 {
-	run_nok "-n 'block' $G_TEST_FILE_1"
+	run_nok "-n 'block' -B '/*' -T '*/' $G_TEST_FILE_1"
 	diff_stdout "empty"
 
 	run_ok "-n 'block' -B '' -T '' $G_TEST_FILE_1"
+	diff_stdout "block_comment_default_off.txt"
+
+	run_ok "-n 'block' $G_TEST_FILE_1"
 	diff_stdout "block_comment_default_off.txt"
 
 	# long options
@@ -203,10 +213,10 @@ function test_match_dont_match
 	run_nok "--block-name 'max' --dont-match 'the quick' $G_TEST_FILE_1"
 	diff_stdout "empty"
 
-	run_ok "-M 'the quick' $G_TEST_FILE_1"
+	run_ok "-M 'the quick' -C '//' -B '/*' -T '*/' $G_TEST_FILE_1"
 	diff_stdout "block_dont_match_default.txt"
 
-	run_ok "-M 'foo' -M 'the quick' $G_TEST_FILE_1"
+	run_ok "-M 'foo' -C '//' -B '/*' -T '*/' -M 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_dont_match_default.txt"
 
 	# logic
@@ -253,7 +263,7 @@ function test_mark_start_end
 		"--mark-start '@START' --mark-end '@END' $G_TEST_FILE_1"
 	diff_stdout "mark_start_end_1.txt"
 
-	run_ok "-S'@START' -E'@END' $G_TEST_FILE_1"
+	run_ok "-S'@START' -E'@END' $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "mark_start_end_4.txt"
 }
 
@@ -265,67 +275,67 @@ function test_block_count
 	run_ok "-c 1 $G_TEST_FILE_1"
 	diff_stdout "blocks_count_1.txt"
 
-	run_ok "-c 2 $G_TEST_FILE_1"
+	run_ok "-C '//' -B '/*' -T '*/' -c 2 $G_TEST_FILE_1"
 	diff_stdout "blocks_count_2.txt"
 
-	run_ok "--block-count 2 $G_TEST_FILE_1"
+	run_ok "--block-count 2 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "blocks_count_2.txt"
 
-	run_ok "-c 3 $G_TEST_FILE_1"
+	run_ok "-c 3 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "blocks_count_3.txt"
 
-	run_ok "-c 4 $G_TEST_FILE_1"
+	run_ok "-c 4 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "blocks_count_4.txt"
 
-	run_ok "-c 5 $G_TEST_FILE_1"
+	run_ok "-c 5 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "blocks_count_4.txt"
 }
 
 function test_skip
 {
-	run_ok "-k 0 $G_TEST_FILE_1"
+	run_ok "-k 0 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "skip_0.txt"
 
-	run_ok "-k 1 $G_TEST_FILE_1"
+	run_ok "-k 1 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "skip_1.txt"
 
-	run_ok "-k 2 $G_TEST_FILE_1"
+	run_ok "-k 2 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "skip_2.txt"
 
-	run_ok "-k 3 $G_TEST_FILE_1"
+	run_ok "-k 3 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "skip_3.txt"
 
 	# long options
-	run_ok "--skip 3 $G_TEST_FILE_1"
+	run_ok "--skip 3 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "skip_3.txt"
 
-	run_nok "-k 4 $G_TEST_FILE_1"
+	run_nok "-k 4 $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "empty"
 }
 
 function test_line_numbers
 {
-	run_ok "-l $G_TEST_FILE_1"
+	run_ok "-l $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "line_numbers.txt"
 
 	# long options
-	run_ok "--line-numbers $G_TEST_FILE_1"
+	run_ok "--line-numbers $G_TEST_FILE_1 -C '//' -B '/*' -T '*/'"
 	diff_stdout "line_numbers.txt"
 }
 
 function test_with_filename
 {
-	run_ok "-N $G_TEST_FILE_1"
+	run_ok "-N $G_TEST_FILE_3"
 	diff_stdout "with_filename.txt"
 
 	# long options
-	run_ok "--with-filename $G_TEST_FILE_1"
+	run_ok "--with-filename $G_TEST_FILE_3"
 	diff_stdout "with_filename.txt"
 }
 
 function test_with_filename_and_numbers
 {
-	run_ok "-Nl $G_TEST_FILE_1"
+	run_ok "-Nl $G_TEST_FILE_3"
 	diff_stdout "with_filename_and_numbers.txt"
 }
 
@@ -645,6 +655,208 @@ function test_version
 	unset_run_prefix
 }
 
+# <lang>
+function test_lang_c
+{
+	local L_FILE="./input/test_input_lang_c.txt"
+
+	run_ok "-D -g C"
+	diff_stdout "lang_c_debug_1.txt"
+
+	# long name
+	run_ok "-D --lang C"
+	diff_stdout "lang_c_debug_1.txt"
+
+	run_ok "-D --lang C -C '#'"
+	diff_stdout "lang_c_debug_1.txt"
+
+	run_ok "-D --lang C -s '' -e '' -C '' -B '' -T ''"
+	diff_stdout "lang_c_debug_1.txt"
+
+	run_ok "-D -g C -n main"
+	diff_stdout "lang_c_debug_2.txt"
+
+	run_ok "-D -g C -ri -n main"
+	diff_stdout "lang_c_debug_3.txt"
+
+	run_nok "-n main $L_FILE"
+	diff_stdout_stderr "empty" "lang_c_err_1_stderr.txt"
+
+	run_nok "-n main -C '//' $L_FILE"
+	diff_stdout_stderr "lang_c_err_2_stdout.txt" "lang_c_err_2_stderr.txt"
+
+	run_nok "-n main -C '//' -z $L_FILE"
+	diff_stdout_stderr "lang_c_err_3_stdout.txt" "lang_c_err_3_stderr.txt"
+
+	run_ok "-n main -C '//' -z -B '/*' -T '*/' $L_FILE"
+	diff_stdout "lang_c_ok.txt"
+
+	run_ok "-g C -n main $L_FILE"
+	diff_stdout "lang_c_ok.txt"
+}
+
+function test_lang_awk
+{
+	local L_FILE="./input/test_input_lang_awk.txt"
+
+	run_ok "-D -g awk"
+	diff_stdout "lang_awk_debug_1.txt"
+
+	# long name
+	run_ok "-D --lang awk"
+	diff_stdout "lang_awk_debug_1.txt"
+
+	run_ok "-D --lang awk -C ';'"
+	diff_stdout "lang_awk_debug_1.txt"
+
+	run_ok "-D --lang=awk -s '' -e '' -C '' -B '' -T ''"
+	diff_stdout "lang_awk_debug_1.txt"
+
+	run_ok "-D -g awk -n main"
+	diff_stdout "lang_awk_debug_2.txt"
+
+	run_ok "-D -g awk -ri -n main"
+	diff_stdout "lang_awk_debug_3.txt"
+
+	run_nok "-n main $L_FILE"
+	diff_stdout_stderr "empty" "lang_awk_err_1_stderr.txt"
+
+	run_nok "-n main -C '#' $L_FILE"
+	diff_stdout_stderr "lang_awk_err_2_stdout.txt" "lang_awk_err_2_stderr.txt"
+
+	run_ok "-n main -C '#' -z $L_FILE"
+	diff_stdout "lang_awk_ok.txt"
+
+	run_ok "-g awk -n main $L_FILE"
+	diff_stdout "lang_awk_ok.txt"
+}
+
+function test_lang_json
+{
+	local L_FILE="./input/test_input_lang_json.txt"
+
+	run_ok "-D -g json"
+	diff_stdout "lang_json_debug_1.txt"
+
+	# long name
+	run_ok "-D --lang json"
+	diff_stdout "lang_json_debug_1.txt"
+
+	run_ok "-D --lang json -ri -C '#'"
+	diff_stdout "lang_json_debug_1.txt"
+
+	run_ok "-D --lang=json -s '' -e '' -C '#' -B '<' -T '>'"
+	diff_stdout "lang_json_debug_1.txt"
+
+	run_ok "-D -g json -rin 'foo|zig'"
+	diff_stdout "lang_json_debug_2.txt"
+
+	run_nok "-rin 'foo|zig' $L_FILE"
+	diff_stdout_stderr "lang_json_err_1_stdout.txt" "lang_json_err_1_stderr.txt"
+
+	run_ok "-r +i -n 'foo|zig' -s '\{|\[' -e '\}|\]' -Nl $L_FILE"
+	diff_stdout "lang_json_ok.txt"
+
+	run_ok "-g json -rin 'foo|zig' -Nl $L_FILE"
+	diff_stdout "lang_json_ok.txt"
+}
+
+function test_lang_xml
+{
+	local L_FILE="./input/test_input_lang_xml.txt"
+
+	run_ok "-D -g xml"
+	diff_stdout "lang_xml_debug_1.txt"
+
+	# long name
+	run_ok "-D --lang xml"
+	diff_stdout "lang_xml_debug_1.txt"
+
+	run_ok "-D --lang xml -C '#'"
+	diff_stdout "lang_xml_debug_1.txt"
+
+	run_ok "-D --lang xml -s '' -e '' -C '' -B '' -T ''"
+	diff_stdout "lang_xml_debug_1.txt"
+
+	run_ok "-D -g xml -n 'to|from'"
+	diff_stdout "lang_xml_debug_2.txt"
+
+	run_ok "-D -g xml -fin 'to|from'"
+	diff_stdout "lang_xml_debug_3.txt"
+
+	run_nok "-r -s '<([_:a-zA-Z][-._:a-zA-Z0-9]*)'" \
+		"-e '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' $L_FILE"
+	diff_stdout_stderr "lang_xml_err_1_stdout.txt" "lang_xml_err_1_stderr.txt"
+
+	run_nok "-r -s '<([_:a-zA-Z][-._:a-zA-Z0-9]*)'" \
+		"-e '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' -C '<.*/>' $L_FILE"
+	diff_stdout_stderr "lang_xml_err_2_stdout.txt" "lang_xml_err_2_stderr.txt"
+
+	run_nok "-Nl -r -s '<([_:a-zA-Z][-._:a-zA-Z0-9]*)'" \
+		"-e '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' -C '<.*/>'" \
+		"-z --string-rx '\"[^\"]*\"' $L_FILE"
+	diff_stdout_stderr "lang_xml_err_3_stdout.txt" "lang_xml_err_3_stderr.txt"
+
+	run_nok "-Nl -r -s '<([_:a-zA-Z][-._:a-zA-Z0-9]*)'" \
+		"-e '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' -C '<.*/>'" \
+		"-z --string-rx '\"[^\"]*\"' -B '<!--' -T '-->' $L_FILE"
+	diff_stdout_stderr "lang_xml_err_3_stdout.txt" "lang_xml_err_3_stderr.txt"
+
+	run_ok "-Nl -r -s '<([_:a-zA-Z][-._:a-zA-Z0-9]*)'" \
+		"-e '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' -C '<.*/>'" \
+		"-z --string-rx \"\\\"[^\\\"]*\\\"|'[^']*'\" -B '<!--' -T '-->' $L_FILE"
+	diff_stdout "lang_xml_ok_1.txt"
+
+	run_ok "-Nl -g xml $L_FILE"
+	diff_stdout "lang_xml_ok_1.txt"
+
+	run_ok "-Nl -g xml -n 'to|from' $L_FILE"
+	diff_stdout "lang_xml_ok_2.txt"
+}
+
+function test_lang_info
+{
+	local L_FILE="./input/test_input_lang_info.txt"
+
+	run_ok "-D -g info"
+	diff_stdout "lang_info_debug_1.txt"
+
+	# long name
+	run_ok "-D --lang info"
+	diff_stdout "lang_info_debug_1.txt"
+
+	run_ok "-D --lang info -ri -C '#'"
+	diff_stdout "lang_info_debug_1.txt"
+
+	run_ok "-D --lang=info -s '' -e '' -C '' -B '' -T ''"
+	diff_stdout "lang_info_debug_1.txt"
+
+	run_ok "-D -g info -n main"
+	diff_stdout "lang_info_debug_2.txt"
+
+	run_ok "-D -g info -ri -n main"
+	diff_stdout "lang_info_debug_3.txt"
+
+	run_nok "-rn 'main|bar' $L_FILE"
+	diff_stdout_stderr "lang_info_err_1_stdout.txt" "lang_info_err_1_stderr.txt"
+
+	run_ok "-rn 'main|bar' -C ';' $L_FILE"
+	diff_stdout "lang_info_ok.txt"
+
+	run_ok "-g info -rn 'main|bar' $L_FILE"
+	diff_stdout "lang_info_ok.txt"
+}
+
+function test_lang
+{
+	bt_eval test_lang_c
+	bt_eval test_lang_awk
+	bt_eval test_lang_json
+	bt_eval test_lang_xml
+	bt_eval test_lang_info
+}
+# </lang>
+
 function test_flags
 {
 	bt_eval test_block_name
@@ -669,6 +881,7 @@ function test_flags
 	bt_eval test_version
 	bt_eval test_closest_name_to_block
 	bt_eval test_no_strings
+	bt_eval test_lang
 }
 # </flags>
 
@@ -735,43 +948,42 @@ function test_multiple_files
 function test_stdin_pipe
 {
 	set_run_prefix "cat $G_TEST_FILE_1 |"
-	run_ok
+	run_ok "-C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_default.txt"
 
-	run_ok "-N"
+	run_ok "-N -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_with_filename.txt"
 
-	run_ok "-l"
+	run_ok "-l -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_with_line_num.txt"
 
-	run_ok "-Nl"
+	run_ok "-Nl -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_line_nums_and_file.txt"
 
-	run_ok "-w"
+	run_ok "-w -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_file_with_match.txt"
 
-	run_nok "-n 'none' -W"
+	run_nok "-n 'none' -W -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_file_without_match.txt"
 
-	run_ok "-Nl $G_TEST_FILE_2"
+	run_ok "-Nl $G_TEST_FILE_2 -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_file_name_num.txt"
 
-	run_ok "-Nl $G_TEST_FILE_2 -"
+	run_ok "-Nl $G_TEST_FILE_2 - -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_file_name_num_2.txt"
 
-	run_ok "-Nl - $G_TEST_FILE_2"
+	run_ok "-Nl - $G_TEST_FILE_2 -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_file_name_num_3.txt"
 	unset_run_prefix
 
 	set_run_prefix "cat $G_TEST_FILES_1_2 |"
-	run_ok "-Nl"
+	run_ok "-Nl -C '//' -B '/*' -T '*/'"
 	diff_stdout "pipe_stdin_2_files.txt"
 	unset_run_prefix
 }
 
 function test_file_list
 {
-	local L_TEST_FILE_3="./input/test_input_3.txt"
 	local L_FLIST="./file_list.txt"
 
 	run_nok "-L none"
@@ -792,7 +1004,7 @@ function test_file_list
 	run_ok "-r -n 'main|zing' -lN -L $L_FLIST"
 	diff_stdout "mult_files_filenames_line_numbers.txt"
 
-	run_ok "-r -n 'main|zing' -lN $G_TEST_FILE_2 -L $L_FLIST $L_TEST_FILE_3"
+	run_ok "-r -n 'main|zing' -lN $G_TEST_FILE_2 -L $L_FLIST $G_TEST_FILE_3"
 	diff_stdout "file_list_1.txt"
 }
 
@@ -814,7 +1026,7 @@ function test_exit_codes
 	assert_ec 2
 	diff_stderr "exit_codes_no_file_err.txt"
 
-	run "$G_TEST_FILES_WITH_DIR"
+	run "$G_TEST_FILES_WITH_DIR -C '//' -B '/*' -T '*/'"
 	assert_ec 2
 	diff_stdout_stderr "exit_codes_with_dir_stdout.txt" \
 		"exit_codes_with_dir_stderr.txt"
@@ -844,11 +1056,11 @@ function test_exit_codes
 	assert_ec 2
 	diff_stderr "exit_codes_empty_end.txt"
 
-	run "-B ''"
+	run "-B '' -T '*/'"
 	assert_ec 2
 	diff_stderr "exit_codes_empty_B.txt"
 
-	run "-T ''"
+	run "-B '*/' -T ''"
 	assert_ec 2
 	diff_stderr "exit_codes_empty_T.txt"
 
@@ -861,13 +1073,19 @@ function test_closest_name_to_block
 {
 	local L_FILE="./input/test_input_closest_name_to_block.txt"
 
-	run_ok "-ln 'main' $L_FILE"
+	run_ok "-ln 'main' -C '//' -B '/*' -T '*/' $L_FILE"
 	diff_stdout "closest_name_to_block_1.txt"
 
-	run_ok "-ln 'main' -C '' $L_FILE"
+	run_ok "-ln 'main' -C '' -B '/*' -T '*/' $L_FILE"
+	diff_stdout "closest_name_to_block_2.txt"
+
+	run_ok "-ln 'main' -B '/*' -T '*/' $L_FILE"
 	diff_stdout "closest_name_to_block_2.txt"
 
 	run_ok "-ln 'main' -B '' -T '' $L_FILE"
+	diff_stdout "closest_name_to_block_3.txt"
+
+	run_ok "-ln 'main' $L_FILE"
 	diff_stdout "closest_name_to_block_3.txt"
 }
 
@@ -899,7 +1117,7 @@ function test_eoi_before_comment_end
 {
 	local L_FILE="./input/bug_input_eoi_before_comment_end.txt"
 
-	run_ok "$L_FILE"
+	run_ok "$L_FILE -C '//' -B '/*' -T '*/'"
 	diff_stdout "bugfix_eoi_before_comment_end.txt"
 }
 

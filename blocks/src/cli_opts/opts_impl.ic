@@ -56,6 +56,7 @@ static void handle_lang(const char * opt_arg, void * ctx)
 	{
 		if (strcmp(buff, langs[i].name) == 0)
 		{
+			context->lang_name = langs[i].name;
 			context->which_lang = langs[i].which;
 			return;
 		}
@@ -260,10 +261,7 @@ printf("When the name is matched, the input isn't advanced and the search for\n"
 "%s -n '(define' -s '(' -e ')'\n",
 	program_name
 );
-puts(
-"Input is advanced when either block start or block end are matched and\n"
-"subsequent searching begins one character after the start match."
-);
+puts("Input is advanced when either block start or block end is matched.");
 puts("");
 puts("Return codes:");
 printf(
@@ -319,21 +317,6 @@ static void make_lang(prog_options& opts)
 
 				if (!opts.matchers[B_END].pat)
 					opts.matchers[B_END].pat = defaults.block_close;
-
-				if (!opts.matchers[B_LINE_COMMENT].pat)
-					opts.matchers[B_LINE_COMMENT].pat = defaults.line_comment;
-
-				if (!opts.matchers[B_COMMENT_BEGIN].pat)
-				{
-					opts.matchers[B_COMMENT_BEGIN].pat =
-						defaults.block_comment_begin;
-				}
-
-				if (!opts.matchers[B_COMMENT_TERM].pat)
-				{
-					opts.matchers[B_COMMENT_TERM].pat =
-						defaults.block_comment_terminate;
-				}
 
 				if (opts.no_strings)
 				{
@@ -432,10 +415,10 @@ static void make_lang(prog_options& opts)
 		} break;
 
 		case LANG_XML: {
-			static std::string start_pat("<");
-			static std::string end_pat("</");
+			static std::string start_pat("<(");
+			static std::string end_pat("</(");
 
-			const char * xml_name_rx = "[_:a-zA-Z][-._:a-zA-Z0-9]+";
+			const char * xml_name_rx = "[_:a-zA-Z][-._:a-zA-Z0-9]*";
 
 			if (opts.matchers[B_NAME].pat)
 			{
@@ -449,9 +432,11 @@ static void make_lang(prog_options& opts)
 				opts.matchers[B_NAME].is_regex = true;
 				opts.matchers[B_END].is_regex = true;
 			}
-			end_pat.append(">");
+			start_pat.append(")");
+			end_pat.append(")");
 
 			opts.matchers[B_NAME].pat = start_pat.c_str();
+			opts.matchers[B_NAME].is_regex = true;
 
 			opts.matchers[B_START] = opts.matchers[B_NAME];
 
@@ -521,6 +506,7 @@ static void handle_options(
 {
 	prog_options * context = &opts;
 
+	opts.lang_name = "none";
 	opts.file_names = &file_names;
 	opts.block_count = -1;
 	opts.skip_count = 0;

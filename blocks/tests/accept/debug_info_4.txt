@@ -1,9 +1,7 @@
 default block name: default block start
 default block start: '{'
 default block end: '}'
-default line comment: '//'
-default block comment begin: '/*'
-default block comment terminate: '*/'
+lang: none
 block name: 'A' type: string case: A
 block start: 'B' type: string case: A
 block end: 'C' type: string case: A
@@ -13,5 +11,5 @@ block comment terminate: 'F' type: string case: A
 match: '' type: none case: none
 don't match: 'G' type: string case: A
 string rx: '' type: none case: none
-no strings: off
 match/don't match logic: none
+no strings: off

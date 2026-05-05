@@ -59,20 +59,20 @@ public:
 		_has_input(false),
 		_block_comment(false)
 	{
-		_name[0] = {_pats.name,          _NAME};
-		_name[1] = {_pats.comment,       _COMMENT};
-		_name[2] = {_pats.comment_start, _COMMENT_START};
+		_name[0] = {_pats.comment,       _COMMENT};
+		_name[1] = {_pats.comment_start, _COMMENT_START};
+		_name[2] = {_pats.name,          _NAME};
 
-		_name_open_close[0] = {_pats.name,          _NAME};
-		_name_open_close[1] = {_pats.open,          _OPEN};
-		_name_open_close[2] = {_pats.close,         _CLOSE};
-		_name_open_close[3] = {_pats.comment,       _COMMENT};
-		_name_open_close[4] = {_pats.comment_start, _COMMENT_START};
+		_name_open_close[0] = {_pats.comment,       _COMMENT};
+		_name_open_close[1] = {_pats.comment_start, _COMMENT_START};
+		_name_open_close[2] = {_pats.name,          _NAME};
+		_name_open_close[3] = {_pats.open,          _OPEN};
+		_name_open_close[4] = {_pats.close,         _CLOSE};
 
-		_open_close[0] = {_pats.open,          _OPEN};
-		_open_close[1] = {_pats.close,         _CLOSE};
-		_open_close[2] = {_pats.comment,       _COMMENT};
-		_open_close[3] = {_pats.comment_start, _COMMENT_START};
+		_open_close[0] = {_pats.comment,       _COMMENT};
+		_open_close[1] = {_pats.comment_start, _COMMENT_START};
+		_open_close[2] = {_pats.open,          _OPEN};
+		_open_close[3] = {_pats.close,         _CLOSE};
 
 		_comment_end[0] = {_pats.comment_end, _COMMENT_END};
 	}

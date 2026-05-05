@@ -38,7 +38,8 @@ enum elang {
 	LANG_AWK,
 	LANG_JSON,
 	LANG_XML,
-	LANG_INFO
+	LANG_INFO,
+	LANG_END
 };
 
 struct mdata {
@@ -68,6 +69,7 @@ struct prog_options {
 	const char * mark_start;
 	const char * mark_end;
 	const char * file_list;
+	const char * lang_name;
 	elang which_lang;
 	int block_count;
 	int skip_count;
@@ -91,9 +93,6 @@ struct prog_options {
 struct {
 	const char * block_open    = "{";
 	const char * block_close   = "}";
-	const char * line_comment  = "//";
-	const char * block_comment_begin  = "/*";
-	const char * block_comment_terminate = "*/";
 	const char * string_rx = "\"([^\\\\\"]|[\\\\].)*\"";
 } defaults;
 
@@ -244,32 +243,23 @@ static void print_debug_and_quit(
 	std::string buff;
 	const matcher * mtchr = nullptr;
 
-	{
-		// defaults
-		buff.assign("default block name: default block start");
-		print_line(buff.c_str());
+	// defaults
+	buff.assign("default block name: default block start");
+	print_line(buff.c_str());
 
-		buff.assign("default block start: '").append(defaults.block_open).
-			append("'");
-		print_line(buff.c_str());
+	buff.assign("default block start: '").append(defaults.block_open).
+		append("'");
+	print_line(buff.c_str());
 
-		buff.assign("default block end: '").append(defaults.block_close).
-			append("'");
-		print_line(buff.c_str());
+	buff.assign("default block end: '").append(defaults.block_close).
+		append("'");
+	print_line(buff.c_str());
 
-		buff.assign("default line comment: '").append(defaults.line_comment).
-			append("'");
-		print_line(buff.c_str());
+	// lang
+	buff.assign("lang: ").append(opts.lang_name);
+	print_line(buff.c_str());
 
-		buff.assign("default block comment begin: '").
-			append(defaults.block_comment_begin).append("'");
-		print_line(buff.c_str());
-
-		buff.assign("default block comment terminate: '").
-			append(defaults.block_comment_terminate).append("'");
-		print_line(buff.c_str());
-	}
-
+	// mathers
 	for (int i = M_FIRST; i < M_TOTAL; ++i)
 	{
 		mtchr = pats.matchers[i];
@@ -296,15 +286,15 @@ static void print_debug_and_quit(
 		print_line(buff.c_str());
 	}
 
-	buff.assign("no strings: ");
-	buff.append(opts.no_strings ? "on" : "off");
-	print_line(buff.c_str());
-
 	buff.assign("match/don't match logic: ");
 	if (opts.match_how.do_logic)
 		buff.append(opts.match_how.and_mM_together ? "and" : "or");
 	else
 		buff.append("none");
+	print_line(buff.c_str());
+
+	buff.assign("no strings: ");
+	buff.append(opts.no_strings ? "on" : "off");
 	print_line(buff.c_str());
 
 	exit(EXIT_SUCCESS);

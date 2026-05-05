@@ -1,13 +1,10 @@
-xxxx-xx-xx
-#blocks 3.0
-#--lang=C,awk,json,xml,info,lisp?(comments? scheme?)
-#add --lang
-#no comments by default
-#test lang
-- add i/A to -D
-- case sensitive introduced
-- put +(r|f) and +(iA) together
-- incompatibility - now case in/sensitive act like -(f|r)/+(f|r)
+2026-05-05
+blocks 3.0
+--lang=C,awk,json,xml,info implemented
+no comments by default
+case sensitive introduced
+put +(r|f) and +(iA) together
+incompatibility - now case in/sensitive act like -(f|r)/+(f|r)
 
 2026-04-20
 blocks 2.2
