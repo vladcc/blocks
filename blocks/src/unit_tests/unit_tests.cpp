@@ -1,6 +1,7 @@
 #include "matcher.hpp"
 #include "lexer.hpp"
 #include "block_parser.hpp"
+#include "find_files.hpp"
 
 #include <memory>
 #include <string>
@@ -24,6 +25,7 @@ static bool test_block_parser();
 static bool test_block_comment();
 static bool test_closest_name_to_block_open();
 static bool test_no_strings();
+static bool test_file_finder();
 
 static ftest tests[] = {
 	test_matchers,
@@ -32,7 +34,8 @@ static ftest tests[] = {
 	test_block_parser,
 	test_block_comment,
 	test_closest_name_to_block_open,
-	test_no_strings
+	test_no_strings,
+	test_file_finder
 };
 
 static bool test_matchers()
@@ -1744,6 +1747,267 @@ static bool test_no_strings()
 	return true;
 }
 
+static bool cmp_vects(
+	const std::vector<std::string>& a,
+	const std::vector<std::string>& b
+)
+{
+	// ignores order
+	if (a.size() != b.size())
+		return false;
+
+	bool seen = false;
+	for (const auto& str_a : a)
+	{
+		seen = false;
+		for (const auto& str_b : b)
+		{
+			if (str_a == str_b)
+			{
+				seen = true;
+				break;
+			}
+		}
+
+		if (!seen)
+			return false;
+	}
+
+	return true;
+}
+
+static bool test_file_finder()
+{
+	const std::string base = "base";
+
+	/*** no directory error ***/
+	{
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		const char * no_dir = "no_dir";
+		std::string err;
+		check(err.empty());
+		check(!find_files(no_dir, false, nullptr, nullptr, out_files, err));
+		check(!err.empty());
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+	}
+
+	/*** non-recursive, no filters ***/
+	{
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/dir_2",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, false, nullptr, nullptr, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** non-recursive, include filter ***/
+	{
+		const regex_matcher include("\\.txt$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, false, &include, nullptr, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** non-recursive, exclude filter ***/
+	{
+		const regex_matcher exclude("/dir_2$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, false, nullptr, &exclude, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** non-recursive, include and exclude filters ***/
+	{
+		const regex_matcher include("\\.txt$", 0);
+		const regex_matcher exclude("_2\\.txt$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, false, &include, &exclude, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** recursive, no filters ***/
+	{
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/dir_2",
+			"./src/unit_tests/dir_1/dir_2/file_1.txt",
+			"./src/unit_tests/dir_1/dir_2/file_2.txt",
+			"./src/unit_tests/dir_1/dir_2/file_3.txt",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, true, nullptr, nullptr, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** recursive, include filter ***/
+	{
+		const regex_matcher include("\\.txt$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/dir_2/file_1.txt",
+			"./src/unit_tests/dir_1/dir_2/file_2.txt",
+			"./src/unit_tests/dir_1/dir_2/file_3.txt",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, true, &include, nullptr, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** recursive, exclude filter ***/
+	{
+		const regex_matcher exclude("/dir_2$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/dir_2/file_1.txt",
+			"./src/unit_tests/dir_1/dir_2/file_2.txt",
+			"./src/unit_tests/dir_1/dir_2/file_3.txt",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_2.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, true, nullptr, &exclude, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	/*** recursive, include and exclude filters ***/
+	{
+		const regex_matcher include("\\.txt$", 0);
+		const regex_matcher exclude("_2\\.txt$", 0);
+
+		static std::vector<std::string> flist = {
+			"base",
+			"./src/unit_tests/dir_1/dir_2/file_1.txt",
+			"./src/unit_tests/dir_1/dir_2/file_3.txt",
+			"./src/unit_tests/dir_1/file_1.txt",
+			"./src/unit_tests/dir_1/file_3.txt",
+		};
+
+		std::string err;
+		const char * dir = "./src/unit_tests/dir_1";
+
+		std::vector<std::string> out_files;
+		out_files.push_back(base);
+		check(out_files.size() == 1);
+		check(out_files[0] == base);
+
+		check(err.empty());
+		check(find_files(dir, true, &include, &exclude, out_files, err));
+		check(err.empty());
+		check(cmp_vects(flist, out_files));
+	}
+
+	return true;
+}
+
 // <impl>
 bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, size_t line)
 {
@@ -1755,7 +2019,6 @@ bool check_(bool expr_val, cpstr expr_ch, cpstr file, cpstr func, size_t line)
 			<< std::endl << "("
 			<< expr_ch << ") " << std::endl
 			<< "failed" << std::endl;
-
 	}
 
 	return expr_val;

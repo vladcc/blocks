@@ -93,8 +93,14 @@ static void handle_matcher(ematcher which, const char * opt_arg, void * ctx)
 		matcher->is_icase = context->are_all_matchers_icase;
 	}
 
-	if (STRING_RX == which)
+	if (
+		STRING_RX == which        ||
+		FILES_INCLUDE_RX == which ||
+		FILES_EXCLUDE_RX == which
+	)
+	{
 		matcher->is_regex = true;
+	}
 }
 
 static void handle_plus_arguments(const char * arg, void * ctx, int depth)

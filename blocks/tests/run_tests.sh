@@ -982,6 +982,13 @@ function test_stdin_pipe
 	unset_run_prefix
 }
 
+function test_dir_search
+{
+	# implement me
+	bt_eval "false"
+	bt_assert_success
+}
+
 function test_file_list
 {
 	local L_FLIST="./file_list.txt"
@@ -1107,6 +1114,7 @@ function test_behavior
 {
 	bt_eval test_multiple_files
 	bt_eval test_stdin_pipe
+	bt_eval test_dir_search
 	bt_eval test_file_list
 	bt_eval test_exit_codes
 }

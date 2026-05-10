@@ -1,4 +1,4 @@
--- blocks 3.0 --
+-- blocks 4.0 --
 grep for nested data
 
 Use: blocks [options] [files]
@@ -156,16 +156,38 @@ block name inside the tag automatically. To see the resulting matchers
 for each language, use the debug info option. Ignores the no defaults
 option.
 
+-d|--directory <dir>
+Read all files from <dir>. By default, all entries are read, not only files.
+To filter, use the include/exclude options. Processed after the files given 
+on the command line and before the file list option.
+If both the include and the exclude options are provided, a file name must
+match the include and not match the exclude in order to be selected.
+
+-R|--recursive
+Do a recursive file search. If the directory option is not provided, the
+start directory defaults to '.'
+Symlinks to directories are followed.
+
+-u|--include-files-rx <regex>
+If a file name found by the directory option matches <regex>, the file is
+processed. <regex> is matched against the whole path. I.e. to make sure only
+'.txt' files are filtered in, use '\.txt$'
+
+-U|--exclude-files-rx <regex>
+If a file name found by the directory option matches <regex>, the file is
+not processed. <regex> is matched against the whole path. I.e. to make sure
+only '.txt' files are filtered out, use '\.txt$'
+
 -L|--file-list <file>
 Read a list of input files from <file>. Processed after the files given
-on the command line.
+on the command line and after the directory option.
 
 -z|--no-strings
 Ignore strings when looking for matching patterns.
 
 --string-rx <regex>
-The regex used for identifying strings.
-Used only if --string-rx is turned on. Default is "([^\\"]|[\\].)*"
+The regex used for identifying strings. Default is "([^\\"]|[\\].)*"
+Used only if the no strings option is turned on.
 
 -r|--regex-match
 All matchers after this argument are regex.

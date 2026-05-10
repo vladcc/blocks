@@ -1,3 +1,10 @@
+xxxx-xx-xx
+blocks 4.0
+lto added to the release build
+find_files() added, recursive follows symlinks
+- incompatibility - match/dont_match now use vectors, all match ands together,
+all don_match also
+
 2026-05-05
 blocks 3.0
 --lang=C,awk,json,xml,info implemented

@@ -291,6 +291,54 @@ opts_entry all_entries[] = {
 	},
 	{
 		.names = {
+			.long_name = directory_opt_long,
+			.short_name = directory_opt_short
+		},
+		.handler = {
+			.handler = handle_directory,
+			.context = (void *)context,
+		},
+		.print_help = help_directory,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = recursive_opt_long,
+			.short_name = recursive_opt_short
+		},
+		.handler = {
+			.handler = handle_recursive,
+			.context = (void *)context,
+		},
+		.print_help = help_recursive,
+		.takes_arg = false,
+	},
+	{
+		.names = {
+			.long_name = include_files_rx_opt_long,
+			.short_name = include_files_rx_opt_short
+		},
+		.handler = {
+			.handler = handle_include_files_rx,
+			.context = (void *)context,
+		},
+		.print_help = help_include_files_rx,
+		.takes_arg = true,
+	},
+	{
+		.names = {
+			.long_name = exclude_files_rx_opt_long,
+			.short_name = exclude_files_rx_opt_short
+		},
+		.handler = {
+			.handler = handle_exclude_files_rx,
+			.context = (void *)context,
+		},
+		.print_help = help_exclude_files_rx,
+		.takes_arg = true,
+	},
+	{
+		.names = {
 			.long_name = file_list_opt_long,
 			.short_name = file_list_opt_short
 		},

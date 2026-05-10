@@ -30,6 +30,10 @@ defn_start
 #-D|--debug
 
 #-g|--lang
+#-d|--directory
+#-R|--recursive
+#-u|--include-files-rx
+#-U|--exclude-files-rx
 #-L|--file-list
 #-z|--no-strings
 # --string-rx
@@ -471,6 +475,86 @@ puts("");
 end_code
 end
 
+long_name  directory
+short_name d
+takes_args true
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->files_dir = opt_arg;
+end_code
+
+help_code
+printf("%s|%s <dir>\n", short_name, long_name);
+puts(
+"Read all files from <dir>. By default, all entries are read, not only files.\n"
+"To filter, use the include/exclude options. Processed after the files given \n"
+"on the command line and before the file list option."
+);
+puts(
+"If both the include and the exclude options are provided, a file name must\n"
+"match the include and not match the exclude in order to be selected."
+);
+puts("");
+end_code
+end
+
+long_name  recursive
+short_name R
+takes_args false
+handler_code
+	prog_options * context = (prog_options *)ctx;
+	context->recursive = true;
+	if (!context->files_dir)
+		context->files_dir = ".";
+end_code
+
+help_code
+printf("%s|%s\n", short_name, long_name);
+puts(
+"Do a recursive file search. If the directory option is not provided, the\n"
+"start directory defaults to '.'"
+);
+puts("Symlinks to directories are followed.");
+puts("");
+end_code
+end
+
+long_name  include-files-rx
+short_name u
+takes_args true
+handler_code
+	handle_matcher(FILES_INCLUDE_RX, opt_arg, ctx);
+end_code
+
+help_code
+printf("%s|%s <regex>\n", short_name, long_name);
+puts(
+"If a file name found by the directory option matches <regex>, the file is\n"
+"processed. <regex> is matched against the whole path. I.e. to make sure only\n"
+"'.txt' files are filtered in, use '\\.txt$'"
+);
+puts("");
+end_code
+end
+
+long_name  exclude-files-rx
+short_name U
+takes_args true
+handler_code
+	handle_matcher(FILES_EXCLUDE_RX, opt_arg, ctx);
+end_code
+
+help_code
+printf("%s|%s <regex>\n", short_name, long_name);
+puts(
+"If a file name found by the directory option matches <regex>, the file is\n"
+"not processed. <regex> is matched against the whole path. I.e. to make sure\n"
+"only '.txt' files are filtered out, use '\\.txt$'"
+);
+puts("");
+end_code
+end
+
 long_name  file-list
 short_name L
 takes_args true
@@ -482,7 +566,7 @@ end_code
 help_code
 printf("%s|%s <file>\n", short_name, long_name);
 puts("Read a list of input files from <file>. Processed after the files given");
-puts("on the command line.");
+puts("on the command line and after the directory option.");
 puts("");
 end_code
 end
@@ -511,12 +595,11 @@ end_code
 
 help_code
 printf("%s <regex>\n", long_name);
-puts("The regex used for identifying strings.");
 printf(
-"Used only if --%s is turned on. Default is %s\n",
-string_rx_opt_long,
+"The regex used for identifying strings. Default is %s\n",
 defaults.string_rx
 );
+puts("Used only if the no strings option is turned on.");
 puts("");
 end_code
 end

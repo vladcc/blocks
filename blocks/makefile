@@ -5,16 +5,34 @@ AWK := awk
 CMPL := g++
 CCMPL := gcc
 EXTRA_FLAGS :=
-INCL_PATHS := -I ./src/matcher -I ./src/lexer -I ./src/parser
-INCL_PATHS += -I ./src/parse_opts -I ./src/cli_opts
-WARN_FLAGS := -Wall -Wfatal-errors
-FLAGS := $(INCL_PATHS) $(WARN_FLAGS) $(EXTRA_FLAGS)
 
 SRC_DIR := ./src
 OBJ_DIR := ./obj
 
+# <base_src>
+PARSE_OPTS_BASE := parse_opts
+CLI_OPTS_BASE   := cli_opts
+MATCHER_BASE    := matcher
+FIND_FILES_BASE := find_files
+LEXER_BASE      := lexer
+PARSER_BASE     := block_parser
+
+PARSE_OPTS_SRC_DIR := $(SRC_DIR)/$(PARSE_OPTS_BASE)
+CLI_SRC_DIR        := $(SRC_DIR)/$(CLI_OPTS_BASE)
+MATCHERS_SRC_DIR   := $(SRC_DIR)/$(MATCHER_BASE)
+FIND_FILES_SRC_DIR := $(SRC_DIR)/$(FIND_FILES_BASE)
+LEXER_SRC_DIR      := $(SRC_DIR)/$(LEXER_BASE)
+PARSER_SRC_DIR     := $(SRC_DIR)/$(PARSER_BASE)
+# </base_src>
+
+INCL_PATHS := -I $(MATCHERS_SRC_DIR) -I $(LEXER_SRC_DIR) -I $(PARSER_SRC_DIR)
+INCL_PATHS += -I $(PARSE_OPTS_SRC_DIR) -I $(CLI_SRC_DIR)
+INCL_PATHS += -I $(FIND_FILES_SRC_DIR)
+WARN_FLAGS := -Wall -Wfatal-errors
+FLAGS := $(INCL_PATHS) $(WARN_FLAGS) $(EXTRA_FLAGS)
+
 .PHONY: release
-release: FLAGS += -O3
+release: FLAGS += -O3 -flto=auto
 release: clean compile
 
 .PHONY: debug
@@ -22,10 +40,7 @@ debug: FLAGS += -g
 debug: clean compile
 
 # <parse_opts>
-PARSE_OPTS_SRC_DIR := $(SRC_DIR)/parse_opts
-
 PARSE_OPTS_GEN := $(PARSE_OPTS_SRC_DIR)/parse-opts-gen.awk
-PARSE_OPTS_BASE := parse_opts
 PARSE_OPTS_SRC := $(PARSE_OPTS_SRC_DIR)/$(PARSE_OPTS_BASE).c
 PARSE_OPTS_O := $(OBJ_DIR)/$(PARSE_OPTS_BASE).o
 $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
@@ -33,8 +48,6 @@ $(PARSE_OPTS_O): $(PARSE_OPTS_SRC)
 # </parse_opts>
 
 # <cli_opts>
-CLI_SRC_DIR := $(SRC_DIR)/cli_opts
-
 CLI_DEFN_SRC := $(CLI_SRC_DIR)/cli_opts_defn.txt
 CLI_DEFN_IC := $(CLI_SRC_DIR)/opts_definitions.ic
 CLI_PROC_IC := $(CLI_SRC_DIR)/opts_process.ic
@@ -61,8 +74,6 @@ $(MAIN_O): $(MAIN_SRC) $(MAIN_CLI)
 # </main>
 
 # <matchers>
-MATCHERS_SRC_DIR := $(SRC_DIR)/matcher
-
 STRING_MATCHER_BASE := string_matcher
 STRING_MATCHER_SRC := $(MATCHERS_SRC_DIR)/$(STRING_MATCHER_BASE).cpp
 STRING_MATCHER_HDR := $(MATCHERS_SRC_DIR)/$(STRING_MATCHER_BASE).hpp
@@ -87,10 +98,15 @@ $(MATCHER_FACTORY_O): $(MATCHER_FACTORY_SRC) $(MATCHER_FACTORY_HDR)
 MATCHERS_O := $(STRING_MATCHER_O) $(REGEX_MATCHER_O) $(MATCHER_FACTORY_O)
 # </matchers>
 
-# <lexer>
-LEXER_SRC_DIR := $(SRC_DIR)/lexer
+# <find_files>
+FIND_FILES_SRC := $(FIND_FILES_SRC_DIR)/$(FIND_FILES_BASE).cpp
+FIND_FILES_HDR := $(FIND_FILES_SRC_DIR)/$(FIND_FILES_BASE).hpp
+FIND_FILES_O := $(OBJ_DIR)/$(FIND_FILES_BASE).o
+$(FIND_FILES_O): $(FIND_FILES_SRC) $(FIND_FILES_HDR)
+	$(CMPL) -c $< -o $@ $(FLAGS)
+# </find_files>
 
-LEXER_BASE := lexer
+# <lexer>
 LEXER_SRC := $(LEXER_SRC_DIR)/$(LEXER_BASE).cpp
 LEXER_HDR := $(LEXER_SRC_DIR)/$(LEXER_BASE).hpp
 LEXER_O := $(OBJ_DIR)/$(LEXER_BASE).o
@@ -99,9 +115,6 @@ $(LEXER_O): $(LEXER_SRC) $(LEXER_HDR)
 # </lexer>
 
 # <parser>
-PARSER_SRC_DIR := $(SRC_DIR)/parser
-
-PARSER_BASE := block_parser
 PARSER_SRC := $(PARSER_SRC_DIR)/$(PARSER_BASE).cpp
 PARSER_HDR := $(PARSER_SRC_DIR)/$(PARSER_BASE).hpp
 PARSER_O := $(OBJ_DIR)/$(PARSER_BASE).o
@@ -123,11 +136,13 @@ $(UNIT_TESTS_O): $(UNIT_TESTS_SRC)
 BLOCKS_BASE := blocks
 BLOCKS_BIN := $(BLOCKS_BASE)
 BLOCKS_DEP := $(MAIN_O) $(PARSE_OPTS_O) $(MATCHERS_O) $(LEXER_O) $(PARSER_O)
+BLOCKS_DEP += $(FIND_FILES_O)
 $(BLOCKS_BIN): $(BLOCKS_DEP)
 	$(CMPL) $^ -o ./$@ $(FLAGS)
 
 UNIT_TESTS_BIN := unit-tests
 UNIT_TESTS_DEP := $(UNIT_TESTS_O) $(MATCHERS_O) $(LEXER_O) $(PARSER_O)
+UNIT_TESTS_DEP += $(FIND_FILES_O)
 $(UNIT_TESTS_BIN): FLAGS += -g
 $(UNIT_TESTS_BIN): $(UNIT_TESTS_DEP)
 	$(CMPL) $^ -o ./$@ $(FLAGS)

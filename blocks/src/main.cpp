@@ -1,5 +1,6 @@
 #include "block_parser.hpp"
 #include "matcher.hpp"
+#include "find_files.hpp"
 
 #include <string>
 #include <vector>
@@ -16,7 +17,7 @@
 #define BLOCKS_EXIT_HAD_ERROR 2
 
 static const char program_name[] = "blocks";
-static const char program_version[] = "3.0";
+static const char program_version[] = "4.0";
 
 enum ematcher {
 	M_FIRST = 0,
@@ -28,7 +29,9 @@ enum ematcher {
 	B_COMMENT_TERM,
 	MATCH,
 	DONT_MATCH,
-	STRING_RX,
+	STRING_RX, M_DEBUG = STRING_RX,
+	FILES_INCLUDE_RX,
+	FILES_EXCLUDE_RX,
 	M_TOTAL,
 };
 
@@ -69,6 +72,7 @@ struct prog_options {
 	const char * mark_start;
 	const char * mark_end;
 	const char * file_list;
+	const char * files_dir;
 	const char * lang_name;
 	elang which_lang;
 	int block_count;
@@ -84,6 +88,7 @@ struct prog_options {
 	bool verbose_error;
 	bool debug;
 	bool no_strings;
+	bool recursive;
 	bool are_all_matchers_regex;
 	m_single_type next_type;
 	m_single_case next_case;
@@ -259,8 +264,8 @@ static void print_debug_and_quit(
 	buff.assign("lang: ").append(opts.lang_name);
 	print_line(buff.c_str());
 
-	// mathers
-	for (int i = M_FIRST; i < M_TOTAL; ++i)
+	// matchers
+	for (int i = M_FIRST; i <= M_DEBUG; ++i)
 	{
 		mtchr = pats.matchers[i];
 		buff.assign(dbg_str[i]).append("'").
@@ -344,6 +349,7 @@ static void make_patterns(const prog_options& opts, patterns& pats)
 }
 
 // <process>
+// <match>
 static bool match_in_block(
 	const matcher * pat,
 	const std::vector<block_parser::block_line>& block
@@ -406,6 +412,7 @@ static bool match_single_block(
 
 	return false;
 }
+// </match>
 
 static bool process_single_block(
 	prog_options& opts,
@@ -644,8 +651,38 @@ static int process(
 }
 // </process>
 
+// <extra_file_lists>
+static void append_dir_search(
+	const prog_options& opts,
+	const patterns& pats,
+	std::vector<const char *>& file_names
+)
+{
+	static std::vector<std::string> dir_files;
+
+	if (opts.files_dir)
+	{
+		std::string err;
+
+		bool found_err = find_files(
+			opts.files_dir,
+			opts.recursive,
+			static_cast<const regex_matcher *>(pats.matchers[FILES_INCLUDE_RX]),
+			static_cast<const regex_matcher *>(pats.matchers[FILES_EXCLUDE_RX]),
+			dir_files,
+			err
+		);
+
+		if (found_err)
+			errq(err.c_str());
+
+		for (auto& fname : dir_files)
+			file_names.push_back(fname.c_str());
+	}
+}
+
 static void append_file_list(
-	const prog_options opts,
+	const prog_options& opts,
 	std::vector<const char *>& file_names
 )
 {
@@ -674,6 +711,17 @@ static void append_file_list(
 	}
 }
 
+static void append_extra_file_lists(
+	const prog_options& opts,
+	const patterns& pats,
+	std::vector<const char *>& file_names
+)
+{
+	append_dir_search(opts, pats, file_names);
+	append_file_list(opts, file_names);
+}
+// </extra_file_lists>
+
 int main(int argc, char * argv[])
 {
 	static prog_options opts;
@@ -681,7 +729,7 @@ int main(int argc, char * argv[])
 	static std::vector<const char *> file_names;
 
 	handle_options(argc, argv, opts, file_names);
-	append_file_list(opts, file_names);
 	make_patterns(opts, pats);
+	append_extra_file_lists(opts, pats, file_names);
 	return process(opts, pats, file_names);
 }

@@ -419,6 +419,90 @@ puts("option.");
 puts("");
 }
 
+// --directory|-d
+static const char directory_opt_short = 'd';
+static const char directory_opt_long[] = "directory";
+static void handle_directory(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->files_dir = opt_arg;
+}
+
+static void help_directory(const char * short_name, const char * long_name)
+{
+printf("%s|%s <dir>\n", short_name, long_name);
+puts(
+"Read all files from <dir>. By default, all entries are read, not only files.\n"
+"To filter, use the include/exclude options. Processed after the files given \n"
+"on the command line and before the file list option."
+);
+puts(
+"If both the include and the exclude options are provided, a file name must\n"
+"match the include and not match the exclude in order to be selected."
+);
+puts("");
+}
+
+// --recursive|-R
+static const char recursive_opt_short = 'R';
+static const char recursive_opt_long[] = "recursive";
+static void handle_recursive(const char * opt, char * opt_arg, void * ctx)
+{
+	prog_options * context = (prog_options *)ctx;
+	context->recursive = true;
+	if (!context->files_dir)
+		context->files_dir = ".";
+}
+
+static void help_recursive(const char * short_name, const char * long_name)
+{
+printf("%s|%s\n", short_name, long_name);
+puts(
+"Do a recursive file search. If the directory option is not provided, the\n"
+"start directory defaults to '.'"
+);
+puts("Symlinks to directories are followed.");
+puts("");
+}
+
+// --include-files-rx|-u
+static const char include_files_rx_opt_short = 'u';
+static const char include_files_rx_opt_long[] = "include-files-rx";
+static void handle_include_files_rx(const char * opt, char * opt_arg, void * ctx)
+{
+	handle_matcher(FILES_INCLUDE_RX, opt_arg, ctx);
+}
+
+static void help_include_files_rx(const char * short_name, const char * long_name)
+{
+printf("%s|%s <regex>\n", short_name, long_name);
+puts(
+"If a file name found by the directory option matches <regex>, the file is\n"
+"processed. <regex> is matched against the whole path. I.e. to make sure only\n"
+"'.txt' files are filtered in, use '\\.txt$'"
+);
+puts("");
+}
+
+// --exclude-files-rx|-U
+static const char exclude_files_rx_opt_short = 'U';
+static const char exclude_files_rx_opt_long[] = "exclude-files-rx";
+static void handle_exclude_files_rx(const char * opt, char * opt_arg, void * ctx)
+{
+	handle_matcher(FILES_EXCLUDE_RX, opt_arg, ctx);
+}
+
+static void help_exclude_files_rx(const char * short_name, const char * long_name)
+{
+printf("%s|%s <regex>\n", short_name, long_name);
+puts(
+"If a file name found by the directory option matches <regex>, the file is\n"
+"not processed. <regex> is matched against the whole path. I.e. to make sure\n"
+"only '.txt' files are filtered out, use '\\.txt$'"
+);
+puts("");
+}
+
 // --file-list|-L
 static const char file_list_opt_short = 'L';
 static const char file_list_opt_long[] = "file-list";
@@ -432,7 +516,7 @@ static void help_file_list(const char * short_name, const char * long_name)
 {
 printf("%s|%s <file>\n", short_name, long_name);
 puts("Read a list of input files from <file>. Processed after the files given");
-puts("on the command line.");
+puts("on the command line and after the directory option.");
 puts("");
 }
 
@@ -463,12 +547,11 @@ static void handle_string_rx(const char * opt, char * opt_arg, void * ctx)
 static void help_string_rx(const char * short_name, const char * long_name)
 {
 printf("%s <regex>\n", long_name);
-puts("The regex used for identifying strings.");
 printf(
-"Used only if --%s is turned on. Default is %s\n",
-string_rx_opt_long,
+"The regex used for identifying strings. Default is %s\n",
 defaults.string_rx
 );
+puts("Used only if the no strings option is turned on.");
 puts("");
 }
 
