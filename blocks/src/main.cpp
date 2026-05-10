@@ -662,9 +662,9 @@ static void append_dir_search(
 
 	if (opts.files_dir)
 	{
-		std::string err;
+		std::string err("foo");
 
-		bool found_err = find_files(
+		bool found_files = find_files(
 			opts.files_dir,
 			opts.recursive,
 			static_cast<const regex_matcher *>(pats.matchers[FILES_INCLUDE_RX]),
@@ -673,7 +673,7 @@ static void append_dir_search(
 			err
 		);
 
-		if (found_err)
+		if (!found_files)
 			errq(err.c_str());
 
 		for (auto& fname : dir_files)

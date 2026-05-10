@@ -1,5 +1,6 @@
 #include "find_files.hpp"
 #include <filesystem>
+#include <algorithm>
 #include <cstring>
 
 namespace
@@ -39,6 +40,8 @@ bool find_files(
 	std::string& out_err
 )
 {
+	out_file_list.clear();
+
 	try
 	{
 		if (recursive)
@@ -65,6 +68,7 @@ bool find_files(
 			}
 		}
 
+		std::sort(out_file_list.begin(), out_file_list.end());
 		return true;
 	}
 	catch (const std::filesystem::filesystem_error& e)

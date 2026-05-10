@@ -1,8 +1,8 @@
 #!/bin/bash
 
-readonly G_BLOCKS_BIN="../blocks"
-readonly G_TEST_RESULT_STDOUT="./test_result_stdout.txt"
-readonly G_TEST_RESULT_STDERR="./test_result_stderr.txt"
+G_BLOCKS_BIN="../blocks"
+G_TEST_RESULT_STDOUT="./test_result_stdout.txt"
+G_TEST_RESULT_STDERR="./test_result_stderr.txt"
 readonly G_TEST_FILE_1="./input/test_input_1.txt"
 readonly G_TEST_FILE_2="./input/test_input_2.txt"
 readonly G_TEST_FILE_3="./input/test_input_3.txt"
@@ -984,9 +984,88 @@ function test_stdin_pipe
 
 function test_dir_search
 {
-	# implement me
-	bt_eval "false"
-	bt_assert_success
+	# trivial
+	run_nok "-Nl -d './dir_1'"
+	diff_stdout_stderr "dir_search_1_stdout.txt" "dir_search_1_stderr.txt"
+
+	# non-recursive
+	# filter in text files only
+	run_ok "-Nl -d './dir_1' -u '\.txt$'"
+	diff_stdout "dir_search_1_stdout.txt"
+
+	# filter out dir_2
+	run_ok "-Nl -d './dir_1' -U 'dir_2$'"
+	diff_stdout "dir_search_1_stdout.txt"
+
+	run_ok "-Nl -d './dir_1' -u '\.txt$' -U '(dir_2|_2\.txt)$'"
+	diff_stdout "dir_search_2.txt"
+
+	# long options
+	run_ok "-Nl --directory './dir_1'" \
+		"--include-files-rx '\.txt$' --exclude-files-rx '(dir_2|_2\.txt)$'"
+	diff_stdout "dir_search_2.txt"
+
+	# non-recursive
+	# filter in text files only
+	run_ok "-Nl -R -d './dir_1' -u '\.txt$'"
+	diff_stdout "dir_search_3.txt"
+
+	# filter out dir_2
+	run_ok "-Nl -d './dir_1' -R -U 'dir_2$'"
+	diff_stdout "dir_search_3.txt"
+
+	run_ok "-Nl -Rd './dir_1' -u '\.txt$' -U '(dir_2|_2\.txt)$'"
+	diff_stdout "dir_search_4.txt"
+
+	# long options
+	run_ok "-Nl --recursive --directory './dir_1'" \
+		"--include-files-rx '\.txt$' --exclude-files-rx '(dir_2|_2\.txt)$'"
+	diff_stdout "dir_search_4.txt"
+
+	# recursive only
+	local L_BLOCKS_BIN_PREV="$G_BLOCKS_BIN"
+	local L_TEST_RES_OUT_PREV="$G_TEST_RESULT_STDOUT"
+	local L_TEST_RES_ERR_PREV="$G_TEST_RESULT_STDERR"
+
+	G_BLOCKS_BIN="../../blocks"
+	G_TEST_RESULT_STDOUT="../test_result_stdout.txt"
+	G_TEST_RESULT_STDERR="../test_result_stderr.txt"
+
+	pushd "./dir_1" > /dev/null || exit 1
+	run_ok "-Nl -R -u '\.txt$' -U '(dir_2|_2\.txt)$'"
+	popd
+
+	G_BLOCKS_BIN="$L_BLOCKS_BIN_PREV"
+	G_TEST_RESULT_STDOUT="$L_TEST_RES_OUT_PREV"
+	G_TEST_RESULT_STDERR="$L_TEST_RES_ERR_PREV"
+
+	diff_stdout "dir_search_5.txt"
+
+	# case sensitivity
+	run_ok "-Nl -Rd './dir_1' -u '\.TXT$' -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_1.txt"
+
+	run_ok "-Nl -Rd './dir_1' +i -u '\.TXT$' -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_2.txt"
+
+	run_ok "-Nl -Rd './dir_1' +i -u '\.TXT$' +i -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_3.txt"
+
+	run_ok "-Nl -Rd './dir_1' -i -u '\.TXT$' -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_3.txt"
+
+	# types - always a regex
+	run_ok "-f -Nl -Rd './dir_1' -i -u '\.TXT$' -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_3.txt"
+
+	run_ok "-Nl -Rd './dir_1' +fi -u '\.TXT$' +fi -U '(dir_2|_2\.TXT)$'" \
+		"input/trivial.txt"
+	diff_stdout "dir_search_6_3.txt"
 }
 
 function test_file_list

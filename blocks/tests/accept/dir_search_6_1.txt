@@ -1,0 +1,3 @@
+input/trivial.txt:1:foo {
+input/trivial.txt:2:	bar
+input/trivial.txt:3:}

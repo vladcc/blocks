@@ -1,0 +1,12 @@
+./dir_2/file_1.txt:1:foo_a {
+./dir_2/file_1.txt:2:	bar
+./dir_2/file_1.txt:3:}
+./dir_2/file_3.txt:1:foo_c {
+./dir_2/file_3.txt:2:	bar
+./dir_2/file_3.txt:3:}
+./file_1.txt:1:foo_a {
+./file_1.txt:2:	bar
+./file_1.txt:3:}
+./file_3.txt:1:foo_c {
+./file_3.txt:2:	bar
+./file_3.txt:3:}

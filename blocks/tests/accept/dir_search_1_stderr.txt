@@ -1,0 +1,1 @@
+blocks: error: ./dir_1/dir_2: Is a directory

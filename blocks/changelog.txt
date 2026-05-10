@@ -1,7 +1,10 @@
 xxxx-xx-xx
 blocks 4.0
 lto added to the release build
-find_files() added, recursive follows symlinks
+-d|--directory        implemented
+-R|--recursive        implemented
+-u|--include-files-rx implemented
+-U|--exclude-files-rx implemented
 - incompatibility - match/dont_match now use vectors, all match ands together,
 all don_match also
 
