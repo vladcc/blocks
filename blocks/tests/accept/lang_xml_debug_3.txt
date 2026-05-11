@@ -8,8 +8,12 @@ block end: '</(to|from)' type: regex case: i
 line comment: '<.*/>' type: regex case: A
 block comment begin: '<!--' type: string case: A
 block comment terminate: '-->' type: string case: A
+string rx: '"[^"]*"|'[^']*'' type: regex case: A
+files include: '' type: none case: none
+files exclude: '' type: none case: none
+files dir: none
+recurse: no
+no strings: on
 match: '' type: none case: none
 don't match: '' type: none case: none
-string rx: '"[^"]*"|'[^']*'' type: regex case: A
 match/don't match logic: none
-no strings: on

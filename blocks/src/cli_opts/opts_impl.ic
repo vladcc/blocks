@@ -69,7 +69,9 @@ static void handle_lang(const char * opt_arg, void * ctx)
 static void handle_matcher(ematcher which, const char * opt_arg, void * ctx)
 {
 	prog_options * context = (prog_options *)ctx;
-	mdata * matcher = (context->matchers + which);
+	mdata dmatcher = {};
+	mdata * matcher = (which < M_SCALAR_TOTAL) ?
+		(context->matchers + which) : &dmatcher;
 
 	matcher->pat = opt_arg;
 	matcher->is_icase = context->are_all_matchers_icase;
@@ -93,7 +95,19 @@ static void handle_matcher(ematcher which, const char * opt_arg, void * ctx)
 		matcher->is_icase = context->are_all_matchers_icase;
 	}
 
-	if (
+	if (V_MATCH == which)
+	{
+		// collecting empty string matchers doesn't make sense
+		if (*matcher->pat)
+			context->mM_vect.match.push_back(*matcher);
+	}
+	else if (V_DONT_MATCH == which)
+	{
+		// collecting empty string matchers doesn't make sense
+		if (*matcher->pat)
+			context->mM_vect.dont_match.push_back(*matcher);
+	}
+	else if (
 		STRING_RX == which        ||
 		FILES_INCLUDE_RX == which ||
 		FILES_EXCLUDE_RX == which
@@ -250,8 +264,8 @@ defaults.block_close
 );
 puts("");
 printf(
-	"and you run '%s --block-name bar <my-file>', you'll get:\n",
-	program_name
+"and you run '%s --block-name bar <my-file>', you'll get:\n",
+program_name
 );
 printf(
 "\tbar %s\n"
@@ -260,10 +274,11 @@ printf(
 defaults.block_open,
 defaults.block_close
 );
-printf("When the name is matched, the input isn't advanced and the search for\n"
-"the block begins at the start of the name. This allows to match all blocks\n"
-"in a file when the name is the same as the opening symbol. It also allows\n"
-"to match LISP-like syntax where the block start comes before the name, e.g.:\n"
+printf(
+"When the name is matched, the input isn't advanced and the search for the\n"
+"block begins at the start of the name. This allows to match all blocks in a\n"
+"file when the name is the same as the opening symbol. It also allows to\n"
+"match LISP-like syntax where the block start comes before the name, e.g.:\n"
 "%s -n '(define' -s '(' -e ')'\n",
 	program_name
 );
@@ -281,8 +296,10 @@ BLOCKS_EXIT_NO_MATCH,
 BLOCKS_EXIT_HAD_ERROR
 );
 puts("");
-puts("Unless stated otherwise, when multiples of the same option are given,");
-puts("the last one applies.");
+puts(
+"Unless stated otherwise, when multiples of the same option are given, the\n"
+"last one applies."
+);
 puts("");
 printf(
 "Out of the plus options, %c/%c, %c/%c can appear together, e.g. +%c%c\n",
@@ -503,6 +520,12 @@ static void make_lang(prog_options& opts)
 	}
 }
 
+static void disable_empty_str_matcher(mdata& data)
+{
+	if (data.pat && !(*(data.pat)))
+		data.pat = nullptr;
+}
+
 static void handle_options(
 	int argc,
 	char * argv[],
@@ -522,19 +545,10 @@ static void handle_options(
 	make_lang(opts);
 
 	// disable empty string matchers
-	{
-		mdata * matcher = nullptr;
-		const char * mpat = nullptr;
-		for (int i = M_FIRST; i < M_TOTAL; ++i)
-		{
-			matcher = (opts.matchers + i);
-			mpat = matcher->pat;
-			if (mpat && !(*mpat))
-				matcher->pat = nullptr;
-		}
-	}
+	for (int i = M_FIRST; i < M_SCALAR_TOTAL; ++i)
+		disable_empty_str_matcher(opts.matchers[i]);
 
-	if (opts.matchers[MATCH].pat && opts.matchers[DONT_MATCH].pat)
+	if (!opts.mM_vect.match.empty() && !opts.mM_vect.dont_match.empty())
 	{
 		// if match and dont_match are given but no logic op is specified
 		// default to and
@@ -577,7 +591,7 @@ static void handle_options(
 
 	if (opts.match_how.do_logic)
 	{
-		if (!opts.matchers[MATCH].pat || !opts.matchers[DONT_MATCH].pat)
+		if (opts.mM_vect.match.empty() || opts.mM_vect.dont_match.empty())
 			errq("match/don't match logic op requires both patterns to exist");
 	}
 }

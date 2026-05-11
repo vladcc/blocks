@@ -1,19 +1,19 @@
 default block name: default block start
 default block start: '{'
 default block end: '}'
-lang: awk
-block name: 'main' type: regex case: i
+lang: none
+block name: '{' type: string case: A
 block start: '{' type: string case: A
 block end: '}' type: string case: A
-line comment: '#' type: string case: A
+line comment: '' type: none case: none
 block comment begin: '' type: none case: none
 block comment terminate: '' type: none case: none
-string rx: '"([^\\"]|[\\].)*"' type: regex case: A
+string rx: '' type: none case: none
 files include: '' type: none case: none
 files exclude: '' type: none case: none
-files dir: none
+files dir: foo/bar/baz
 recurse: no
-no strings: on
+no strings: off
 match: '' type: none case: none
 don't match: '' type: none case: none
 match/don't match logic: none

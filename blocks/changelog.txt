@@ -1,12 +1,13 @@
-xxxx-xx-xx
+2026-05-11
 blocks 4.0
 lto added to the release build
 -d|--directory        implemented
 -R|--recursive        implemented
 -u|--include-files-rx implemented
 -U|--exclude-files-rx implemented
-- incompatibility - match/dont_match now use vectors, all match ands together,
-all don_match also
+bugfix - file list name "-" now means stdin
+incompatibility - match/dont_match now use vectors, all match ands together,
+all dont_match also
 
 2026-05-05
 blocks 3.0

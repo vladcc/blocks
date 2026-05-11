@@ -8,8 +8,12 @@ block end: '}' type: string case: A
 line comment: '' type: none case: none
 block comment begin: '' type: none case: none
 block comment terminate: '' type: none case: none
+string rx: '' type: none case: none
+files include: '' type: none case: none
+files exclude: '' type: none case: none
+files dir: none
+recurse: no
+no strings: off
 match: 'foo' type: string case: A
 don't match: 'bar' type: string case: A
-string rx: '' type: none case: none
 match/don't match logic: and
-no strings: off

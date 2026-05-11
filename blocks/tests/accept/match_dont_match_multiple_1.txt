@@ -1,0 +1,18 @@
+block_111 {
+    aaa
+    bbb
+    ccc
+    ddd
+}
+block_222 {
+    aaa
+    bbb
+    ccc
+    fff
+}
+block_333 {
+    aaa
+    qqq
+    ccc
+    fff
+}

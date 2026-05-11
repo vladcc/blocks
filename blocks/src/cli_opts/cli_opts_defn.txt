@@ -175,20 +175,31 @@ long_name  match
 short_name m
 takes_args true
 handler_code
-	handle_matcher(MATCH, opt_arg, ctx);
+	handle_matcher(V_MATCH, opt_arg, ctx);
 end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Print only blocks in which at least one line matches <matcher>.");
+puts(
+"Print only blocks in which at least one line matches <matcher>. If this\n"
+"option is given more than once, all respective <matcher>s must match."
+);
 puts("Does not ignore comments and strings.");
-puts("If both match and don't match are given, logical and is applied even if");
-puts("it is not specified on the command line. If a logical operation is");
-puts("specified on the command line, both match and don't match must be give.");
-puts("Logical operations:");
-printf("+%c - Logical and. Both matchers must match.\n", mM_and);
-printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
-printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
+puts(
+"If both match and don't match are given, logical and is applied even if it\n"
+"is not specified on the command line. If a logical operation is specified on\n"
+"the command line, both match and don't match must be give."
+);
+printf(
+"Logical oprations:\n"
+"+%c - Logical and. Both matchers must match.\n"
+"+%c - Logical or. One or the other matcher must match.\n"
+"+%c|+%c can appear anywhere on the command line.\n",
+mM_and,
+mM_or,
+mM_and,
+mM_or
+);
 puts("");
 end_code
 end
@@ -197,20 +208,31 @@ long_name  dont-match
 short_name M
 takes_args true
 handler_code
-	handle_matcher(DONT_MATCH, opt_arg, ctx);
+	handle_matcher(V_DONT_MATCH, opt_arg, ctx);
 end_code
 
 help_code
 printf("%s|%s <matcher>\n", short_name, long_name);
-puts("Print only blocks in which no line matches <matcher>.");
+puts(
+"Print only blocks in which no line matches <matcher>. If this option is\n"
+"given more than once, all respective <matcher>s must not match."
+);
 puts("Does not ignore comments and strings.");
-puts("If both match and don't match are given, logical and is applied even if");
-puts("it is not specified on the command line. If a logical operation is");
-puts("specified on the command line, both match and don't match must be give.");
-puts("Logical operations:");
-printf("+%c - Logical and. Both matchers must match.\n", mM_and);
-printf("+%c - Logical or. One or the other matcher must match.\n", mM_or);
-printf("+%c|+%c can appear anywhere on the command line.\n", mM_and, mM_or);
+puts(
+"If both match and don't match are given, logical and is applied even if it\n"
+"is not specified on the command line. If a logical operation is specified on\n"
+"the command line, both match and don't match must be give."
+);
+printf(
+"Logical oprations:\n"
+"+%c - Logical and. Both matchers must match.\n"
+"+%c - Logical or. One or the other matcher must match.\n"
+"+%c|+%c can appear anywhere on the command line.\n",
+mM_and,
+mM_or,
+mM_and,
+mM_or
+);
 puts("");
 end_code
 end
@@ -400,10 +422,11 @@ end_code
 
 help_code
 printf("%s|%s\n", short_name, long_name);
-puts("Print only the body of the block. I.e. don't print the block name,");
-puts("block start, and block end. All lines between and including the block");
-puts("name and block open, as well as the line containing the block end are");
-puts("ignored.");
+puts(
+"Print only the body of the block. I.e. don't print the block name, block\n"
+"start, and block end. All lines between and including the block name and\n"
+"block open, as well as the line containing the block end are ignored."
+);
 puts("");
 end_code
 end
@@ -465,12 +488,11 @@ printf("%s|%s <name>\n", short_name, long_name);
 puts("Select language defaults. <name> is case insensitive and one of:");
 puts("C, awk, json, xml, info");
 puts(
-"If used, all block matchers given on the command line but the block name"
+"If used, all block matchers given on the command line but the block name are\n"
+"ignored. info is the boost ptree info. xml takes care to place the block\n"
+"name inside the tag automatically. To see the resulting matchers for each\n"
+"language, use the debug info option. Ignores the no defaults option."
 );
-puts("are ignored. info is the boost ptree info. xml takes care to place the");
-puts("block name inside the tag automatically. To see the resulting matchers");
-puts("for each language, use the debug info option. Ignores the no defaults");
-puts("option.");
 puts("");
 end_code
 end
@@ -512,9 +534,8 @@ help_code
 printf("%s|%s\n", short_name, long_name);
 puts(
 "Do a recursive file search. If the directory option is not provided, the\n"
-"start directory defaults to '.'"
+"start directory defaults to the current. Symlinks to directories are followed."
 );
-puts("Symlinks to directories are followed.");
 puts("");
 end_code
 end
@@ -565,8 +586,10 @@ end_code
 
 help_code
 printf("%s|%s <file>\n", short_name, long_name);
-puts("Read a list of input files from <file>. Processed after the files given");
-puts("on the command line and after the directory option.");
+puts(
+"Read a list of input files from <file>. Processed after the files given on\n"
+"the command line and after the directory option."
+);
 puts("");
 end_code
 end

@@ -193,13 +193,39 @@ sequence), respectively. It looks for the block name closest to the block start
 and fetches everything between the opening and closing sequences for that block.
 
 It can match fixed strings and regular expressions. As mentioned in the
-beginning, it can ignore comments and strings. It can perform simple logic on
-the blocks it finds (e.g. print only the ones which don't have string x
-somewhere inside). It can mark blocks starts and ends for further processing
-with e.g. awk.
+beginning, it can ignore comments and strings of a target laguage. It can
+perform logic on the blocks it finds (e.g. print only the ones which don't have
+the pattern x somewhere inside). It can mark blocks starts and ends for further
+processing with e.g. awk.
 
-Each of its options can be turned on and off by itself. This can get cumbersome
-so presets for the more common languages are offered with a single option, e.g.
+Files can be given on the command line, as a list from a file, or blocks can
+look for them itself, recursivelly or not, using regex to include/exclude file
+names.
+
+When matching patterns inside a block, the ```-m -M``` options can appear
+multiple times. If they do, all ```-m``` must match the block together, all
+```-M``` must not match the block together. The logic between the two can be
+controlled to either match all ```-m``` ```and``` don't match all ```-M```, or
+match all ```-m``` ```or``` don't match all ```-M```, i.e. the following:
+
+```
+if ((match(m_1) && match(m_2) ...) && (dont_match(M_1) && dont_match(M_2) ...))
+	print_block()
+```
+
+```
+if ((match(m_1) && match(m_2) ...) || (dont_match(M_1) && dont_match(M_2) ...))
+	print_block()
+```
+
+Logic of the type "print the block only if this pattern or that pattern
+matches/doesn't match" is handled with regex, e.g.
+```-m 'foo|bar' -M 'zig|zag'```
+will print only blocks which match foo or bar and don't match zig or zag.
+
+Each of blocks' options can be turned on and off by itself. This can get
+cumbersome so presets for the more common languages are offered with a single
+option, e.g.
 
 No language:
 ```
@@ -214,11 +240,15 @@ block end: '}' type: string case: A
 line comment: '' type: none case: none
 block comment begin: '' type: none case: none
 block comment terminate: '' type: none case: none
+string rx: '' type: none case: none
+files include: '' type: none case: none
+files exclude: '' type: none case: none
+files dir: none
+recurse: no
+no strings: off
 match: '' type: none case: none
 don't match: '' type: none case: none
-string rx: '' type: none case: none
 match/don't match logic: none
-no strings: off
 ```
 
 C:
@@ -234,11 +264,15 @@ block end: '}' type: string case: A
 line comment: '//' type: string case: A
 block comment begin: '/*' type: string case: A
 block comment terminate: '*/' type: string case: A
+string rx: '"([^\\"]|[\\].)*"' type: regex case: A
+files include: '' type: none case: none
+files exclude: '' type: none case: none
+files dir: none
+recurse: no
+no strings: on
 match: '' type: none case: none
 don't match: '' type: none case: none
-string rx: '"([^\\"]|[\\].)*"' type: regex case: A
 match/don't match logic: none
-no strings: on
 ```
 
 XML:
@@ -254,11 +288,15 @@ block end: '</([_:a-zA-Z][-._:a-zA-Z0-9]*)' type: regex case: A
 line comment: '<.*/>' type: regex case: A
 block comment begin: '<!--' type: string case: A
 block comment terminate: '-->' type: string case: A
+string rx: '"[^"]*"|'[^']*'' type: regex case: A
+files include: '' type: none case: none
+files exclude: '' type: none case: none
+files dir: none
+recurse: no
+no strings: on
 match: '' type: none case: none
 don't match: '' type: none case: none
-string rx: '"[^"]*"|'[^']*'' type: regex case: A
 match/don't match logic: none
-no strings: on
 ```
 
 For a full list of options see the help message.

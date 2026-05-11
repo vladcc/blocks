@@ -16,8 +16,10 @@
 #define BLOCKS_EXIT_NO_MATCH  1
 #define BLOCKS_EXIT_HAD_ERROR 2
 
-static const char program_name[] = "blocks";
-static const char program_version[] = "4.0";
+static const char * program_name = "blocks";
+static const char * program_version = "4.0";
+
+static const char * str_stdin = "-";
 
 enum ematcher {
 	M_FIRST = 0,
@@ -27,12 +29,14 @@ enum ematcher {
 	B_LINE_COMMENT,
 	B_COMMENT_BEGIN,
 	B_COMMENT_TERM,
-	MATCH,
-	DONT_MATCH,
-	STRING_RX, M_DEBUG = STRING_RX,
+	STRING_RX,
 	FILES_INCLUDE_RX,
 	FILES_EXCLUDE_RX,
-	M_TOTAL,
+	M_SCALAR_TOTAL,
+
+	// needed for handle_matcher(), not used as indexes
+	V_MATCH,
+	V_DONT_MATCH,
 };
 
 enum elang {
@@ -49,6 +53,21 @@ struct mdata {
 	const char * pat;
 	bool is_regex;
 	bool is_icase;
+};
+
+struct mM_mdata_vect {
+	std::vector<mdata> match;
+	std::vector<mdata> dont_match;
+};
+
+struct mM_matchers_vect {
+	std::vector<std::unique_ptr<matcher>> match;
+	std::vector<std::unique_ptr<matcher>> dont_match;
+};
+
+struct patterns {
+	const matcher * matchers[M_SCALAR_TOTAL];
+	mM_matchers_vect mM_vect;
 };
 
 struct m_single_type {
@@ -68,7 +87,8 @@ struct match_logic {
 
 struct prog_options {
 	std::vector<const char *> * file_names;
-	mdata matchers[M_TOTAL];
+	mdata matchers[M_SCALAR_TOTAL];
+	mM_mdata_vect mM_vect;
 	const char * mark_start;
 	const char * mark_end;
 	const char * file_list;
@@ -93,6 +113,11 @@ struct prog_options {
 	m_single_type next_type;
 	m_single_case next_case;
 	match_logic match_how;
+};
+
+struct process_result {
+	bool was_match;
+	bool was_err;
 };
 
 struct {
@@ -224,9 +249,33 @@ static void print_block(
 		print_line(mark_end);
 }
 
-struct patterns {
-	const matcher * matchers[M_TOTAL];
-};
+
+static void print_debug_a_matcher(const char * str, const matcher * mtchr)
+{
+	static std::string buff;
+
+	buff.assign(str).append("'").
+		append(mtchr ? mtchr->pattern() : "").
+		append("' type: ").
+		append(mtchr ? mtchr->type_of() : "none").
+		append(" case: ");
+
+		if (mtchr)
+		{
+			buff.push_back(
+				mtchr->is_icase() ?
+					case_insensitive_opt_short
+					:
+					case_sensitive_opt_short
+			);
+		}
+		else
+		{
+			buff.append("none");
+		}
+
+	print_line(buff.c_str());
+}
 
 static void print_debug_and_quit(
 	const prog_options& opts,
@@ -240,13 +289,12 @@ static void print_debug_and_quit(
 		"line comment: ",
 		"block comment begin: ",
 		"block comment terminate: ",
-		"match: ",
-		"don't match: ",
 		"string rx: ",
+		"files include: ",
+		"files exclude: ",
 	};
 
 	std::string buff;
-	const matcher * mtchr = nullptr;
 
 	// defaults
 	buff.assign("default block name: default block start");
@@ -265,30 +313,37 @@ static void print_debug_and_quit(
 	print_line(buff.c_str());
 
 	// matchers
-	for (int i = M_FIRST; i <= M_DEBUG; ++i)
+	for (int i = M_FIRST; i < M_SCALAR_TOTAL; ++i)
+		print_debug_a_matcher(dbg_str[i], pats.matchers[i]);
+
+	buff.assign("files dir: ").append(opts.files_dir ? opts.files_dir : "none");
+	print_line(buff.c_str());
+
+	buff.assign("recurse: ").append(opts.recursive ? "yes" : "no");
+	print_line(buff.c_str());
+
+	buff.assign("no strings: ");
+	buff.append(opts.no_strings ? "on" : "off");
+	print_line(buff.c_str());
+
+	if (pats.mM_vect.match.empty())
 	{
-		mtchr = pats.matchers[i];
-		buff.assign(dbg_str[i]).append("'").
-			append(mtchr ? mtchr->pattern() : "").
-			append("' type: ").
-			append(mtchr ? mtchr->type_of() : "none").
-			append(" case: ");
+		print_debug_a_matcher("match: ", nullptr);
+	}
+	else
+	{
+		for (const auto& m : pats.mM_vect.match)
+			print_debug_a_matcher("match: ", m.get());
+	}
 
-			if (mtchr)
-			{
-				buff.push_back(
-					mtchr->is_icase() ?
-						case_insensitive_opt_short
-						:
-						case_sensitive_opt_short
-				);
-			}
-			else
-			{
-				buff.append("none");
-			}
-
-		print_line(buff.c_str());
+	if (pats.mM_vect.dont_match.empty())
+	{
+		print_debug_a_matcher("don't match: ", nullptr);
+	}
+	else
+	{
+		for (const auto& m : pats.mM_vect.dont_match)
+			print_debug_a_matcher("don't match: ", m.get());
 	}
 
 	buff.assign("match/don't match logic: ");
@@ -298,48 +353,50 @@ static void print_debug_and_quit(
 		buff.append("none");
 	print_line(buff.c_str());
 
-	buff.assign("no strings: ");
-	buff.append(opts.no_strings ? "on" : "off");
-	print_line(buff.c_str());
-
 	exit(EXIT_SUCCESS);
+}
+
+static matcher * make_a_pattern(const mdata * data, matcher_factory& mfact)
+{
+	static const matcher::type mtypes[2] = {
+		matcher::type::STRING,
+		matcher::type::REGEX
+	};
+
+	static const uint32_t matcher_flags[2] = {
+		matcher::flags::NONE,
+		(matcher::flags::NONE | matcher::flags::ICASE)
+	};
+
+	matcher * ret = nullptr;
+	const char * mpat = data->pat;
+	bool is_regex = data->is_regex;
+	bool is_icase = data->is_icase;
+
+	if (mpat && *mpat)
+		 ret = mfact.create(mtypes[is_regex], mpat, matcher_flags[is_icase]);
+
+	return ret;
 }
 
 static void make_patterns(const prog_options& opts, patterns& pats)
 {
 	// so valgrind can track
-	static std::unique_ptr<matcher> matchers[M_TOTAL];
+	static std::unique_ptr<matcher> matchers[M_SCALAR_TOTAL];
 
 	try
 	{
-		const matcher::type mtypes[2] = {
-			matcher::type::STRING,
-			matcher::type::REGEX
-		};
-
-		const uint32_t matcher_flags[2] = {
-			matcher::flags::NONE,
-			(matcher::flags::NONE | matcher::flags::ICASE)
-		};
-
 		matcher_factory mfact;
-		const mdata * matcher = nullptr;
-		const char * mpat = nullptr;
-		for (int i = M_FIRST; i < M_TOTAL; ++i)
-		{
-			matcher = (opts.matchers + i);
-			mpat = matcher->pat;
-			if (mpat && *mpat)
-			{
-				matchers[i] = mfact.create(
-					mtypes[matcher->is_regex],
-					mpat,
-					matcher_flags[matcher->is_icase]
-				);
-			}
-		}
+		for (int i = M_FIRST; i < M_SCALAR_TOTAL; ++i)
+			matchers[i].reset(make_a_pattern(opts.matchers + i, mfact));
 
-		for (int i = M_FIRST; i < M_TOTAL; ++i)
+		for (const auto& data : opts.mM_vect.match)
+			pats.mM_vect.match.emplace_back(make_a_pattern(&data, mfact));
+
+		for (const auto& data : opts.mM_vect.dont_match)
+			pats.mM_vect.dont_match.emplace_back(make_a_pattern(&data, mfact));
+
+		for (int i = M_FIRST; i < M_SCALAR_TOTAL; ++i)
 			pats.matchers[i] = matchers[i].get();
 	}
 	catch(const std::runtime_error& e)
@@ -375,55 +432,85 @@ static bool match_in_block(
 	return ret;
 }
 
-static bool match_single_block(
-	prog_options& opts,
-	const matcher * pat_match,
-	const matcher * pat_dont_match,
+static bool all_matched(
+	const std::vector<std::unique_ptr<matcher>> * vect,
 	const std::vector<block_parser::block_line>& block
 )
 {
-	if (pat_match && pat_dont_match)
+	const std::unique_ptr<matcher> * data = vect->data();
+	for (std::size_t i = 0, end = vect->size(); i < end; ++i)
+	{
+		if (!match_in_block(data[i].get(), block))
+			return false;
+	}
+
+	return true;
+}
+
+static bool all_didnt_match(
+	const std::vector<std::unique_ptr<matcher>> * vect,
+	const std::vector<block_parser::block_line>& block
+)
+{
+	const std::unique_ptr<matcher> * data = vect->data();
+	for (std::size_t i = 0, end = vect->size(); i < end; ++i)
+	{
+		if (match_in_block(data[i].get(), block))
+			return false;
+	}
+
+	return true;
+}
+
+static bool match_a_block(
+	prog_options& opts,
+	const std::vector<std::unique_ptr<matcher>> * match,
+	const std::vector<std::unique_ptr<matcher>> * dont_match,
+	const std::vector<block_parser::block_line>& block
+)
+{
+	if (match && dont_match)
 	{
 		if (opts.match_how.and_mM_together)
 		{
 			return (
-				match_in_block(pat_match, block)
+				all_matched(match, block)
 				&&
-				!match_in_block(pat_dont_match, block)
+				all_didnt_match(dont_match, block)
 			);
 		}
 		else
 		{
 			return (
-				match_in_block(pat_match, block)
+				all_matched(match, block)
 				||
-				!match_in_block(pat_dont_match, block)
+				all_didnt_match(dont_match, block)
 			);
 		}
 	}
-	else if (pat_match)
+	else if (match)
 	{
-		return match_in_block(pat_match, block);
+		return all_matched(match, block);
 	}
-	else if (pat_dont_match)
+	else if (dont_match)
 	{
-		return !match_in_block(pat_dont_match, block);
+		return all_didnt_match(dont_match, block);
 	}
 
 	return false;
 }
 // </match>
 
-static bool process_single_block(
+static bool process_a_block(
 	prog_options& opts,
-	const matcher * pat_match,
-	const matcher * pat_dont_match,
+	const std::vector<std::unique_ptr<matcher>> * match,
+	const std::vector<std::unique_ptr<matcher>> * dont_match,
 	const std::vector<block_parser::block_line>& block
 )
 {
-	if (pat_match || pat_dont_match)
+	if (match || dont_match)
 	{
-		if (!match_single_block(opts, pat_match, pat_dont_match, block))
+		if (!match_a_block(opts, match, dont_match, block))
 			return false;
 	}
 
@@ -449,17 +536,12 @@ static bool process_single_block(
 	return should_print;
 }
 
-struct process_result {
-	bool was_match;
-	bool was_err;
-};
-
 static process_result process_blocks_from_file(
 	block_parser& parser,
 	prog_options& opts,
 	const char * fname,
-	const matcher * pat_match,
-	const matcher * pat_dont_match
+	const std::vector<std::unique_ptr<matcher>> * match,
+	const std::vector<std::unique_ptr<matcher>> * dont_match
 )
 {
 	process_result res;
@@ -485,10 +567,10 @@ static process_result process_blocks_from_file(
 		}
 		else
 		{
-			if (process_single_block(
+			if (process_a_block(
 					opts,
-					pat_match,
-					pat_dont_match,
+					match,
+					dont_match,
 					parser.get_block()
 				))
 			{
@@ -517,16 +599,16 @@ static void process_file(
 	block_parser& parser,
 	prog_options& opts,
 	const char * fname,
-	const matcher * pat_match,
-	const matcher * pat_dont_match
+	const std::vector<std::unique_ptr<matcher>> * match,
+	const std::vector<std::unique_ptr<matcher>> * dont_match
 )
 {
 	process_result curr = process_blocks_from_file(
 		parser,
 		opts,
 		fname,
-		pat_match,
-		pat_dont_match
+		match,
+		dont_match
 	);
 
 	if (!total.was_match)
@@ -542,18 +624,20 @@ static int process(
 	const std::vector<const char *>& file_names
 )
 {
-	if (opts.debug)
-		print_debug_and_quit(opts, pats);
-
 	if (0 == opts.block_count)
 		return BLOCKS_EXIT_HAD_MATCH;
+
+	const std::vector<std::unique_ptr<matcher>> * v_match =
+		pats.mM_vect.match.empty() ? nullptr : &(pats.mM_vect.match);
+
+	const std::vector<std::unique_ptr<matcher>> * v_dont_match =
+		pats.mM_vect.dont_match.empty() ? nullptr : &(pats.mM_vect.dont_match);
 
 	bool was_file_open_err = false;
 	process_result total;
 	total.was_match = false;
 	total.was_err = false;
 
-	const char str_stdin[] = "-";
 	const char * current_file = str_stdin;
 
 	std::ifstream file_in_stream;
@@ -579,13 +663,14 @@ static int process(
 			b_parser,
 			opts,
 			current_file,
-			pats.matchers[MATCH],
-			pats.matchers[DONT_MATCH]
+			v_match,
+			v_dont_match
 		);
 	}
 	else
 	{
 		static std::string err;
+
 
 		for (auto& fname : file_names)
 		{
@@ -627,8 +712,8 @@ static int process(
 				b_parser,
 				opts,
 				current_file,
-				pats.matchers[MATCH],
-				pats.matchers[DONT_MATCH]
+				v_match,
+				v_dont_match
 			);
 			opts.block_count = block_count;
 			opts.skip_count = skip_count;
@@ -690,17 +775,28 @@ static void append_file_list(
 
 	if (opts.file_list)
 	{
-		std::ifstream flist_file(opts.file_list);
-		if (!flist_file.is_open())
+		std::ifstream file_list;
+		std::istream generic_in_stream(std::cin.rdbuf());
+
+
+		if (0 != strcmp(opts.file_list, str_stdin))
 		{
-			std::string err;
-			err.assign("file list: ").append(opts.file_list);
-			err.append(": ").append(std::strerror(errno));
-			errq(err.c_str());
+			file_list.open(opts.file_list);
+			if (file_list.is_open())
+			{
+				generic_in_stream.rdbuf(file_list.rdbuf());
+			}
+			else
+			{
+				std::string err;
+				err.assign("file list: ").append(opts.file_list);
+				err.append(": ").append(std::strerror(errno));
+				errq(err.c_str());
+			}
 		}
 
 		std::string line;
-		while (std::getline(flist_file, line))
+		while (std::getline(generic_in_stream, line))
 			flist.push_back(line);
 
 		if (!flist.empty())
@@ -730,6 +826,10 @@ int main(int argc, char * argv[])
 
 	handle_options(argc, argv, opts, file_names);
 	make_patterns(opts, pats);
+
+	if (opts.debug)
+		print_debug_and_quit(opts, pats);
+
 	append_extra_file_lists(opts, pats, file_names);
 	return process(opts, pats, file_names);
 }

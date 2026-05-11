@@ -34,10 +34,10 @@ and you run 'blocks --block-name bar <my-file>', you'll get:
 	bar {
 		baz
 	}
-When the name is matched, the input isn't advanced and the search for
-the block begins at the start of the name. This allows to match all blocks
-in a file when the name is the same as the opening symbol. It also allows
-to match LISP-like syntax where the block start comes before the name, e.g.:
+When the name is matched, the input isn't advanced and the search for the
+block begins at the start of the name. This allows to match all blocks in a
+file when the name is the same as the opening symbol. It also allows to
+match LISP-like syntax where the block start comes before the name, e.g.:
 blocks -n '(define' -s '(' -e ')'
 Input is advanced when either block start or block end is matched.
 
@@ -47,8 +47,8 @@ No error, match was found:    0
 No error, no match was found: 1
 An error happened:            2
 
-Unless stated otherwise, when multiples of the same option are given,
-the last one applies.
+Unless stated otherwise, when multiples of the same option are given, the
+last one applies.
 
 Out of the plus options, f/r, i/A can appear together, e.g. +fi
 Plus options a, o need to appear alone.
@@ -74,23 +74,25 @@ Set <matcher> as the start of block comment symbol.
 Set <matcher> as the end of block comment symbol.
 
 -m|--match <matcher>
-Print only blocks in which at least one line matches <matcher>.
+Print only blocks in which at least one line matches <matcher>. If this
+option is given more than once, all respective <matcher>s must match.
 Does not ignore comments and strings.
-If both match and don't match are given, logical and is applied even if
-it is not specified on the command line. If a logical operation is
-specified on the command line, both match and don't match must be give.
-Logical operations:
+If both match and don't match are given, logical and is applied even if it
+is not specified on the command line. If a logical operation is specified on
+the command line, both match and don't match must be give.
+Logical oprations:
 +a - Logical and. Both matchers must match.
 +o - Logical or. One or the other matcher must match.
 +a|+o can appear anywhere on the command line.
 
 -M|--dont-match <matcher>
-Print only blocks in which no line matches <matcher>.
+Print only blocks in which no line matches <matcher>. If this option is
+given more than once, all respective <matcher>s must not match.
 Does not ignore comments and strings.
-If both match and don't match are given, logical and is applied even if
-it is not specified on the command line. If a logical operation is
-specified on the command line, both match and don't match must be give.
-Logical operations:
+If both match and don't match are given, logical and is applied even if it
+is not specified on the command line. If a logical operation is specified on
+the command line, both match and don't match must be give.
+Logical oprations:
 +a - Logical and. Both matchers must match.
 +o - Logical or. One or the other matcher must match.
 +a|+o can appear anywhere on the command line.
@@ -133,10 +135,9 @@ Only the next matcher after this argument is case sensitive.
 Do not use defaults for matchers.
 
 -I|--ignore-top
-Print only the body of the block. I.e. don't print the block name,
-block start, and block end. All lines between and including the block
-name and block open, as well as the line containing the block end are
-ignored.
+Print only the body of the block. I.e. don't print the block name, block
+start, and block end. All lines between and including the block name and
+block open, as well as the line containing the block end are ignored.
 
 -F|--fatal-error
 Quit after the first error.
@@ -150,11 +151,10 @@ Print debug info about matchers and quit.
 -g|--lang <name>
 Select language defaults. <name> is case insensitive and one of:
 C, awk, json, xml, info
-If used, all block matchers given on the command line but the block name
-are ignored. info is the boost ptree info. xml takes care to place the
-block name inside the tag automatically. To see the resulting matchers
-for each language, use the debug info option. Ignores the no defaults
-option.
+If used, all block matchers given on the command line but the block name are
+ignored. info is the boost ptree info. xml takes care to place the block
+name inside the tag automatically. To see the resulting matchers for each
+language, use the debug info option. Ignores the no defaults option.
 
 -d|--directory <dir>
 Read all files from <dir>. By default, all entries are read, not only files.
@@ -165,8 +165,7 @@ match the include and not match the exclude in order to be selected.
 
 -R|--recursive
 Do a recursive file search. If the directory option is not provided, the
-start directory defaults to '.'
-Symlinks to directories are followed.
+start directory defaults to the current. Symlinks to directories are followed.
 
 -u|--include-files-rx <regex>
 If a file name found by the directory option matches <regex>, the file is
@@ -179,8 +178,8 @@ not processed. <regex> is matched against the whole path. I.e. to make sure
 only '.txt' files are filtered out, use '\.txt$'
 
 -L|--file-list <file>
-Read a list of input files from <file>. Processed after the files given
-on the command line and after the directory option.
+Read a list of input files from <file>. Processed after the files given on
+the command line and after the directory option.
 
 -z|--no-strings
 Ignore strings when looking for matching patterns.

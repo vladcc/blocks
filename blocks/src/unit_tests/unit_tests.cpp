@@ -50,9 +50,9 @@ static bool test_matchers()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> rm[3];
-		rm[0] = mfact.create(matcher::type::REGEX, "foo");
-		rm[1] = mfact.create(matcher::type::REGEX, "bar ");
-		rm[2] = mfact.create(matcher::type::REGEX, "no");
+		rm[0].reset(mfact.create(matcher::type::REGEX, "foo"));
+		rm[1].reset(mfact.create(matcher::type::REGEX, "bar "));
+		rm[2].reset(mfact.create(matcher::type::REGEX, "no"));
 
 		check(strcmp(rm[0]->type_of(), "regex") == 0);
 		check(strcmp(rm[1]->type_of(), "regex") == 0);
@@ -99,9 +99,9 @@ static bool test_matchers()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> sm[4];
-		sm[0] = mfact.create(matcher::type::STRING, "foo");
-		sm[1] = mfact.create(matcher::type::STRING, "bar ");
-		sm[2] = mfact.create(matcher::type::STRING, "no");
+		sm[0].reset(mfact.create(matcher::type::STRING, "foo"));
+		sm[1].reset(mfact.create(matcher::type::STRING, "bar "));
+		sm[2].reset(mfact.create(matcher::type::STRING, "no"));
 
 		check(strcmp(sm[0]->type_of(), "string") == 0);
 		check(strcmp(sm[1]->type_of(), "string") == 0);
@@ -375,10 +375,10 @@ static bool test_lexer()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
-		rm_name = mfact.create(matcher::type::REGEX, "main");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "main"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
 
 		lexer::matchers pats(
 			rm_name.get(),
@@ -395,10 +395,10 @@ static bool test_lexer()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
-		sm_name = mfact.create(matcher::type::STRING, "main");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
+		sm_name.reset(mfact.create(matcher::type::STRING, "main"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
 
 		lexer::matchers pats(
 			sm_name.get(),
@@ -882,13 +882,13 @@ static bool test_block_parser_blocks()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close, rm_comment;
-		rm_name = mfact.create(matcher::type::REGEX, "\\{");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
 
 		std::unique_ptr<matcher> rm_name2;
-		rm_name2 = mfact.create(matcher::type::REGEX, "main");
+		rm_name2.reset(mfact.create(matcher::type::REGEX, "main"));
 
 		check(test_block_parser_test_blocks(
 				rm_name.get(),
@@ -905,13 +905,13 @@ static bool test_block_parser_blocks()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close, sm_comment;
-		sm_name = mfact.create(matcher::type::STRING, "{");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
+		sm_name.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
 
 		std::unique_ptr<matcher> sm_name2;
-		sm_name2 = mfact.create(matcher::type::REGEX, "main");
+		sm_name2.reset(mfact.create(matcher::type::REGEX, "main"));
 
 		check(test_block_parser_test_blocks(
 				sm_name.get(),
@@ -979,13 +979,15 @@ static bool test_block_parser_icase()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close;
-		rm_name = mfact.create(
-			matcher::type::REGEX,
-			"MAiN",
-			matcher::flags::ICASE
+		rm_name.reset(
+			mfact.create(
+				matcher::type::REGEX,
+				"MAiN",
+				matcher::flags::ICASE
+			)
 		);
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
 
 		lexer::matchers patterns(rm_name.get(), rm_open.get(), rm_close.get());
 		check(test_block_parser_test_icase(&patterns));
@@ -996,13 +998,15 @@ static bool test_block_parser_icase()
 		matcher_factory mfact;
 
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close;
-		sm_name = mfact.create(
-			matcher::type::STRING,
-			"MaIN",
-			matcher::flags::ICASE
+		sm_name.reset(
+			mfact.create(
+				matcher::type::STRING,
+				"MaIN",
+				matcher::flags::ICASE
+			)
 		);
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
 
 		lexer::matchers patterns(sm_name.get(), sm_open.get(), sm_close.get());
 		check(test_block_parser_test_icase(&patterns));
@@ -1160,12 +1164,12 @@ static bool test_block_comment()
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
 			rm_comment, rm_comment_start, rm_comment_end;
 
-		rm_name = mfact.create(matcher::type::REGEX, "\\{");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
-		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
-		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
+		rm_comment_start.reset(mfact.create(matcher::type::REGEX, "/\\*"));
+		rm_comment_end.reset(mfact.create(matcher::type::REGEX, "\\*/"));
 
 		lexer::matchers patterns(
 			rm_name.get(),
@@ -1186,12 +1190,12 @@ static bool test_block_comment()
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
 			sm_comment, sm_comment_start, sm_comment_end;
 
-		sm_name = mfact.create(matcher::type::STRING, "{");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
-		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
-		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+		sm_name.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
+		sm_comment_start.reset(mfact.create(matcher::type::STRING, "/*"));
+		sm_comment_end.reset(mfact.create(matcher::type::STRING, "*/"));
 
 		lexer::matchers patterns(
 			sm_name.get(),
@@ -1358,12 +1362,12 @@ static bool test_closest_name_to_block_open()
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
 			rm_comment, rm_comment_start, rm_comment_end;
 
-		rm_name = mfact.create(matcher::type::REGEX, "main");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
-		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
-		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "main"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
+		rm_comment_start.reset(mfact.create(matcher::type::REGEX, "/\\*"));
+		rm_comment_end.reset(mfact.create(matcher::type::REGEX, "\\*/"));
 
 		lexer::matchers patterns(
 			rm_name.get(),
@@ -1384,12 +1388,12 @@ static bool test_closest_name_to_block_open()
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
 			sm_comment, sm_comment_start, sm_comment_end;
 
-		sm_name = mfact.create(matcher::type::STRING, "main");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
-		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
-		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+		sm_name.reset(mfact.create(matcher::type::STRING, "main"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
+		sm_comment_start.reset(mfact.create(matcher::type::STRING, "/*"));
+		sm_comment_end.reset(mfact.create(matcher::type::STRING, "*/"));
 
 		lexer::matchers patterns(
 			sm_name.get(),
@@ -1410,12 +1414,12 @@ static bool test_closest_name_to_block_open()
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
 			rm_comment, rm_comment_start, rm_comment_end;
 
-		rm_name = mfact.create(matcher::type::REGEX, "\\{");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
-		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
-		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
+		rm_comment_start.reset(mfact.create(matcher::type::REGEX, "/\\*"));
+		rm_comment_end.reset(mfact.create(matcher::type::REGEX, "\\*/"));
 
 		lexer::matchers patterns(
 			rm_name.get(),
@@ -1436,12 +1440,12 @@ static bool test_closest_name_to_block_open()
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
 			sm_comment, sm_comment_start, sm_comment_end;
 
-		sm_name = mfact.create(matcher::type::STRING, "{");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
-		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
-		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+		sm_name.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
+		sm_comment_start.reset(mfact.create(matcher::type::STRING, "/*"));
+		sm_comment_end.reset(mfact.create(matcher::type::STRING, "*/"));
 
 		lexer::matchers patterns(
 			sm_name.get(),
@@ -1687,9 +1691,11 @@ static bool test_no_strings_impl(lexer::matchers * pats)
 static bool test_no_strings()
 {
 	matcher_factory mfact;
-	std::unique_ptr<matcher> string_rx = mfact.create(
-		matcher::type::REGEX,
-		STRING_RX
+	std::unique_ptr<matcher> string_rx(
+		mfact.create(
+			matcher::type::REGEX,
+			STRING_RX
+		)
 	);
 
 	/*** regex matchers ***/
@@ -1698,12 +1704,12 @@ static bool test_no_strings()
 		std::unique_ptr<matcher> rm_name, rm_open, rm_close,
 			rm_comment, rm_comment_start, rm_comment_end;
 
-		rm_name = mfact.create(matcher::type::REGEX, "main");
-		rm_open = mfact.create(matcher::type::REGEX, "\\{");
-		rm_close = mfact.create(matcher::type::REGEX, "\\}");
-		rm_comment = mfact.create(matcher::type::REGEX, "//");
-		rm_comment_start = mfact.create(matcher::type::REGEX, "/\\*");
-		rm_comment_end = mfact.create(matcher::type::REGEX, "\\*/");
+		rm_name.reset(mfact.create(matcher::type::REGEX, "main"));
+		rm_open.reset(mfact.create(matcher::type::REGEX, "\\{"));
+		rm_close.reset(mfact.create(matcher::type::REGEX, "\\}"));
+		rm_comment.reset(mfact.create(matcher::type::REGEX, "//"));
+		rm_comment_start.reset(mfact.create(matcher::type::REGEX, "/\\*"));
+		rm_comment_end.reset(mfact.create(matcher::type::REGEX, "\\*/"));
 
 		lexer::matchers patterns(
 			rm_name.get(),
@@ -1725,12 +1731,12 @@ static bool test_no_strings()
 		std::unique_ptr<matcher> sm_name, sm_open, sm_close,
 			sm_comment, sm_comment_start, sm_comment_end;
 
-		sm_name = mfact.create(matcher::type::STRING, "main");
-		sm_open = mfact.create(matcher::type::STRING, "{");
-		sm_close = mfact.create(matcher::type::STRING, "}");
-		sm_comment = mfact.create(matcher::type::STRING, "//");
-		sm_comment_start = mfact.create(matcher::type::STRING, "/*");
-		sm_comment_end = mfact.create(matcher::type::STRING, "*/");
+		sm_name.reset(mfact.create(matcher::type::STRING, "main"));
+		sm_open.reset(mfact.create(matcher::type::STRING, "{"));
+		sm_close.reset(mfact.create(matcher::type::STRING, "}"));
+		sm_comment.reset(mfact.create(matcher::type::STRING, "//"));
+		sm_comment_start.reset(mfact.create(matcher::type::STRING, "/*"));
+		sm_comment_end.reset(mfact.create(matcher::type::STRING, "*/"));
 
 		lexer::matchers patterns(
 			sm_name.get(),

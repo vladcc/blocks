@@ -11,7 +11,10 @@ test_comment_no_comment
 test_debug
 test_debug_base
 test_debug_dash_matcher_types
+test_debug_file_search
 test_debug_match_dont_match_logic
+test_debug_match_dont_match_logic_multiple
+test_debug_match_dont_match_logic_single
 test_debug_nostr_strrx
 test_debug_plus_dash_matcher_case
 test_debug_plus_matcher_types
@@ -33,6 +36,8 @@ test_lang_xml
 test_line_numbers
 test_mark_start_end
 test_match_dont_match
+test_match_dont_match_multiple
+test_match_dont_match_single
 test_multiple_files
 test_no_defaults
 test_no_strings

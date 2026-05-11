@@ -180,9 +180,8 @@ function test_block_comment
 	diff_stdout "empty"
 }
 
-function test_match_dont_match
+function test_match_dont_match_single
 {
-
 	# match
 	run_nok "-m '[t]he quick' $G_TEST_FILE_1"
 	diff_stdout "empty"
@@ -200,9 +199,6 @@ function test_match_dont_match
 	run_ok "-m 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_default.txt"
 
-	run_ok "-m '[t]he quick' -m 'the quick' $G_TEST_FILE_1"
-	diff_stdout "block_match_default.txt"
-
 	run_ok "-n 'max' -m 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_match_name.txt"
 
@@ -214,9 +210,6 @@ function test_match_dont_match
 	diff_stdout "empty"
 
 	run_ok "-M 'the quick' -C '//' -B '/*' -T '*/' $G_TEST_FILE_1"
-	diff_stdout "block_dont_match_default.txt"
-
-	run_ok "-M 'foo' -C '//' -B '/*' -T '*/' -M 'the quick' $G_TEST_FILE_1"
 	diff_stdout "block_dont_match_default.txt"
 
 	# logic
@@ -245,6 +238,38 @@ function test_match_dont_match
 
 	run_ok "-n 'block' -m 'fox jumps' -M 'bar' +o $L_FILE"
 	diff_stdout "match_dont_match_logic_3.txt"
+}
+
+function test_match_dont_match_multiple
+{
+	local L_FILE="input/match_dont_match_multiple.txt"
+
+	run_ok "-n 'block' -m 'aaa' -m 'ccc' $L_FILE"
+	diff_stdout "match_dont_match_multiple_1.txt"
+
+	run_ok "-n 'block' -M 'bbb' -M 'fff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_2.txt"
+
+	run_ok "-n 'block' -m 'aaa' -m 'ccc' -M 'qqq' -M 'fff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_3.txt"
+
+	run_ok "-n 'block' -m 'aaa' -m 'ccc' +a -M 'qqq' -M 'fff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_3.txt"
+
+	run_ok "-n 'block' -r -m '[a]aa' -m '[c]cc' -M '[q]qq' -M '[f]ff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_3.txt"
+
+	run_ok "-n 'block' -i -m 'Aaa' -m 'Ccc' -M 'Qqq' -M 'Fff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_3.txt"
+
+	run_ok "-n 'block' -m 'ccc' -m 'ddd' +o -M 'aaa' -M 'fff' $L_FILE"
+	diff_stdout "match_dont_match_multiple_4.txt"
+}
+
+function test_match_dont_match
+{
+	bt_eval test_match_dont_match_single
+	bt_eval test_match_dont_match_multiple
 }
 
 function test_mark_start_end
@@ -573,7 +598,7 @@ function test_debug_nostr_strrx
 	diff_stdout "debug_nostr_strrx_3.txt"
 }
 
-function test_debug_match_dont_match_logic
+function test_debug_match_dont_match_logic_single
 {
 	run_ok "-D -m 'foo' -M 'bar'"
 	diff_stdout "debug_match_dont_match_logic_1.txt"
@@ -615,6 +640,67 @@ function test_debug_match_dont_match_logic
 	diff_stderr "match_dont_match_logic_err_3.txt"
 }
 
+function test_debug_match_dont_match_logic_multiple
+{
+	run_ok "-D -m 'aaa' -m 'bbb' -M 'ccc' -M 'ddd'"
+	diff_stdout "match_dont_match_logic_multiple_1.txt"
+
+	run_ok "-D -m 'aaa' -m 'bbb' -m '' -M 'ccc' -M 'ddd' -M ''"
+	diff_stdout "match_dont_match_logic_multiple_1.txt"
+
+	run_ok "-D -m 'aaa' -m 'bbb' +a -M 'ccc' -M 'ddd'"
+	diff_stdout "match_dont_match_logic_multiple_1.txt"
+
+	run_ok "-D -m 'aaa' -m 'bbb' +o -M 'ccc' -M 'ddd'"
+	diff_stdout "match_dont_match_logic_multiple_2.txt"
+
+	run_ok "-D -ri -m 'aaa' -m 'bbb' -m 'ccc' -M 'ddd' -M 'eee' -M 'fff'"
+	diff_stdout "match_dont_match_logic_multiple_3.txt"
+
+	run_ok "-D -ri -m 'aaa' -m 'bbb' -m 'ccc' -fA -M 'ddd' -M 'eee' -M 'fff'"
+	diff_stdout "match_dont_match_logic_multiple_4.txt"
+
+	run_ok "-D -rA +fA -m 'aaa' +fi -m 'bbb' -m 'ccc'" \
+		"-fA +rA -M 'ddd' +ri -M 'eee' -M 'fff'"
+	diff_stdout "match_dont_match_logic_multiple_5.txt"
+}
+
+function test_debug_match_dont_match_logic
+{
+	bt_eval test_debug_match_dont_match_logic_single
+	bt_eval test_debug_match_dont_match_logic_multiple
+}
+
+function test_debug_file_search
+{
+	run_ok "-D -d 'foo/bar/baz'"
+	diff_stdout "debug_file_search_1.txt"
+
+	run_ok "-D -d 'foo/bar/baz' -R"
+	diff_stdout "debug_file_search_2.txt"
+
+	run_ok "-D -R"
+	diff_stdout "debug_file_search_3.txt"
+
+	run_ok "-D -d 'foo/bar/baz' -u '\.txt$' -U '\.xml$'"
+	diff_stdout "debug_file_search_4.txt"
+
+	run_ok "-D -d 'foo/bar/baz' +fi -u '\.txt$' -fi -U '\.xml$' -R"
+	diff_stdout "debug_file_search_5.txt"
+
+	run_ok "-D -d 'foo/bar/baz' -A -u '\.txt$' -U '\.xml$' -R"
+	diff_stdout "debug_file_search_6.txt"
+
+	run_ok "-D -d 'foo/bar/baz' -A -u '\.txt$' -i -U '\.xml$' -R"
+	diff_stdout "debug_file_search_7.txt"
+
+	run_ok "-D -i -U '\.xml$' -R"
+	diff_stdout "debug_file_search_8.txt"
+
+	run_ok "-D -i -u '\.txt$'"
+	diff_stdout "debug_file_search_9.txt"
+}
+
 function test_debug
 {
 	bt_eval test_debug_base
@@ -623,6 +709,7 @@ function test_debug
 	bt_eval test_debug_plus_dash_matcher_case
 	bt_eval test_debug_nostr_strrx
 	bt_eval test_debug_match_dont_match_logic
+	bt_eval test_debug_file_search
 }
 
 function test_help
@@ -859,6 +946,8 @@ function test_lang
 
 function test_flags
 {
+	bt_eval test_version
+	bt_eval test_help
 	bt_eval test_block_name
 	bt_eval test_block_start_end
 	bt_eval test_comment_no_comment
@@ -877,8 +966,6 @@ function test_flags
 	bt_eval test_fatal_error
 	bt_eval test_verbose_error
 	bt_eval test_debug
-	bt_eval test_help
-	bt_eval test_version
 	bt_eval test_closest_name_to_block
 	bt_eval test_no_strings
 	bt_eval test_lang
@@ -1082,6 +1169,11 @@ function test_file_list
 	# file names + line numbers
 	run_ok "-r -n 'main|zing' -N -L $L_FLIST"
 	diff_stdout "mult_files_filenames.txt"
+
+	set_run_prefix "cat $L_FLIST |"
+	run_ok "-r -n 'main|zing' -N -L '-'"
+	diff_stdout "mult_files_filenames.txt"
+	unset_run_prefix
 
 	# long option
 	run_ok "-r -n 'main|zing' -N --file-list $L_FLIST"
