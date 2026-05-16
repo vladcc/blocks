@@ -19,7 +19,7 @@ public:
 
 public:
 	matcher() :
-		_is_icase(false)
+		m_is_icase(false)
 	{}
 
 	virtual ~matcher() {}
@@ -33,10 +33,10 @@ public:
 
 	const bool is_icase() const
 	{
-		return _is_icase;
+		return m_is_icase;
 	}
 
 protected:
-	bool _is_icase;
+	bool m_is_icase;
 };
 #endif

@@ -15,23 +15,23 @@ public:
 		if (start >= len)
 			return false;
 
-		_start = start;
-		return (_prx &&
+		m_start = start;
+		return (m_prx &&
 			std::regex_search(
 				text + start,
 				text + len,
-				_match,
-				*_prx
+				m_match,
+				*m_prx
 			)
 		);
 	}
 	ptrdiff_t position() const override
 	{
-		return (_start + _match.position());
+		return (m_start + m_match.position());
 	}
 	size_t length() const override
 	{
-		return _match.length();
+		return m_match.length();
 	}
 	const char * type_of() const override
 	{
@@ -39,13 +39,13 @@ public:
 	}
 	const char * pattern() const override
 	{
-		return _str_rx.c_str();
+		return m_str_rx.c_str();
 	}
 
 private:
-	std::string _str_rx;
-	std::cmatch _match;
-	std::unique_ptr<std::regex> _prx;
-	size_t _start;
+	std::string m_str_rx;
+	std::cmatch m_match;
+	std::unique_ptr<std::regex> m_prx;
+	size_t m_start;
 };
 #endif

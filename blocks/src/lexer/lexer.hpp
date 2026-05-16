@@ -50,49 +50,49 @@ public:
 
 public:
 	lexer(std::istream& in, const matchers& pats) :
-		_pats(pats),
-		_str_find(pats.string_rx),
-		_in(in),
-		_line_pos(0),
-		_line_no(0),
-		_last_match_len(0),
-		_has_input(false),
-		_block_comment(false)
+		m_pats(pats),
+		m_str_find(pats.string_rx),
+		m_in(in),
+		m_line_pos(0),
+		m_line_no(0),
+		m_last_match_len(0),
+		m_has_input(false),
+		m_block_comment(false)
 	{
-		_name[0] = {_pats.comment,       _COMMENT};
-		_name[1] = {_pats.comment_start, _COMMENT_START};
-		_name[2] = {_pats.name,          _NAME};
+		m_name[0] = {m_pats.comment,       I_COMMENT};
+		m_name[1] = {m_pats.comment_start, I_COMMENT_START};
+		m_name[2] = {m_pats.name,          I_NAME};
 
-		_name_open_close[0] = {_pats.comment,       _COMMENT};
-		_name_open_close[1] = {_pats.comment_start, _COMMENT_START};
-		_name_open_close[2] = {_pats.name,          _NAME};
-		_name_open_close[3] = {_pats.open,          _OPEN};
-		_name_open_close[4] = {_pats.close,         _CLOSE};
+		m_name_open_close[0] = {m_pats.comment,       I_COMMENT};
+		m_name_open_close[1] = {m_pats.comment_start, I_COMMENT_START};
+		m_name_open_close[2] = {m_pats.name,          I_NAME};
+		m_name_open_close[3] = {m_pats.open,          I_OPEN};
+		m_name_open_close[4] = {m_pats.close,         I_CLOSE};
 
-		_open_close[0] = {_pats.comment,       _COMMENT};
-		_open_close[1] = {_pats.comment_start, _COMMENT_START};
-		_open_close[2] = {_pats.open,          _OPEN};
-		_open_close[3] = {_pats.close,         _CLOSE};
+		m_open_close[0] = {m_pats.comment,       I_COMMENT};
+		m_open_close[1] = {m_pats.comment_start, I_COMMENT_START};
+		m_open_close[2] = {m_pats.open,          I_OPEN};
+		m_open_close[3] = {m_pats.close,         I_CLOSE};
 
-		_comment_end[0] = {_pats.comment_end, _COMMENT_END};
+		m_comment_end[0] = {m_pats.comment_end, I_COMMENT_END};
 	}
 
 	inline tok block_name()
 	{
-		return _leftmost_non_comment(_name.data(), _name.size());
+		return p_leftmost_non_comment(m_name.data(), m_name.size());
 	}
 
 	inline tok block_name_open_close()
 	{
-		return _leftmost_non_comment(
-			_name_open_close.data(),
-			_name_open_close.size()
+		return p_leftmost_non_comment(
+			m_name_open_close.data(),
+			m_name_open_close.size()
 		);
 	}
 
 	inline tok block_open_close()
 	{
-		return _leftmost_non_comment(_open_close.data(), _open_close.size());
+		return p_leftmost_non_comment(m_open_close.data(), m_open_close.size());
 	}
 
 	bool next_line();
@@ -100,49 +100,49 @@ public:
 
 	void reset()
 	{
-		_in.clear();
-		_line.clear();
-		_line_no = 0;
-		_line_pos = 0;
-		_last_match_len = 0;
-		_has_input = false;
+		m_in.clear();
+		m_line.clear();
+		m_line_no = 0;
+		m_line_pos = 0;
+		m_last_match_len = 0;
+		m_has_input = false;
 		next_line();
 	}
 
 	inline void advance_past_match()
 	{
-		_line_pos += _last_match_len;
-		_last_match_len = 0;
+		m_line_pos += m_last_match_len;
+		m_last_match_len = 0;
 	}
 
 	inline const std::string& get_line()
-	{return _line;}
+	{return m_line;}
 
 	inline bool has_input()
-	{return _has_input;}
+	{return m_has_input;}
 
 	inline size_t line_num()
-	{return _line_no;}
+	{return m_line_no;}
 
 	inline size_t line_pos()
-	{return _line_pos;}
+	{return m_line_pos;}
 
 private:
-	enum _internal_tok : uint32_t {
-		_NAME,
-		_OPEN,
-		_CLOSE,
-		_EOI,
-		_COMMENT,
-		_COMMENT_START,
-		_COMMENT_END,
-		_NONE
+	enum p_internal_tok : uint32_t {
+		I_NAME,
+		I_OPEN,
+		I_CLOSE,
+		I_EOI,
+		I_COMMENT,
+		I_COMMENT_START,
+		I_COMMENT_END,
+		I_NONE
 	};
 
-	struct _tok_match
+	struct i_tok_match
 	{
 		const matcher * m;
-		_internal_tok t;
+		p_internal_tok t;
 	};
 
 protected:
@@ -150,17 +150,18 @@ protected:
 	{
 	public:
 		string_finder(const regex_matcher * string_rx) :
-			_str_rx(string_rx)
+			m_str_rx(string_rx)
 		{
-			_ranges.reserve(8);
+			m_ranges.reserve(8);
 		}
 
 		void find_strings(const char * str, size_t len);
 		bool is_in_string(size_t pos) const;
 
-		inline const auto& _test_get_ranges() const
+	std::array<i_tok_match, 1> m_comment_end;
+		inline const auto& o_test_get_ranges() const
 		{
-			return _ranges;
+			return m_ranges;
 		}
 
 	private:
@@ -173,42 +174,45 @@ protected:
 			size_t start;
 			size_t end;
 		};
-		std::vector<range> _ranges;
-		const regex_matcher * _str_rx;
+		std::vector<range> m_ranges;
+		const regex_matcher * m_str_rx;
 	};
 
 private:
-	bool _match(matcher * m, const char * text, size_t len, size_t start);
-	_internal_tok _match_leftmost_of(const _tok_match * tm, size_t len);
-	_internal_tok _leftmost_non_comment_intl(const _tok_match * tm, size_t len);
+	bool p_match(matcher * m, const char * text, size_t len, size_t start);
+	p_internal_tok p_match_leftmost_of(const i_tok_match * tm, size_t len);
+	p_internal_tok p_leftmost_non_comment_intl(
+		const i_tok_match * tm,
+		size_t len
+	);
 
-	inline tok _leftmost_non_comment(const _tok_match * tm, size_t len)
+	inline tok p_leftmost_non_comment(const i_tok_match * tm, size_t len)
 	{
 		tok ret = tok::NONE;
-		switch(_leftmost_non_comment_intl(tm, len))
+		switch(p_leftmost_non_comment_intl(tm, len))
 		{
-			case _internal_tok::_NAME:  ret = tok::NAME;  break;
-			case _internal_tok::_OPEN:  ret = tok::OPEN;  break;
-			case _internal_tok::_CLOSE: ret = tok::CLOSE; break;
-			case _internal_tok::_EOI:   ret = tok::EOI;   break;
-			default:                    ret = tok::NONE;  break;
+			case p_internal_tok::I_NAME:  ret = tok::NAME;  break;
+			case p_internal_tok::I_OPEN:  ret = tok::OPEN;  break;
+			case p_internal_tok::I_CLOSE: ret = tok::CLOSE; break;
+			case p_internal_tok::I_EOI:   ret = tok::EOI;   break;
+			default:                      ret = tok::NONE;  break;
 		}
 		return ret;
 	}
 
 private:
-	matchers _pats;
-	string_finder _str_find;
-	std::array<_tok_match, 5> _name_open_close;
-	std::array<_tok_match, 4> _open_close;
-	std::array<_tok_match, 3> _name;
-	std::array<_tok_match, 1> _comment_end;
-	std::string _line;
-	std::istream& _in;
-	size_t _line_pos;
-	size_t _line_no;
-	size_t _last_match_len;
-	bool _has_input;
-	bool _block_comment;
+	matchers m_pats;
+	string_finder m_str_find;
+	std::array<i_tok_match, 5> m_name_open_close;
+	std::array<i_tok_match, 4> m_open_close;
+	std::array<i_tok_match, 3> m_name;
+	std::array<i_tok_match, 1> m_comment_end;
+	std::string m_line;
+	std::istream& m_in;
+	size_t m_line_pos;
+	size_t m_line_no;
+	size_t m_last_match_len;
+	bool m_has_input;
+	bool m_block_comment;
 };
 #endif

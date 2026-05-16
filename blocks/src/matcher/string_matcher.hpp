@@ -14,11 +14,11 @@ public:
 	bool match(const char * text, size_t len, size_t start) override;
 	ptrdiff_t position() const override
 	{
-		return _pos;
+		return m_pos;
 	}
 	size_t length() const override
 	{
-		return _pattern.length();
+		return m_pattern.length();
 	}
 	const char * type_of() const override
 	{
@@ -26,29 +26,28 @@ public:
 	}
 	const char * pattern() const override
 	{
-		return _pattern.c_str();
+		return m_pattern.c_str();
 	}
 
 private:
-	inline void _tolower(std::string& text)
+	inline void p_tolower(std::string& text)
 	{
 		char * str = const_cast<char *>(text.c_str());
 		for (size_t i = 0, end = text.length(); i < end; ++i)
 			str[i] = tolower(str[i]);
 	}
-	inline char _ch_case(char ch) const
+	inline char p_ch_case(char ch) const
 	{
-		return _icase ? tolower(ch) : ch;
+		return m_icase ? tolower(ch) : ch;
 	}
 
 private:
-	std::string _pattern;
-	const char * _last_line;
-	const char * _ppat;
-	ptrdiff_t _pos;
-	size_t _plen;
-	uint32_t _opts;
-	char _cfirst;
-	bool _icase;
+	std::string m_pattern;
+	const char * m_ppat;
+	ptrdiff_t m_pos;
+	size_t m_plen;
+	uint32_t m_opts;
+	char m_cfirst;
+	bool m_icase;
 };
 #endif

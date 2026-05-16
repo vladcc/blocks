@@ -15,7 +15,7 @@ void filter_file(
 	bool take = false;
 	regex_matcher * mincl = const_cast<regex_matcher *>(files_include);
 	regex_matcher * mexcl = const_cast<regex_matcher *>(files_exclude);
-	std::size_t len = strlen(fname);
+	size_t len = strlen(fname);
 
 	if (mincl && mexcl)
 		take = mincl->match(fname, len, 0) && !mexcl->match(fname, len, 0);

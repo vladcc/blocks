@@ -1,3 +1,7 @@
+2026-05-16
+blocks 4.1
+internal names changed to avoid clashes with the preprocessor on some platforms
+
 2026-05-11
 blocks 4.0
 lto added to the release build

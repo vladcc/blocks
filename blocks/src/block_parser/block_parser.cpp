@@ -4,29 +4,29 @@
 
 void block_parser::init(const char * fname)
 {
-	_lexer.reset();
-	_fname = fname;
+	m_lexer.reset();
+	m_fname = fname;
 }
 
 bool block_parser::parse_block()
 {
-	_clear_block();
-	_clear_error();
-	bool has_block_start = _find_block_name();
+	p_clear_block();
+	p_clear_error();
+	bool has_block_start = p_find_block_name();
 
-	if (has_block_start && !(_find_block_open() && _get_block_body()))
-		_error_report_generate();
+	if (has_block_start && !(p_find_block_open() && p_get_block_body()))
+		p_error_report_generate();
 
 	return has_block_start;
 }
 
-bool block_parser::_get_block_body()
+bool block_parser::p_get_block_body()
 {
 	bool ret = false;
 	size_t stack = 0;
 	lexer::tok which = lexer::tok::NONE;
 
-	while (_find_open_or_close(&which))
+	while (p_find_open_or_close(&which))
 	{
 		if (lexer::tok::OPEN == which)
 			++stack;
@@ -45,17 +45,17 @@ out:
 	return ret;
 }
 
-bool block_parser::_find_block_name()
+bool block_parser::p_find_block_name()
 {
 	bool found_name = false;
 	lexer::tok which = lexer::tok::NONE;
 
-	while ((which = _lexer.block_name()) != lexer::tok::EOI)
+	while ((which = m_lexer.block_name()) != lexer::tok::EOI)
 	{
 		found_name = (lexer::tok::NAME == which);
 		if (!found_name)
 		{
-			_lexer.next_line();
+			m_lexer.next_line();
 			continue;
 		}
 		else
@@ -65,35 +65,35 @@ bool block_parser::_find_block_name()
 	return found_name;
 }
 
-bool block_parser::_find_block_open()
+bool block_parser::p_find_block_open()
 {
 	bool found_block_open = false;
 	lexer::tok which = lexer::tok::NONE;
 
-	while ((which = _lexer.block_name_open_close()) != lexer::tok::EOI)
+	while ((which = m_lexer.block_name_open_close()) != lexer::tok::EOI)
 	{
-		_save_line_unique(which);
+		p_save_line_unique(which);
 		switch (which)
 		{
 			default:
 			case lexer::tok::NONE:
 			{
-				_lexer.next_line();
+				m_lexer.next_line();
 				continue;
 			} break;
 
 			case lexer::tok::NAME:
 			{
-				_clear_block();
+				p_clear_block();
 
-				if (_lexer.also_matches_open())
+				if (m_lexer.also_matches_open())
 				{
 					found_block_open = true;
 					goto done;
 				}
 				else
 				{
-					_lexer.advance_past_match();
+					m_lexer.advance_past_match();
 					continue;
 				}
 			} break;
@@ -116,20 +116,20 @@ done:
 	return found_block_open;
 }
 
-bool block_parser::_find_open_or_close(lexer::tok * out_which)
+bool block_parser::p_find_open_or_close(lexer::tok * out_which)
 {
 	bool ret = false;
 	lexer::tok which = lexer::tok::NONE;
 
-	while ((which = _lexer.block_open_close()) != lexer::tok::EOI)
+	while ((which = m_lexer.block_open_close()) != lexer::tok::EOI)
 	{
-		_save_line_unique(which);
+		p_save_line_unique(which);
 
 		if (lexer::tok::NONE == which)
-			_lexer.next_line();
+			m_lexer.next_line();
 		else if ((lexer::tok::OPEN == which) || (lexer::tok::CLOSE == which))
 		{
-			_lexer.advance_past_match();
+			m_lexer.advance_past_match();
 			ret = true;
 			break;
 		}
@@ -139,18 +139,18 @@ bool block_parser::_find_open_or_close(lexer::tok * out_which)
 	return ret;
 }
 
-void block_parser::_error_report_generate()
+void block_parser::p_error_report_generate()
 {
-	const std::vector<block_line>& block = _block.get_content();
+	const std::vector<block_line>& block = m_block.get_content();
 	size_t first_line_no = block.front().get_line_no();
 	const std::string& bad_line = block.back().get_line();
 
-	_error.create(
+	m_error.create(
 		first_line_no,
 		bad_line,
-		_fname,
-		_lexer.line_num(),
-		_lexer.line_pos()
+		m_fname,
+		m_lexer.line_num(),
+		m_lexer.line_pos()
 	);
 }
 
@@ -160,26 +160,26 @@ void block_parser::parsed_block::save_line(
 	lexer::tok token
 )
 {
-	if (_last_saved_line_no != line_num)
+	if (m_last_saved_line_no != line_num)
 	{
-		_content.emplace_back(txt, line_num);
-		_last_saved_line_no = line_num;
+		m_content.emplace_back(txt, line_num);
+		m_last_saved_line_no = line_num;
 	}
-	_content.back().mark_token(token);
+	m_content.back().mark_token(token);
 }
 
 void block_parser::parsed_block::reset()
 {
-	_content.clear();
-	_last_saved_line_no = 0;
+	m_content.clear();
+	m_last_saved_line_no = 0;
 }
 
 block_parser::error::error() :
-	_did_error_happen(false)
+	m_did_error_happen(false)
 {
-	_text.emplace_back("");
-	_text.emplace_back("");
-	_text.emplace_back("");
+	m_text.emplace_back("");
+	m_text.emplace_back("");
+	m_text.emplace_back("");
 }
 
 void block_parser::error::create(
@@ -192,9 +192,9 @@ void block_parser::error::create(
 {
 	reset();
 
-	_did_error_happen = true;
+	m_did_error_happen = true;
 
-	std::string * err = &_text[0];
+	std::string * err = &m_text[0];
 	if (fname)
 		err->append(fname).append(":");
 
@@ -203,10 +203,10 @@ void block_parser::error::create(
 	err->append(": improper nesting from line ");
 	err->append(std::to_string(first_line_no));
 
-	err = &_text[1];
+	err = &m_text[1];
 	err->append(bad_line_text);
 
-	err = &_text[2];
+	err = &m_text[2];
 	for (size_t i = 0; i < lex_line_pos; ++i)
 		err->append(('\t' == bad_line_text[i]) ? "\t" : " ");
 	err->append("^");
@@ -214,7 +214,7 @@ void block_parser::error::create(
 
 void block_parser::error::reset()
 {
-	_did_error_happen = false;
-	for (auto& str : _text)
+	m_did_error_happen = false;
+	for (auto& str : m_text)
 		str.clear();
 }

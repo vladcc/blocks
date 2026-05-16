@@ -5,9 +5,9 @@
 
 regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
 	 matcher(),
-	 _str_rx(rx ? rx : ""),
-	 _prx(nullptr),
-	 _start(0)
+	 m_str_rx(rx ? rx : ""),
+	 m_prx(nullptr),
+	 m_start(0)
 {
 	if (rx)
 	{
@@ -16,9 +16,9 @@ regex_matcher::regex_matcher(const char * rx, uint32_t opts) :
 		if (opts & matcher::flags::ICASE)
 		{
 			re_flags |= std::regex::icase;
-			matcher::_is_icase = true;
+			matcher::m_is_icase = true;
 		}
 
-		_prx.reset(new std::regex(rx, re_flags));
+		m_prx.reset(new std::regex(rx, re_flags));
 	}
 }

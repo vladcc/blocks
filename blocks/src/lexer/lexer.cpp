@@ -4,16 +4,16 @@
 
 #define left_of(a, b) (a < b)
 
-bool lexer::_match(matcher * m, const char * text, size_t len, size_t start)
+bool lexer::p_match(matcher * m, const char * text, size_t len, size_t start)
 {
 	ptrdiff_t pos = 0;
 	while (m->match(text, len, start))
 	{
-		if (!_pats.string_rx)
+		if (!m_pats.string_rx)
 			return true;
 
 		pos = m->position();
-		if (!_str_find.is_in_string(pos))
+		if (!m_str_find.is_in_string(pos))
 			return true;
 
 		start = pos + m->length();
@@ -21,73 +21,73 @@ bool lexer::_match(matcher * m, const char * text, size_t len, size_t start)
 	return false;
 }
 
-lexer::_internal_tok lexer::_match_leftmost_of(
-	const _tok_match * tms,
+lexer::p_internal_tok lexer::p_match_leftmost_of(
+	const i_tok_match * tms,
 	size_t len
 )
 {
-	lexer::_internal_tok match_tok = lexer::_internal_tok::_EOI;
+	lexer::p_internal_tok match_tok = lexer::p_internal_tok::I_EOI;
 
-	if (_has_input)
+	if (m_has_input)
 	{
-		match_tok = lexer::_internal_tok::_NONE;
+		match_tok = lexer::p_internal_tok::I_NONE;
 		ptrdiff_t match_pos = 0;
 		ptrdiff_t last_pos = std::numeric_limits<ptrdiff_t>::max();
 
-		const _tok_match * ptm = nullptr;
+		const i_tok_match * ptm = nullptr;
 		matcher * m = nullptr;
-		const char * pline = _line.c_str();
-		size_t llen = _line.length();
+		const char * pline = m_line.c_str();
+		size_t llen = m_line.length();
 		for (size_t i = 0; i < len; ++i)
 		{
 			ptm = tms+i;
 			if ((m = const_cast<matcher *>(ptm->m)))
 			{
-				if (_match(m, pline, llen, _line_pos))
+				if (p_match(m, pline, llen, m_line_pos))
 				{
 					match_pos = m->position();
 					if (left_of(match_pos, last_pos))
 					{
 						last_pos = match_pos;
 						match_tok = ptm->t;
-						_last_match_len = m->length();
+						m_last_match_len = m->length();
 					}
 				}
 			}
 		}
 
-		if (match_tok != lexer::_internal_tok::_NONE)
-			_line_pos = last_pos;
+		if (match_tok != lexer::p_internal_tok::I_NONE)
+			m_line_pos = last_pos;
 	}
 
 	return match_tok;
 }
 
-lexer::_internal_tok lexer::_leftmost_non_comment_intl(
-	const _tok_match * tm,
+lexer::p_internal_tok lexer::p_leftmost_non_comment_intl(
+	const i_tok_match * tm,
 	size_t len
 )
 {
-	lexer::_internal_tok ret = lexer::_internal_tok::_NONE;
+	lexer::p_internal_tok ret = lexer::p_internal_tok::I_NONE;
 
-	if (!_block_comment)
+	if (!m_block_comment)
 	{
-		ret = _match_leftmost_of(tm, len);
-		if (lexer::_internal_tok::_COMMENT_START == ret)
+		ret = p_match_leftmost_of(tm, len);
+		if (lexer::p_internal_tok::I_COMMENT_START == ret)
 		{
-			_block_comment = true;
+			m_block_comment = true;
 			advance_past_match();
-			ret = _leftmost_non_comment_intl(tm, len);
+			ret = p_leftmost_non_comment_intl(tm, len);
 		}
 	}
 	else
 	{
-		ret = _match_leftmost_of(_comment_end.data(), _comment_end.size());
-		if (lexer::_internal_tok::_COMMENT_END == ret)
+		ret = p_match_leftmost_of(m_comment_end.data(), m_comment_end.size());
+		if (lexer::p_internal_tok::I_COMMENT_END == ret)
 		{
-			_block_comment = false;
+			m_block_comment = false;
 			advance_past_match();
-			ret = _leftmost_non_comment_intl(tm, len);
+			ret = p_leftmost_non_comment_intl(tm, len);
 		}
 	}
 
@@ -96,46 +96,46 @@ lexer::_internal_tok lexer::_leftmost_non_comment_intl(
 
 bool lexer::also_matches_open()
 {
-	matcher * open = const_cast<matcher *>(_pats.open);
+	matcher * open = const_cast<matcher *>(m_pats.open);
 
 	return (open
-		&& _match(open, _line.c_str(), _line.length(), _line_pos)
-		&& (open->position() == static_cast<ptrdiff_t>(_line_pos)));
+		&& p_match(open, m_line.c_str(), m_line.length(), m_line_pos)
+		&& (open->position() == static_cast<ptrdiff_t>(m_line_pos)));
 }
 
 bool lexer::next_line()
 {
-	if ((_has_input = static_cast<bool>(std::getline(_in, _line))))
+	if ((m_has_input = static_cast<bool>(std::getline(m_in, m_line))))
 	{
-		++_line_no;
-		_line_pos = 0;
-		_last_match_len = 0;
+		++m_line_no;
+		m_line_pos = 0;
+		m_last_match_len = 0;
 
-		if (_pats.string_rx)
-			_str_find.find_strings(_line.c_str(), _line.length());
+		if (m_pats.string_rx)
+			m_str_find.find_strings(m_line.c_str(), m_line.length());
 	}
-	return _has_input;
+	return m_has_input;
 }
 
 void lexer::string_finder::find_strings(const char * str, size_t len)
 {
 	size_t start = 0;
 	size_t end = 0;
-	regex_matcher * m = const_cast<regex_matcher *>(_str_rx);
+	regex_matcher * m = const_cast<regex_matcher *>(m_str_rx);
 
-	_ranges.clear();
+	m_ranges.clear();
 	while (m->match(str, len, start))
 	{
 		start = m->position();
 		end = start + m->length();
-		_ranges.emplace_back(start, end);
+		m_ranges.emplace_back(start, end);
 		start = end;
 	}
 }
 
 bool lexer::string_finder::is_in_string(size_t pos) const
 {
-	for (const auto& r : _ranges)
+	for (const auto& r : m_ranges)
 	{
 		if (pos >= r.start && pos < r.end)
 			return true;

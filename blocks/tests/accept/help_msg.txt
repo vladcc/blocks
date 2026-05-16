@@ -1,4 +1,4 @@
--- blocks 4.0 --
+-- blocks 4.1 --
 grep for nested data
 
 Use: blocks [options] [files]

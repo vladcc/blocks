@@ -443,7 +443,7 @@ static bool test_lexer_string_finder()
 	);
 
 	str_find_test::string_finder str_find(rxm.get());
-	const auto& ranges = str_find._test_get_ranges();
+	const auto& ranges = str_find.o_test_get_ranges();
 
 	check(ranges.empty());
 
@@ -607,13 +607,13 @@ static bool test_block_parser_test_blocks(
 			{}
 
 			bool find_block_name()
-			{return block_parser::find_block_name_();}
+			{return block_parser::o_find_block_name();}
 
 			bool find_open_or_close(lexer::tok * out_which)
-			{return block_parser::find_open_or_close_(out_which);}
+			{return block_parser::o_find_open_or_close(out_which);}
 
 			lexer& get_lexer()
-			{return block_parser::get_lexer_();}
+			{return block_parser::o_get_lexer();}
 		};
 
 		{

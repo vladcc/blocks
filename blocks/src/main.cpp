@@ -17,7 +17,7 @@
 #define BLOCKS_EXIT_HAD_ERROR 2
 
 static const char * program_name = "blocks";
-static const char * program_version = "4.0";
+static const char * program_version = "4.1";
 
 static const char * str_stdin = "-";
 
@@ -438,7 +438,7 @@ static bool all_matched(
 )
 {
 	const std::unique_ptr<matcher> * data = vect->data();
-	for (std::size_t i = 0, end = vect->size(); i < end; ++i)
+	for (size_t i = 0, end = vect->size(); i < end; ++i)
 	{
 		if (!match_in_block(data[i].get(), block))
 			return false;
@@ -453,7 +453,7 @@ static bool all_didnt_match(
 )
 {
 	const std::unique_ptr<matcher> * data = vect->data();
-	for (std::size_t i = 0, end = vect->size(); i < end; ++i)
+	for (size_t i = 0, end = vect->size(); i < end; ++i)
 	{
 		if (match_in_block(data[i].get(), block))
 			return false;
